@@ -23,6 +23,7 @@
             <h1 class="menu-title">ATELIER<br>BOUTEILLE</h1>
             <button id="btn-new-project" class="menu-big-btn"><span>+</span> NOUVEAU</button>
             <button id="btn-open-project" class="menu-big-btn secondary"><span>📂</span> OUVRIR</button>
+            <input type="file" id="file-loader" style="display: none;">
         </div>
     </section>
 
@@ -34,27 +35,78 @@
                 <div class="view-switcher">
                     <button id="btn-view-3d" class="active">3D</button>
                     <button id="btn-view-2d">2D</button>
+                    <button id="btn-outillage">OUTILLAGE</button>
                 </div>
             </div>
         </div>
+
         <div id="workspace-content">
             <aside id="Panel-gauche">
                 <div class="setting-card">
-                    <button class="accordion active">Dimensions</button>
-                    <div class="panel-controls" style="max-height: 1000px;">
+                    <button class="accordion main-accordion">Type de bouteille</button>
+                    <div class="panel-controls">
                         <div class="control-group">
-                            <label>Hauteur Totale</label>
-                            <input type="range" id="height-slider" min="250" max="400" value="320">
-                            <input type="number" id="height-input" value="320">
+                            <label class="label-muted">Forme <span class="label-alert">(FICTIF)</span></label>
+                            <select class="input-select">
+                                <option>Bouteille Cylindrique</option>
+                            </select>
                         </div>
+                    </div>
+                </div>
+
+                <div class="setting-card">
+                    <button class="accordion main-accordion">Dimensions principales</button>
+                    <div class="panel-controls">
+                        <div class="sub-block">
+                            <button class="accordion sub-accordion">HAUTEURS</button>
+                            <div class="panel-controls sub-panel">
+                                <div class="control-group">
+                                    <div class="label-row"><label>Hauteur Totale</label>
+                                    <div class="input-wrapper"><input type="number" id="height-input" value="320"><span class="unit">mm</span></div></div>
+                                    <input type="range" id="height-slider" min="250" max="400" value="320">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row"><label>Hauteur Bas Col</label>
+                                    <div class="input-wrapper"><input type="number" id="neck-height-input" value="270"><span class="unit">mm</span></div></div>
+                                    <input type="range" id="neck-height-slider" min="200" max="380" value="270">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row"><label>Hauteur Épaule</label>
+                                    <div class="input-wrapper"><input type="number" id="body-height-input" value="200"><span class="unit">mm</span></div></div>
+                                    <input type="range" id="body-height-slider" min="100" max="300" value="200">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sub-block">
+                            <button class="accordion sub-accordion">DIAMÈTRES</button>
+                            <div class="panel-controls sub-panel">
+                                <div class="control-group">
+                                    <div class="label-row"><label>Diamètre Corps</label>
+                                    <div class="input-wrapper"><input type="number" id="diameter-input" value="75"><span class="unit">mm</span></div></div>
+                                    <input type="range" id="diameter-slider" min="40" max="120" value="75">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row"><label>Diamètre Haut Col</label>
+                                    <div class="input-wrapper"><input type="number" id="neck-top-diameter-input" value="29"><span class="unit">mm</span></div></div>
+                                    <input type="range" id="neck-top-diameter-slider" min="20" max="60" value="29">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-card">
+                    <button class="accordion main-accordion">Bague</button>
+                    <div class="panel-controls">
                         <div class="control-group">
-                            <label>Diamètre Corps</label>
-                            <input type="range" id="diameter-slider" min="40" max="120" value="75">
-                            <input type="number" id="diameter-input" value="75">
+                            <div class="label-row"><label>Hauteur Bague</label>
+                            <div class="input-wrapper"><input type="number" id="finish-height-input" value="15"></div></div>
+                            <input type="range" id="finish-height-slider" min="5" max="40" value="15">
                         </div>
-                        </div>
+                    </div>
                 </div>
             </aside>
+
             <main id="viewport-3d"></main>
         </div>
     </section>
