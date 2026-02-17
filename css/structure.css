@@ -1,181 +1,20 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
-body { 
-    height: 100vh; 
-    overflow: hidden; 
-}
-
+body { font-family: sans-serif; height: 100vh; overflow: hidden; }
 .hidden { display: none !important; }
 
-/* LAYOUT LOGIN & MENU */
-#Page-login, #Page-menu {
-    width: 100%;
-    height: 100%;
-    display: flex;
-}
+#Page-login, #Page-menu { width: 100%; height: 100%; display: flex; }
+#Page-login { justify-content: center; align-items: center; }
+#Page-menu { justify-content: flex-start; align-items: center; padding-left: 100px; }
 
-#Page-login {
-    justify-content: center;
-    align-items: center;
-}
+#Page-Bouteille { width: 100%; height: 100%; display: flex; flex-direction: column; }
+#Panel-haut { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+#workspace-content { display: flex; flex-grow: 1; overflow: hidden; }
 
-#Page-menu {
-    justify-content: flex-start;
-    align-items: center;
-    padding-left: 100px;
-}
+#Panel-gauche { width: 340px; padding: 20px; overflow-y: auto; flex-shrink: 0; }
+#viewport-3d { flex-grow: 1; position: relative; }
 
-.menu-left-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* LAYOUT BOUTEILLE */
-#Page-Bouteille {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-#Panel-haut {
-    width: 100%;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    flex-shrink: 0;
-}
-
-.right-controls {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-/* WORKSPACE SPLIT */
-#workspace-content {
-    display: flex;
-    flex-grow: 1;
-    height: 100%;
-    overflow: hidden;
-}
-
-#Panel-gauche {
-    width: 340px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
-    flex-shrink: 0;
-}
-
-#Panel-gauche::-webkit-scrollbar { width: 8px; }
-
-/* VIEWPORTS */
-#viewport-3d {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-#viewport-3d canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-}
-
-#viewport-2d {
-    flex-grow: 1;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    height: 100%;
-}
-
-#canvas-2d { display: block; }
-
-#viewport-outillage {
-    flex-grow: 1;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-/* ELEMENTS UI */
-.setting-card {
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 15px;
-    flex-shrink: 0;
-}
-
-.accordion {
-    width: 100%;
-    text-align: left;
-    outline: none;
-    position: relative;
-}
-
-.panel-controls {
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.3s ease-out;
-    padding: 0 15px;
-}
-
-.active + .panel-controls {
-    padding: 15px; /* Ajustement si ouvert */
-}
-
-.sub-block {
-    margin-bottom: 10px;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.control-group {
-    margin: 15px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.input-wrapper {
-    display: flex;
-    align-items: center;
-    border-radius: 4px;
-    padding: 2px 5px;
-}
-
-.view-switcher {
-    display: flex;
-    border-radius: 5px;
-    padding: 2px;
-    align-items: center;
-}
-
-.preview-container {
-    width: 100%;
-    height: 120px;
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 4px;
-}
+.setting-card { margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
+.panel-controls { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; }
+.control-group { margin: 15px 0; display: flex; flex-direction: column; gap: 8px; }
+.label-row { display: flex; justify-content: space-between; align-items: center; }
+.input-wrapper { display: flex; align-items: center; padding: 2px 5px; border-radius: 4px; }
