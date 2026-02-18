@@ -1,25 +1,33 @@
-/* RESET & BASE */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; height: 100vh; overflow: hidden; }
+body { height: 100vh; overflow: hidden; }
 .hidden { display: none !important; }
 
-/* SECTIONS PLEIN ÉCRAN */
-#Page-login, #Page-menu { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+/* LAYOUT GLOBAL */
+#Page-login, #Page-menu { width: 100%; height: 100%; display: flex; align-items: center; }
+#Page-login { justify-content: center; }
+#Page-menu { justify-content: flex-start; padding-left: 100px; }
+
 #Page-Bouteille { width: 100%; height: 100%; display: flex; flex-direction: column; }
+#Panel-haut { width: 100%; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+#workspace-content { display: flex; flex-grow: 1; height: 100%; overflow: hidden; }
 
-/* WORKSPACE LAYOUT */
-#Panel-haut { height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid #ddd; }
-#workspace-content { display: flex; flex-grow: 1; overflow: hidden; }
+/* PANNEAU GAUCHE */
+#Panel-gauche { width: 340px; height: 100%; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; flex-shrink: 0; }
 
-/* SIDEBAR */
-#Panel-gauche { width: 320px; flex-shrink: 0; overflow-y: auto; padding: 15px; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 15px; }
+/* VIEWPORTS */
+#viewport-3d { flex-grow: 1; width: 100%; height: 100%; position: relative; }
+#viewport-3d canvas { display: block; width: 100% !important; height: 100% !important; }
+#viewport-2d { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; height: 100%; }
+#viewport-outillage { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; height: 100%; }
 
-/* 3D VIEW */
-#viewport-3d { flex-grow: 1; position: relative; background: #fff; }
+/* ELEMENTS UI */
+.menu-left-panel { display: flex; flex-direction: column; gap: 20px; }
+.right-controls { display: flex; align-items: center; gap: 20px; }
+.view-switcher { display: flex; padding: 2px; align-items: center; }
 
-/* CONTROLS LAYOUT */
-.setting-card { border-radius: 6px; overflow: hidden; border: 1px solid #eee; }
-.panel-controls { overflow: hidden; transition: max-height 0.3s ease-out; padding: 0 10px; }
-.control-group { margin: 15px 0; display: flex; flex-direction: column; gap: 6px; }
-.label-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #555; }
-.input-wrapper { display: flex; align-items: center; background: #f5f5f5; border-radius: 4px; padding: 2px 5px; }
+.panel-controls { padding: 0 15px; max-height: 0; overflow: hidden; transition: all 0.3s ease-out; }
+.sub-panel { padding: 0 15px; border-top: none; }
+.control-group { margin: 15px 0; display: flex; flex-direction: column; gap: 8px; }
+.label-row { display: flex; justify-content: space-between; align-items: center; }
+.input-wrapper { display: flex; align-items: center; padding: 2px 5px; }
+.btn-add-gravure { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px; width: 100%; }
