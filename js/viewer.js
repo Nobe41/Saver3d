@@ -1,98 +1,69 @@
-var scene, camera, renderer, controls, bottleGroup;
+function initLogiciel() {
+    if (renderer) return; 
 
-function initViewer() {
-    const container = document.getElementById('viewport-3d');
-    
-    // Scène
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
+    scene.background = new THREE.Color(0xffffff); // Fond Blanc
 
-    // Caméra (Orthographique pour le dessin technique)
-    const aspect = container.clientWidth / container.clientHeight;
-    const viewSize = 400;
-    camera = new THREE.OrthographicCamera(
-        -viewSize * aspect, viewSize * aspect, 
-        viewSize, -viewSize, 
-        1, 2000
-    );
-    camera.position.set(500, 300, 500); // Vue ISO
+    const w = viewport3D.clientWidth;
+    const h = viewport3D.clientHeight;
+    const aspect = w / h;
+    const vs = 250; 
+    camera = new THREE.OrthographicCamera(-vs * aspect, vs * aspect, vs, -vs, 1, 2000);
+    camera.position.set(400, 300, 400);
 
-    // Rendu
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    viewport3D.appendChild(renderer.domElement);
 
-    // Lumières
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    dirLight.position.set(200, 500, 300);
-    scene.add(dirLight);
-
-    // Contrôles (Souris)
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    // Grille de sol
-    const grid = new THREE.GridHelper(500, 20, 0xdddddd, 0xeeeeee);
+    scene.add(new THREE.AxesHelper(100));
+    
+    // Grille
+    const grid = new THREE.GridHelper(400, 20, 0x888888, 0xeeeeee);
+    grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
-    // Lancement
-    updateGeometry();
+    // Lumières
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dL = new THREE.DirectionalLight(0xffffff, 0.6); dL.position.set(100, 500, 100);
+    scene.add(dL);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    
+    // Premier rendu
+    updateBouteille();
+    
+    // Active les écouteurs UI (dans ui.js)
+    setupListeners();
+
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
 }
 
-function updateGeometry() {
-    // Nettoyage de l'ancienne bouteille
+function updateBouteille() {
     if (bottleGroup) scene.remove(bottleGroup);
     bottleGroup = new THREE.Group();
 
-    // 1. Générer le profil
-    const points = generateBottleProfile();
-
-    // 2. Créer le volume (Lathe = Révolution)
-    const geometry = new THREE.LatheGeometry(points, 64); // 64 segments = lisse
+    // Récupère le profil depuis math.js
+    const profil = generateBottleProfile();
+    const geometry = new THREE.LatheGeometry(profil, 128); 
     
-    // 3. Matériau (Verre bleuâtre)
-    const material = new THREE.MeshPhysicalMaterial({ 
-        color: 0x7ca1ba, 
-        metalness: 0.1, 
-        roughness: 0.2, 
-        transparent: true, 
-        opacity: 0.9,
-        side: THREE.DoubleSide
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: 0x7ca1ba, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide 
     });
 
-    const mesh = new THREE.Mesh(geometry, material);
-    bottleGroup.add(mesh);
+    bottleGroup.add(new THREE.Mesh(geometry, mat));
+    
+    const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
+    bottleGroup.add(bottom);
 
-    // 4. Ajouter les arêtes noires (Style dessin technique)
-    const edgesGeom = new THREE.EdgesGeometry(geometry, 15); // 15° seuil
-    const edgesMat = new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.2, transparent: true });
-    const edges = new THREE.LineSegments(edgesGeom, edgesMat);
-    bottleGroup.add(edges);
-
-    // Centrer la caméra sur le milieu de la bouteille
-    if (controls) controls.target.set(0, params.height / 2, 0);
+    // Arêtes
+    const edges = new THREE.EdgesGeometry(geometry, 40); 
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
+    bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
     scene.add(bottleGroup);
+    
+    const H_tot = parseFloat(document.getElementById('height-slider').value);
+    controls.target.set(0, H_tot / 2, 0);
 }
-
-function animate() {
-    requestAnimationFrame(animate);
-    if (controls) controls.update();
-    renderer.render(scene, camera);
-}
-
-// Gérer le redimensionnement de la fenêtre
-window.addEventListener('resize', () => {
-    if (!camera || !renderer) return;
-    const box = document.getElementById('viewport-3d');
-    const aspect = box.clientWidth / box.clientHeight;
-    camera.left = -400 * aspect;
-    camera.right = 400 * aspect;
-    camera.top = 400;
-    camera.bottom = -400;
-    camera.updateProjectionMatrix();
-    renderer.setSize(box.clientWidth, box.clientHeight);
-});
