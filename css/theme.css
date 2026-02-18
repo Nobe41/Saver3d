@@ -1,18 +1,34 @@
-body { background-color: #f5f5f5; color: #333; }
-#Page-login { background-color: #ffffff; }
-#password-input { background: #f9f9f9; border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 250px; text-align: center; }
+/* COULEURS */
+body { background-color: #f9f9f9; color: #333; }
 
-#Page-menu { background: radial-gradient(circle at 30% 50%, #ffffff 0%, #f0f0f0 100%); }
-.menu-title { font-size: 4rem; font-weight: 900; color: #222; text-transform: uppercase; }
-.menu-big-btn { background: #fff; border: 1px solid #ccc; padding: 15px 40px; font-weight: bold; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.menu-big-btn:hover { border-color: #0078d4; color: #0078d4; background-color: #f0f8ff; }
+/* LOGIN */
+#Page-login { background-color: #fff; }
+.login-title { font-size: 2rem; margin-bottom: 20px; letter-spacing: 5px; }
+#password-input { padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; text-align: center; font-size: 1.2rem; outline: none; transition: 0.3s; }
+#password-input:focus { border-color: #0078d4; box-shadow: 0 0 5px rgba(0,120,212,0.3); }
+#login-error { color: red; margin-top: 10px; font-size: 0.9rem; }
 
-#Panel-haut, #Panel-gauche, #viewport-3d { background-color: #ffffff; border-color: #e0e0e0; }
-#Panel-haut { border-bottom: 1px solid #e0e0e0; }
-#Panel-gauche { border-right: 1px solid #e0e0e0; }
+/* MENU */
+.main-title { font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 40px; color: #222; }
+.menu-big-btn { background: white; border: 1px solid #ddd; padding: 20px 40px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 8px; margin-bottom: 15px; display: block; width: 250px; text-align: left; transition: 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.menu-big-btn:hover { border-color: #0078d4; transform: translateX(5px); color: #0078d4; }
+.menu-big-btn span { margin-right: 10px; }
 
-.accordion { background-color: #f9f9f9; border: none; border-bottom: 1px solid #eee; padding: 15px; font-weight: bold; cursor: pointer; text-align: left; width: 100%; }
-.accordion:hover { color: #0078d4; background-color: #f0f0f0; }
-.input-wrapper { background-color: #f5f5f5; border: 1px solid #ddd; }
-.input-wrapper input { border: none; background: transparent; color: #0078d4; font-weight: bold; width: 45px; text-align: right; }
-.unit { color: #999; font-size: 0.7rem; }
+/* WORKSPACE UI */
+#Panel-haut { background: white; }
+#Panel-gauche { background: white; }
+.nav-btn, .action-btn { background: none; border: 1px solid #ddd; padding: 5px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+.nav-btn:hover, .action-btn:hover { background: #f0f0f0; border-color: #999; }
+.action-btn { background: #0078d4; color: white; border: none; }
+.action-btn:hover { background: #005a9e; }
+
+/* ACCORDIONS & INPUTS */
+.accordion { background: #f5f5f5; border: none; width: 100%; padding: 12px; text-align: left; font-weight: bold; cursor: pointer; border-bottom: 1px solid #eee; }
+.accordion.active { background: #eef6ff; color: #0078d4; }
+.input-wrapper input { border: none; background: transparent; width: 50px; text-align: right; font-weight: bold; color: #0078d4; }
+.unit { font-size: 0.7rem; color: #999; margin-left: 2px; }
+
+/* SLIDERS */
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #0078d4; cursor: pointer; margin-top: -6px; }
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #ddd; border-radius: 2px; }
