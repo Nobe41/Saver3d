@@ -1,96 +1,64 @@
-function initUI() {
-    setupLogin();
-    setupNavigation();
-    setupSliders();
-    setupAccordions();
-}
+// Sélection des éléments UI
+const pageLogin = document.getElementById('Page-login');
+const pageMenu = document.getElementById('Page-menu');
+const pageBouteille = document.getElementById('Page-Bouteille');
+const passwordInput = document.getElementById('password-input');
+const btnNewProject = document.getElementById('btn-new-project');
+const btnBackMenu = document.getElementById('btn-back-menu');
 
-// 1. GESTION DU LOGIN
-function setupLogin() {
-    const pwdInput = document.getElementById('password-input');
-    const errorMsg = document.getElementById('login-error');
+// On définit viewport3D ici pour que viewer.js puisse le trouver
+viewport3D = document.getElementById('viewport-3d');
 
-    pwdInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            if (pwdInput.value.trim().toLowerCase() === 'axel') {
-                // Succès
-                document.getElementById('Page-login').classList.add('hidden');
-                document.getElementById('Page-menu').classList.remove('hidden');
+// --- 1. LOGIN ---
+passwordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        if (passwordInput.value.trim().toLowerCase() === 'axel') {
+            pageLogin.classList.add('hidden');
+            pageMenu.classList.remove('hidden');
+        } else {
+            passwordInput.style.borderColor = "#ff3333";
+            setTimeout(() => { passwordInput.style.borderColor = "#333"; }, 500);
+        }
+    }
+});
+
+// --- 2. NAVIGATION ---
+btnNewProject.addEventListener('click', () => {
+    pageMenu.classList.add('hidden');
+    pageBouteille.classList.remove('hidden');
+    // On lance la 3D quand on arrive sur la page
+    setTimeout(() => { initLogiciel(); }, 50);
+});
+
+btnBackMenu.addEventListener('click', () => {
+    pageBouteille.classList.add('hidden');
+    pageMenu.classList.remove('hidden');
+});
+
+// --- 3. SLIDERS & INPUTS ---
+function setupListeners() {
+    const inputs = document.querySelectorAll('input[type=range], input[type=number]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.type === 'range') {
+                const num = input.parentElement.querySelector('input[type=number]');
+                if (num) num.value = input.value;
             } else {
-                // Échec
-                errorMsg.classList.remove('hidden');
-                pwdInput.style.borderColor = 'red';
+                const rng = input.parentElement.parentElement.querySelector('input[type=range]');
+                if (rng) rng.value = input.value;
             }
-        }
+            // Met à jour la 3D à chaque mouvement
+            updateBouteille();
+        });
     });
-}
-
-// 2. NAVIGATION ENTRE LES PAGES
-function setupNavigation() {
-    // Bouton "Nouveau Projet"
-    document.getElementById('btn-new-project').addEventListener('click', () => {
-        document.getElementById('Page-menu').classList.add('hidden');
-        document.getElementById('Page-Bouteille').classList.remove('hidden');
-        // On force le redimensionnement 3D car le conteneur vient d'apparaître
-        window.dispatchEvent(new Event('resize'));
-    });
-
-    // Bouton "Retour Menu"
-    document.getElementById('btn-back-menu').addEventListener('click', () => {
-        document.getElementById('Page-Bouteille').classList.add('hidden');
-        document.getElementById('Page-menu').classList.remove('hidden');
-    });
-}
-
-// 3. LIEN ENTRE SLIDERS ET PARAMÈTRES
-function setupSliders() {
-    // Liste des couples : ID HTML <-> Variable JS
-    const mappings = [
-        { id: 'height', param: 'height' },
-        { id: 'body-height', param: 'bodyHeight' },
-        { id: 'diameter', param: 'diameter' },
-        { id: 'shoulder-curve', param: 'shoulderCurve' },
-        { id: 'neck-height', param: 'neckHeight' },
-        { id: 'neck-diameter', param: 'neckDiameter' },
-        { id: 'finish-height', param: 'finishHeight' }
-    ];
-
-    mappings.forEach(map => {
-        const slider = document.getElementById(map.id + '-slider');
-        const input = document.getElementById(map.id + '-input');
-
-        if (slider && input) {
-            // Slider bouge -> Input change -> 3D change
-            slider.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                input.value = val;
-                params[map.param] = val;
-                updateGeometry();
-            });
-
-            // Input change -> Slider bouge -> 3D change
-            input.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                slider.value = val;
-                params[map.param] = val;
-                updateGeometry();
-            });
-        }
-    });
-}
-
-// 4. ANIMATION DES ACCORDÉONS
-function setupAccordions() {
+    
+    // Accordéons
     const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
-        acc[i].addEventListener("click", function() {
+        acc[i].onclick = function() {
             this.classList.toggle("active");
-            const panel = this.nextElementSibling;
-            if (panel.style.maxHeight) {
-                panel.style.maxHeight = null;
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            } 
-        });
+            const p = this.nextElementSibling;
+            p.style.maxHeight = p.style.maxHeight && p.style.maxHeight !== "0px" ? "0px" : p.scrollHeight + "px";
+        };
     }
 }
