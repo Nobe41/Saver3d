@@ -1,12 +1,18 @@
 function generateBottleProfile() {
     // ==========================================
-    // 1. INPUTS : HAUTEURS (Axe Y)
+    // 1. INPUTS : HAUTEURS (La bague pousse vers le haut)
     // ==========================================
-    const H_tot = parseFloat(document.getElementById('height-slider').value) || 320;
+    // On prend la hauteur du slider (ex: 320mm). 
+    // On définit que le bas de la bague est fixé à cette hauteur moins sa valeur par défaut (15mm).
+    const H_base = parseFloat(document.getElementById('height-slider').value) || 320;
     const H_corps_fin = parseFloat(document.getElementById('body-height-slider').value) || 200;
     const H_col_vertical_start = parseFloat(document.getElementById('neck-height-slider').value) || 270;
+    
     const H_finish = parseFloat(document.getElementById('finish-height-input').value) || 15;
-    const Y_bague_start = H_tot - H_finish;
+    
+    // NOUVEAU : Le bas de la bague est ancré. C'est le HAUT de la bouteille qui bouge.
+    const Y_bague_start = H_base - 15; 
+    const H_tot_reel = Y_bague_start + H_finish;
 
     // ==========================================
     // 2. INPUTS : DIAMÈTRES CONIQUES (Axe X)
@@ -25,7 +31,7 @@ function generateBottleProfile() {
     const r2 = parseFloat(document.getElementById('neck-curve-slider').value) || 20; 
 
     // ==========================================
-    // 4. MOTEUR OPTION B : TANGENCES PERPENDICULAIRES
+    // 4. MOTEUR : TANGENCES PERPENDICULAIRES
     // ==========================================
     
     // --- A. CÔNE DU CORPS ET SON RAYON D'ÉPAULE ---
@@ -52,7 +58,7 @@ function generateBottleProfile() {
     const T_neck_x = R_bas_col_ext;
     const T_neck_y = H_col_vertical_start;
 
-    // --- C. RAYON DU PIED (PARFAITEMENT RACCORDÉ) ---
+    // --- C. RAYON DU PIED ---
     let d_pied = R_pied * Math.tan(theta_body / 2); 
     let cx_pied = R_bas - d_pied;
     let cy_pied = R_pied;
@@ -84,7 +90,7 @@ function generateBottleProfile() {
     // ==========================================
     // 5. GÉNÉRATION DES POINTS DU PROFIL
     // ==========================================
-    let keyY = [0, T_pied_body_y, T_body_y, T1y, T2y, T_neck_y, Y_bague_start, H_tot];
+    let keyY = [0, T_pied_body_y, T_body_y, T1y, T2y, T_neck_y, Y_bague_start, H_tot_reel];
     keyY.sort((a, b) => a - b); 
 
     const finalY = [];
@@ -99,34 +105,46 @@ function generateBottleProfile() {
             finalY.push(yStart + (dist * (j / steps)));
         }
     }
-    finalY.push(H_tot); 
+    finalY.push(H_tot_reel); 
 
     const points = [];
     for (let y of finalY) {
-        let r = R_bas;
-
         if (y < T_pied_body_y) {
-            r = cx_pied + Math.sqrt(Math.max(0, R_pied**2 - (y - cy_pied)**2));
+            let r = cx_pied + Math.sqrt(Math.max(0, R_pied**2 - (y - cy_pied)**2));
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (y <= T_body_y) {
-            r = R_bas + (y - 0) * (R_epaule_ext - R_bas) / (H_corps_fin - 0);
+            let r = R_bas + (y - 0) * (R_epaule_ext - R_bas) / (H_corps_fin - 0);
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (bitangent_valid && y <= T1y) {
-            r = cx1 + Math.sqrt(Math.max(0, r1**2 - (y - cy1)**2));
+            let r = cx1 + Math.sqrt(Math.max(0, r1**2 - (y - cy1)**2));
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (bitangent_valid && y <= T2y) {
             const t = (y - T1y) / (T2y - T1y);
-            r = T1x + t * (T2x - T1x);
+            let r = T1x + t * (T2x - T1x);
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (bitangent_valid && y <= T_neck_y) {
-            r = cx2 - Math.sqrt(Math.max(0, r2**2 - (y - cy2)**2));
+            let r = cx2 - Math.sqrt(Math.max(0, r2**2 - (y - cy2)**2));
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (!bitangent_valid && y <= T_neck_y) {
             const t = (y - T_body_y) / (T_neck_y - T_body_y);
-            r = T_body_x + t * (T_neck_x - T_body_x);
-        } else if (y <= Y_bague_start) {
+            let r = T_body_x + t * (T_neck_x - T_body_x);
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
+        } else if (y < Y_bague_start - 0.001) {
+            // Le col (juste en dessous de la bague)
             const t = (y - H_col_vertical_start) / (Y_bague_start - H_col_vertical_start);
-            r = R_bas_col_ext + t * (R_haut_col - R_bas_col_ext);
+            let r = R_bas_col_ext + t * (R_haut_col - R_bas_col_ext);
+            points.push(new THREE.Vector2(Math.max(0.1, r), y));
+        } else if (Math.abs(y - Y_bague_start) <= 0.001) {
+            // ==========================================
+            // L'ARRÊTE PARFAITE À 90 DEGRÉS !
+            // On génère 2 points à la même hauteur : un intérieur (col) et un extérieur (bague)
+            // ==========================================
+            points.push(new THREE.Vector2(Math.max(0.1, R_haut_col), Y_bague_start));
+            points.push(new THREE.Vector2(Math.max(0.1, R_finish), Y_bague_start));
         } else {
-            r = R_finish;
+            // La Bague (Cylindre droit)
+            points.push(new THREE.Vector2(Math.max(0.1, R_finish), y));
         }
-        
-        points.push(new THREE.Vector2(Math.max(0.1, r), y));
     }
     return points;
 }
