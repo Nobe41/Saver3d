@@ -15,17 +15,20 @@ btnAddEngraving.addEventListener('click', () => {
     card.id = `gravure-${id}`;
     card.dataset.id = id;
     
-    // Exactement la même structure HTML que les autres menus (Accordéon, label-row, input-wrapper)
+    // Le design mis à jour : Input personnalisé et bouton supprimer en bas
     card.innerHTML = `
         <button class="accordion sub-accordion active" style="text-transform: uppercase;">Gravure ${gravureCounter}</button>
         <div class="panel-controls sub-panel" style="max-height: 2000px;">
-            <div style="text-align: right; padding: 5px 15px;">
-                <button onclick="removeEngraving(${id})" style="color:#ff3333; background:none; border:none; cursor:pointer; font-weight:bold; font-size: 0.75rem;">X SUPPRIMER</button>
-            </div>
 
-            <div class="control-group">
+            <div class="control-group" style="margin-top: 10px;">
                 <label class="label-simple">Fichier Image (PNG)</label>
-                <input type="file" class="gravure-file input-text" accept="image/png" data-id="${id}" style="font-size: 0.8rem; margin-top:5px; padding: 5px;">
+                <div style="margin-top: 5px; display: flex; align-items: center;">
+                    <label for="gravure-file-${id}" style="background: #f5f5f5; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #555; transition: 0.3s;">
+                        📁 Parcourir...
+                    </label>
+                    <input type="file" id="gravure-file-${id}" class="gravure-file" accept="image/png" data-id="${id}" style="display: none;">
+                    <span id="gravure-filename-${id}" style="font-size: 0.75rem; color: #0078d4; margin-left: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"></span>
+                </div>
             </div>
 
             <div class="control-group">
@@ -71,6 +74,13 @@ btnAddEngraving.addEventListener('click', () => {
                 </div>
                 <input type="range" class="gravure-profondeur" id="gravure-profondeur-slider-${id}" min="0.1" max="5" step="0.1" value="1.5">
             </div>
+
+            <div style="text-align: center; padding: 10px 15px 15px 15px; border-top: 1px solid #eee; margin-top: 10px;">
+                <button onclick="removeEngraving(${id})" style="color:#ff3333; background:none; border:1px solid #ff3333; border-radius: 4px; padding: 5px 10px; cursor:pointer; font-weight:bold; font-size: 0.75rem; transition: 0.3s;" onmouseover="this.style.background='#fff0f0'" onmouseout="this.style.background='none'">
+                    X SUPPRIMER LA GRAVURE
+                </button>
+            </div>
+
         </div>
     `;
     
@@ -94,11 +104,19 @@ btnAddEngraving.addEventListener('click', () => {
     const parentPanel = card.parentElement.closest('.panel-controls');
     if (parentPanel) parentPanel.style.maxHeight = "2000px";
 
-    // Gestion du chargement de l'image
+    // Gestion du chargement de l'image ET de l'affichage du nom du fichier
     const fileInput = card.querySelector('.gravure-file');
+    const fileNameDisplay = card.querySelector(`#gravure-filename-${id}`);
+    
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            fileNameDisplay.textContent = ""; // On efface le texte si on annule
+            return;
+        }
+        
+        // On affiche le nom du fichier à côté du bouton
+        fileNameDisplay.textContent = file.name;
         
         const reader = new FileReader();
         reader.onload = (event) => {
