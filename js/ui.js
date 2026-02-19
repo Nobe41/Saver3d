@@ -84,44 +84,19 @@ document.getElementById('btn-add-engraving').addEventListener('click', () => {
 });
 
 
-// --- 5. SLIDERS ET MÉMOIRE (Blocage si géométrie impossible) ---
-let lastValidState = {};
-
-function saveValidState() {
-    const inputs = document.querySelectorAll('input[type=range], input[type=number]');
-    inputs.forEach(input => {
-        lastValidState[input.id] = input.value;
-    });
-}
-
+// --- 5. SLIDERS ET ACCORDÉONS CLASSIQUES ---
 function setupListeners() {
-    saveValidState(); // Première sauvegarde
-
     const inputs = document.querySelectorAll('input[type=range], input[type=number]');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
-            const isRange = input.type === 'range';
-            const num = isRange ? input.parentElement.querySelector('input[type=number]') : input;
-            const rng = isRange ? input : input.parentElement.parentElement.querySelector('input[type=range]');
-            
-            // On met à jour l'affichage
-            if (num) num.value = input.value;
-            if (rng) rng.value = input.value;
-
-            // On tente de créer la 3D
-            const success = updateBouteille();
-
-            if (success) {
-                // Si ça marche : On valide cette position
-                saveValidState();
+            if (input.type === 'range') {
+                const num = input.parentElement.querySelector('input[type=number]');
+                if (num) num.value = input.value;
             } else {
-                // SI ÇA CASSE : On remet les sliders à la position précédente
-                if (rng && lastValidState[rng.id]) rng.value = lastValidState[rng.id];
-                if (num && lastValidState[num.id]) num.value = lastValidState[num.id];
-                
-                // On redessine l'ancienne forme pour garder la 3D propre
-                updateBouteille();
+                const rng = input.parentElement.parentElement.querySelector('input[type=range]');
+                if (rng) rng.value = input.value;
             }
+            updateBouteille();
         });
     });
     
