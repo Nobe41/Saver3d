@@ -2,7 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff); // Fond Blanc
+    scene.background = new THREE.Color(0xffffff);
 
     const w = viewport3D.clientWidth;
     const h = viewport3D.clientHeight;
@@ -18,22 +18,17 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    // Grille
     const grid = new THREE.GridHelper(400, 20, 0x888888, 0xeeeeee);
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
-    // Lumières
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
     const dL = new THREE.DirectionalLight(0xffffff, 0.6); dL.position.set(100, 500, 100);
     scene.add(dL);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     
-    // Premier rendu
     updateBouteille();
-    
-    // Active les écouteurs UI
     setupListeners();
 
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
@@ -44,26 +39,88 @@ function updateBouteille() {
     if (bottleGroup) scene.remove(bottleGroup);
     bottleGroup = new THREE.Group();
 
+    // 1. DESSINER LA BOUTEILLE DE BASE
     const profil = generateBottleProfile();
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x7ca1ba, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide 
-    });
-
+    const mat = new THREE.MeshStandardMaterial({ color: 0x7ca1ba, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide });
     bottleGroup.add(new THREE.Mesh(geometry, mat));
     
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
     bottleGroup.add(bottom);
 
-    // Arêtes noires pour bien voir les angles à 90°
     const edges = new THREE.EdgesGeometry(geometry, 40); 
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
+    // 2. DESSINER LES GRAVURES (Moteur Pixels vers 3D)
+    if (typeof getEngravingsData === 'function') {
+        const engravings = getEngravingsData();
+        const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
+        
+        engravings.forEach(eng => {
+            const img = window.engravingImages[eng.id];
+            if (!img) return; // Pas encore d'image importée
+
+            // A. On lit les pixels de l'image via un Canvas invisible
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            // B. On prépare la grille 3D vierge
+            const ratio = img.height / img.width;
+            const physHeight = eng.width * ratio;
+            
+            // On fait un maillage très fin pour capter le logo (100x100 faces = 10 000 points)
+            const resX = Math.min(150, img.width);
+            const resY = Math.min(150, img.height);
+            const textGeo = new THREE.PlaneGeometry(eng.width, physHeight, resX, resY);
+            
+            const pos = textGeo.attributes.position;
+            const uv = textGeo.attributes.uv;
+
+            // C. On tord la grille sur le cylindre et on pousse les pixels
+            for (let i = 0; i < pos.count; i++) {
+                const u = uv.getX(i);
+                const v = uv.getY(i);
+
+                // Trouver le pixel correspondant dans l'image
+                const px = Math.floor(u * (canvas.width - 1));
+                const py = Math.floor((1 - v) * (canvas.height - 1));
+                const idx = (py * canvas.width + px) * 4;
+                
+                const alpha = imgData[idx + 3]; // Canal de Transparence (0 = vide, 255 = plein)
+
+                // Coordonnées de base
+                const vx = pos.getX(i); // Emplacement horizontal sur le dessin
+                const vy = pos.getY(i) + eng.y; // Hauteur finale sur la bouteille
+
+                const R_base = getRadiusAtHeight(vy, profil);
+                
+                // MAGIE : Si c'est transparent (alpha 0), on cache la grille LÉGÈREMENT à l'intérieur du verre (-0.1mm)
+                // Si c'est un pixel plein (alpha 255), on le pousse en relief à la profondeur voulue.
+                const relief = -0.1 + (alpha / 255) * (eng.depth + 0.1);
+                const finalR = R_base + relief;
+
+                const theta = eng.angle + (vx / R_base); // Angle sur le cylindre
+                
+                const finalX = finalR * Math.sin(theta);
+                const finalZ = finalR * Math.cos(theta);
+                
+                pos.setXYZ(i, finalX, vy, finalZ);
+            }
+            
+            // On calcule la lumière sur les nouveaux reliefs
+            textGeo.computeVertexNormals();
+            bottleGroup.add(new THREE.Mesh(textGeo, matGravure));
+        });
+    }
+
     scene.add(bottleGroup);
     
-    // NOUVEAU : La caméra lit la vraie hauteur finale pour toujours viser le milieu
     const topY = profil[profil.length - 1].y;
     controls.target.set(0, topY / 2, 0);
 }
