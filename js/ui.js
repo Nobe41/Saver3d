@@ -72,7 +72,6 @@ btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutill
 function setupListeners() {
     const inputs = document.querySelectorAll('input[type=range], input[type=number]');
     inputs.forEach(input => {
-        // Ignore les inputs de gravure
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
         input.addEventListener('input', () => {
@@ -97,7 +96,8 @@ function setupListeners() {
             } else {
                 panel.style.maxHeight = panel.scrollHeight + "px";
                 const parentPanel = this.parentElement.closest('.panel-controls');
-                if (parentPanel) parentPanel.style.maxHeight = "2000px";
+                // NOUVEAU : 10000px au lieu de 2000px pour éviter la coupure !
+                if (parentPanel) parentPanel.style.maxHeight = "10000px";
             }
         };
     }
