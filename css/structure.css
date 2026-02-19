@@ -31,3 +31,7 @@ body { height: 100vh; overflow: hidden; }
 .label-row { display: flex; justify-content: space-between; align-items: center; }
 .input-wrapper { display: flex; align-items: center; padding: 2px 5px; }
 .btn-add-gravure { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px; width: 100%; }
+
+/* ESPACEMENT DES MENUS DÉPLIANTS */
+.panel-controls > *:first-child { margin-top: 15px; }
+.panel-controls > *:last-child { margin-bottom: 15px; }
