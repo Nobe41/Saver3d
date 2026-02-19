@@ -96,8 +96,7 @@ function setupListeners() {
             } else {
                 panel.style.maxHeight = panel.scrollHeight + "px";
                 const parentPanel = this.parentElement.closest('.panel-controls');
-                // NOUVEAU : 10000px au lieu de 2000px pour éviter la coupure !
-                if (parentPanel) parentPanel.style.maxHeight = "10000px";
+                if (parentPanel) parentPanel.style.maxHeight = "2000px";
             }
         };
     }
