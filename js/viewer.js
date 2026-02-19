@@ -53,7 +53,7 @@ function updateBouteille() {
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
-    // 2. DESSINER LES GRAVURES
+    // 2. DESSINER LES GRAVURES SANS DÉFORMATION
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
         const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
@@ -83,7 +83,6 @@ function updateBouteille() {
                 const u = uv.getX(i);
                 const v = uv.getY(i);
 
-                // NOUVEAU : On gère l'effet miroir (flip) en inversant la lecture horizontale "u"
                 let px = Math.floor(u * (canvas.width - 1));
                 if (eng.flip) {
                     px = Math.floor((1 - u) * (canvas.width - 1));
@@ -95,13 +94,26 @@ function updateBouteille() {
                 const alpha = imgData[idx + 3];
 
                 const vx = pos.getX(i); 
-                const vy = pos.getY(i) + eng.y;
+                const vy_base = pos.getY(i) + eng.y;
 
-                const R_base = getRadiusAtHeight(vy, profil);
+                const R_base = getRadiusAtHeight(vy_base, profil);
                 
-                const relief = -0.1 + (alpha / 255) * (eng.depth + 0.1);
-                const finalR = R_base + relief;
+                // NOUVEAU : Calcul de la pente du verre (Normale) pour éviter l'écrasement sur l'épaule
+                const R_up = getRadiusAtHeight(vy_base + 0.1, profil);
+                const R_down = getRadiusAtHeight(vy_base - 0.1, profil);
+                const dx = R_up - R_down;
+                const dy = 0.2; // La différence de hauteur utilisée (vy_base+0.1) - (vy_base-0.1)
+                const len = Math.sqrt(dx*dx + dy*dy);
+                const nx = dy / len;  // Coefficient horizontal de la pente
+                const ny = -dx / len; // Coefficient vertical de la pente
 
+                // On pousse l'épaisseur en suivant l'inclinaison exacte du verre !
+                const relief = -0.1 + (alpha / 255) * (eng.depth + 0.1);
+                
+                const finalR = R_base + relief * nx;
+                const vy = vy_base + relief * ny;
+
+                // Angle géré pour ne pas déformer horizontalement
                 const theta = eng.angle + (vx / R_base); 
                 
                 const finalX = finalR * Math.sin(theta);
