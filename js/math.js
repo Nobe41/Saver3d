@@ -52,8 +52,7 @@ function generateBottleProfile() {
     const T_neck_x = R_bas_col_ext;
     const T_neck_y = H_col_vertical_start;
 
-    // --- C. RAYON DU PIED (CORRIGÉ !) ---
-    // La distance du congé est maintenant parfaitement calculée (multiplication)
+    // --- C. RAYON DU PIED ---
     let d_pied = R_pied * Math.tan(theta_body / 2); 
     let cx_pied = R_bas - d_pied;
     let cy_pied = R_pied;
@@ -65,10 +64,21 @@ function generateBottleProfile() {
     const dy_c = cy2 - cy1;
     const dist_c = Math.sqrt(dx_c*dx_c + dy_c*dy_c);
     const r_sum = r1 + r2;
+    let bitangent_valid = dist_c >= r_sum;
+
+    // ==========================================
+    // SÉCURITÉ : LE CRASH TEST
+    // Si la géométrie est physiquement impossible, on annule.
+    // ==========================================
+    if (H_corps_fin >= H_col_vertical_start) return null; // L'épaule dépasse le col
+    if (H_col_vertical_start >= Y_bague_start) return null; // Le col rentre dans la bague
+    if (!bitangent_valid) return null; // Les rayons se percutent
+    if (cx_pied < 0) return null; // Le rayon du pied est trop gros pour la bouteille
+    // ==========================================
+    
     let T1x = cx1, T1y = cy1 + r1; 
     let T2x = cx2, T2y = cy2 - r2;
-    let bitangent_valid = dist_c >= r_sum;
-    
+
     if (bitangent_valid) {
         const angle_centres = Math.atan2(dy_c, dx_c);
         const angle_offset = Math.acos(r_sum / dist_c);
@@ -107,31 +117,20 @@ function generateBottleProfile() {
         let r = R_bas;
 
         if (y < T_pied_body_y) {
-            // Zone 1: Rayon du Pied (parfaitement raccordé)
             r = cx_pied + Math.sqrt(Math.max(0, R_pied**2 - (y - cy_pied)**2));
         } else if (y <= T_body_y) {
-            // Zone 2: Cône du corps
             r = R_bas + (y - 0) * (R_epaule_ext - R_bas) / (H_corps_fin - 0);
         } else if (bitangent_valid && y <= T1y) {
-            // Zone 3: Rayon de l'épaule
             r = cx1 + Math.sqrt(Math.max(0, r1**2 - (y - cy1)**2));
         } else if (bitangent_valid && y <= T2y) {
-            // Zone 4: Diagonale d'épaule
             const t = (y - T1y) / (T2y - T1y);
             r = T1x + t * (T2x - T1x);
         } else if (bitangent_valid && y <= T_neck_y) {
-            // Zone 5: Rayon Bas Col
             r = cx2 - Math.sqrt(Math.max(0, r2**2 - (y - cy2)**2));
-        } else if (!bitangent_valid && y <= T_neck_y) {
-            // Sécurité si géométrie impossible
-            const t = (y - T_body_y) / (T_neck_y - T_body_y);
-            r = T_body_x + t * (T_neck_x - T_body_x);
         } else if (y <= Y_bague_start) {
-            // Zone 6: Cône du col
             const t = (y - H_col_vertical_start) / (Y_bague_start - H_col_vertical_start);
             r = R_bas_col_ext + t * (R_haut_col - R_bas_col_ext);
         } else {
-            // Zone 7: Bague
             r = R_finish;
         }
         
