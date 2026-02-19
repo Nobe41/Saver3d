@@ -53,7 +53,7 @@ function updateBouteille() {
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
-    // 2. DESSINER LES GRAVURES (Moteur HD Pixels vers 3D)
+    // 2. DESSINER LES GRAVURES
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
         const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
@@ -72,7 +72,6 @@ function updateBouteille() {
             const ratio = img.height / img.width;
             const physHeight = eng.width * ratio;
             
-            // RESOLUTION ULTRA-HD : On monte jusqu'à 350x350 (plus de 120 000 points de calcul)
             const resX = Math.min(350, img.width);
             const resY = Math.min(350, img.height);
             const textGeo = new THREE.PlaneGeometry(eng.width, physHeight, resX, resY);
@@ -84,7 +83,12 @@ function updateBouteille() {
                 const u = uv.getX(i);
                 const v = uv.getY(i);
 
-                const px = Math.floor(u * (canvas.width - 1));
+                // NOUVEAU : On gère l'effet miroir (flip) en inversant la lecture horizontale "u"
+                let px = Math.floor(u * (canvas.width - 1));
+                if (eng.flip) {
+                    px = Math.floor((1 - u) * (canvas.width - 1));
+                }
+                
                 const py = Math.floor((1 - v) * (canvas.height - 1));
                 const idx = (py * canvas.width + px) * 4;
                 
