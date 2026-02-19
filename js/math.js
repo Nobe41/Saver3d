@@ -29,40 +29,32 @@ function generateBottleProfile() {
     // ==========================================
     
     // --- A. CÔNE DU CORPS ET SON RAYON D'ÉPAULE ---
-    // On calcule la pente du corps
     const dx_body = R_epaule_ext - R_bas;
     const dy_body = H_corps_fin - 0;
     const theta_body = Math.atan2(dy_body, dx_body);
-    // On trouve l'axe perpendiculaire vers l'intérieur (+ 90 degrés)
     const theta_body_norm = theta_body + Math.PI / 2; 
 
-    // Le centre du cercle d'épaule "glisse" sur cet axe perpendiculaire
     const cx1 = R_epaule_ext + r1 * Math.cos(theta_body_norm);
     const cy1 = H_corps_fin + r1 * Math.sin(theta_body_norm);
     
-    // Le point de tangence exact est le sommet du cône
     const T_body_x = R_epaule_ext;
     const T_body_y = H_corps_fin;
 
     // --- B. CÔNE DU COL ET SON RAYON BAS COL ---
-    // On calcule la pente du col
     const dx_neck = R_haut_col - R_bas_col_ext;
     const dy_neck = Y_bague_start - H_col_vertical_start;
     const theta_neck = Math.atan2(dy_neck, dx_neck);
-    // On trouve l'axe perpendiculaire vers l'extérieur (- 90 degrés)
     const theta_neck_norm = theta_neck - Math.PI / 2;
 
-    // Le centre du cercle du bas col "glisse" sur cet axe perpendiculaire
     const cx2 = R_bas_col_ext + r2 * Math.cos(theta_neck_norm);
     const cy2 = H_col_vertical_start + r2 * Math.sin(theta_neck_norm);
     
-    // Le point de tangence exact est la base du cône du col
     const T_neck_x = R_bas_col_ext;
     const T_neck_y = H_col_vertical_start;
 
-    // --- C. RAYON DU PIED ---
-    // Calcul précis du congé entre le sol horizontal et le cône du corps
-    let d_pied = R_pied / Math.tan(theta_body / 2); 
+    // --- C. RAYON DU PIED (CORRIGÉ !) ---
+    // La distance du congé est maintenant parfaitement calculée (multiplication)
+    let d_pied = R_pied * Math.tan(theta_body / 2); 
     let cx_pied = R_bas - d_pied;
     let cy_pied = R_pied;
     let T_pied_body_x = R_bas + d_pied * Math.cos(theta_body);
@@ -115,10 +107,10 @@ function generateBottleProfile() {
         let r = R_bas;
 
         if (y < T_pied_body_y) {
-            // Zone 1: Rayon du Pied
+            // Zone 1: Rayon du Pied (parfaitement raccordé)
             r = cx_pied + Math.sqrt(Math.max(0, R_pied**2 - (y - cy_pied)**2));
         } else if (y <= T_body_y) {
-            // Zone 2: Cône du corps (Le Maître absolu)
+            // Zone 2: Cône du corps
             r = R_bas + (y - 0) * (R_epaule_ext - R_bas) / (H_corps_fin - 0);
         } else if (bitangent_valid && y <= T1y) {
             // Zone 3: Rayon de l'épaule
@@ -131,11 +123,11 @@ function generateBottleProfile() {
             // Zone 5: Rayon Bas Col
             r = cx2 - Math.sqrt(Math.max(0, r2**2 - (y - cy2)**2));
         } else if (!bitangent_valid && y <= T_neck_y) {
-            // Sécurité si la géométrie est physiquement impossible
+            // Sécurité si géométrie impossible
             const t = (y - T_body_y) / (T_neck_y - T_body_y);
             r = T_body_x + t * (T_neck_x - T_body_x);
         } else if (y <= Y_bague_start) {
-            // Zone 6: Cône du col (Le Maître absolu)
+            // Zone 6: Cône du col
             const t = (y - H_col_vertical_start) / (Y_bague_start - H_col_vertical_start);
             r = R_bas_col_ext + t * (R_haut_col - R_bas_col_ext);
         } else {
