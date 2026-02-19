@@ -1,40 +1,22 @@
 function generateBottleProfile() {
-    // ==========================================
-    // 1. INPUTS : HAUTEURS (La bague pousse vers le haut)
-    // ==========================================
-    // On prend la hauteur du slider (ex: 320mm). 
-    // On définit que le bas de la bague est fixé à cette hauteur moins sa valeur par défaut (15mm).
     const H_base = parseFloat(document.getElementById('height-slider').value) || 320;
     const H_corps_fin = parseFloat(document.getElementById('body-height-slider').value) || 200;
     const H_col_vertical_start = parseFloat(document.getElementById('neck-height-slider').value) || 270;
-    
     const H_finish = parseFloat(document.getElementById('finish-height-input').value) || 15;
-    
-    // NOUVEAU : Le bas de la bague est ancré. C'est le HAUT de la bouteille qui bouge.
     const Y_bague_start = H_base - 15; 
     const H_tot_reel = Y_bague_start + H_finish;
 
-    // ==========================================
-    // 2. INPUTS : DIAMÈTRES CONIQUES (Axe X)
-    // ==========================================
     const R_bas = (parseFloat(document.getElementById('diameter-slider').value) || 75) / 2;
     const R_epaule_ext = (parseFloat(document.getElementById('shoulder-slider').value) || 75) / 2;
     const R_bas_col_ext = (parseFloat(document.getElementById('neck-bottom-diameter-slider').value) || 30) / 2;
     const R_haut_col = (parseFloat(document.getElementById('neck-top-diameter-slider').value) || 29) / 2;
     const R_finish = (parseFloat(document.getElementById('finish-diameter-input').value) || 30) / 2;
 
-    // ==========================================
-    // 3. INPUTS : RAYONS (Congés de raccordement)
-    // ==========================================
     const R_pied = parseFloat(document.getElementById('base-radius-slider').value) || 5;
     const r1 = parseFloat(document.getElementById('shoulder-curve-slider').value) || 40; 
     const r2 = parseFloat(document.getElementById('neck-curve-slider').value) || 20; 
 
-    // ==========================================
-    // 4. MOTEUR : TANGENCES PERPENDICULAIRES
-    // ==========================================
-    
-    // --- A. CÔNE DU CORPS ET SON RAYON D'ÉPAULE ---
+    // MOTEUR GÉOMÉTRIQUE
     const dx_body = R_epaule_ext - R_bas;
     const dy_body = H_corps_fin - 0;
     const theta_body = Math.atan2(dy_body, dx_body);
@@ -42,11 +24,9 @@ function generateBottleProfile() {
 
     const cx1 = R_epaule_ext + r1 * Math.cos(theta_body_norm);
     const cy1 = H_corps_fin + r1 * Math.sin(theta_body_norm);
-    
     const T_body_x = R_epaule_ext;
     const T_body_y = H_corps_fin;
 
-    // --- B. CÔNE DU COL ET SON RAYON BAS COL ---
     const dx_neck = R_haut_col - R_bas_col_ext;
     const dy_neck = Y_bague_start - H_col_vertical_start;
     const theta_neck = Math.atan2(dy_neck, dx_neck);
@@ -54,18 +34,15 @@ function generateBottleProfile() {
 
     const cx2 = R_bas_col_ext + r2 * Math.cos(theta_neck_norm);
     const cy2 = H_col_vertical_start + r2 * Math.sin(theta_neck_norm);
-    
     const T_neck_x = R_bas_col_ext;
     const T_neck_y = H_col_vertical_start;
 
-    // --- C. RAYON DU PIED ---
     let d_pied = R_pied * Math.tan(theta_body / 2); 
     let cx_pied = R_bas - d_pied;
     let cy_pied = R_pied;
     let T_pied_body_x = R_bas + d_pied * Math.cos(theta_body);
     let T_pied_body_y = d_pied * Math.sin(theta_body);
 
-    // --- D. BITANGENTE (Ligne d'épaule entre les deux cercles) ---
     const dx_c = cx2 - cx1;
     const dy_c = cy2 - cy1;
     const dist_c = Math.sqrt(dx_c*dx_c + dy_c*dy_c);
@@ -77,19 +54,14 @@ function generateBottleProfile() {
     if (bitangent_valid) {
         const angle_centres = Math.atan2(dy_c, dx_c);
         const angle_offset = Math.acos(r_sum / dist_c);
-        
         const theta1 = angle_centres - angle_offset;
         T1x = cx1 + r1 * Math.cos(theta1);
         T1y = cy1 + r1 * Math.sin(theta1);
-        
         const theta2 = angle_centres - angle_offset + Math.PI;
         T2x = cx2 + r2 * Math.cos(theta2);
         T2y = cy2 + r2 * Math.sin(theta2);
     }
 
-    // ==========================================
-    // 5. GÉNÉRATION DES POINTS DU PROFIL
-    // ==========================================
     let keyY = [0, T_pied_body_y, T_body_y, T1y, T2y, T_neck_y, Y_bague_start, H_tot_reel];
     keyY.sort((a, b) => a - b); 
 
@@ -99,7 +71,6 @@ function generateBottleProfile() {
         const yEnd = keyY[i+1];
         const dist = yEnd - yStart;
         if (dist < 0.01) continue; 
-        
         const steps = Math.ceil(dist * 2); 
         for (let j = 0; j < steps; j++) {
             finalY.push(yStart + (dist * (j / steps)));
@@ -130,21 +101,29 @@ function generateBottleProfile() {
             let r = T_body_x + t * (T_neck_x - T_body_x);
             points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (y < Y_bague_start - 0.001) {
-            // Le col (juste en dessous de la bague)
             const t = (y - H_col_vertical_start) / (Y_bague_start - H_col_vertical_start);
             let r = R_bas_col_ext + t * (R_haut_col - R_bas_col_ext);
             points.push(new THREE.Vector2(Math.max(0.1, r), y));
         } else if (Math.abs(y - Y_bague_start) <= 0.001) {
-            // ==========================================
-            // L'ARRÊTE PARFAITE À 90 DEGRÉS !
-            // On génère 2 points à la même hauteur : un intérieur (col) et un extérieur (bague)
-            // ==========================================
             points.push(new THREE.Vector2(Math.max(0.1, R_haut_col), Y_bague_start));
             points.push(new THREE.Vector2(Math.max(0.1, R_finish), Y_bague_start));
         } else {
-            // La Bague (Cylindre droit)
             points.push(new THREE.Vector2(Math.max(0.1, R_finish), y));
         }
     }
     return points;
+}
+
+// Outil indispensable pour le plaquage des gravures
+function getRadiusAtHeight(targetY, profilPoints) {
+    if (targetY <= profilPoints[0].y) return profilPoints[0].x;
+    if (targetY >= profilPoints[profilPoints.length - 1].y) return profilPoints[profilPoints.length - 1].x;
+    
+    for (let i = 0; i < profilPoints.length - 1; i++) {
+        if (targetY >= profilPoints[i].y && targetY <= profilPoints[i+1].y) {
+            const t = (targetY - profilPoints[i].y) / (profilPoints[i+1].y - profilPoints[i].y);
+            return profilPoints[i].x + t * (profilPoints[i+1].x - profilPoints[i].x);
+        }
+    }
+    return 30; 
 }
