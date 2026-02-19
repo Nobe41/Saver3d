@@ -41,8 +41,9 @@
             </div>
         </div>
 
-        <div id="workspace-content">
-            <aside id="Panel-gauche" style="overflow-y: auto; height: 100%;">
+        <div id="workspace-content" style="display: flex; height: calc(100vh - 60px); overflow: hidden;">
+            
+            <aside id="Panel-gauche" style="overflow-y: auto; height: 100%; padding-bottom: 50px;">
                 
                 <div class="setting-card">
                     <button class="accordion main-accordion">Type de bouteille</button>
@@ -152,9 +153,9 @@
 
             </aside>
 
-            <main id="viewport-3d"></main>
-            <main id="viewport-2d" class="hidden"><canvas id="canvas-2d"></canvas></main>
-            <main id="viewport-outillage" class="hidden"><div class="placeholder-outillage"><h1>PROCHAINEMENT</h1></div></main>
+            <main id="viewport-3d" style="flex: 1;"></main>
+            <main id="viewport-2d" class="hidden" style="flex: 1;"><canvas id="canvas-2d"></canvas></main>
+            <main id="viewport-outillage" class="hidden" style="flex: 1;"><div class="placeholder-outillage"><h1>PROCHAINEMENT</h1></div></main>
 
         </div>
     </section>
