@@ -35,6 +35,29 @@ btnBackMenu.addEventListener('click', () => {
     pageMenu.classList.remove('hidden');
 });
 
+// --- BRANCHEMENT DU BOUTON OUVRIR ---
+const btnOpenProject = document.getElementById('btn-open-project');
+const fileLoader = document.getElementById('file-loader');
+
+// Quand on clique sur "OUVRIR", ça ouvre la fenêtre Windows/Mac
+btnOpenProject.addEventListener('click', () => {
+    fileLoader.click(); 
+});
+
+// Quand l'utilisateur a choisi un fichier
+fileLoader.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Alerte temporaire pour montrer que le fichier est bien lu
+    alert("Fichier sélectionné : " + file.name + "\nLe système de chargement complet arrive bientôt !");
+    
+    // On passe quand même sur la page de travail
+    pageMenu.classList.add('hidden');
+    pageBouteille.classList.remove('hidden');
+    setTimeout(() => { initLogiciel(); }, 50);
+});
+
 // --- 3. ONGLETS VUES (3D, 2D, Outillage) ---
 const btn3D = document.getElementById('btn-view-3d');
 const btn2D = document.getElementById('btn-view-2d');
