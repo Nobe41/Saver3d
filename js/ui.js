@@ -22,7 +22,7 @@ passwordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- 2. NAVIGATION ---
+// --- 2. NAVIGATION ENTRE PAGES ---
 btnNewProject.addEventListener('click', () => {
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
@@ -35,8 +35,41 @@ btnBackMenu.addEventListener('click', () => {
     pageMenu.classList.remove('hidden');
 });
 
-// --- 3. SLIDERS & INPUTS ---
+// --- 3. ONGLETS VUES (3D, 2D, Outillage) ---
+const btn3D = document.getElementById('btn-view-3d');
+const btn2D = document.getElementById('btn-view-2d');
+const btnOutillage = document.getElementById('btn-outillage');
+const view3D = document.getElementById('viewport-3d');
+const view2D = document.getElementById('viewport-2d');
+const viewOutillage = document.getElementById('viewport-outillage');
+
+function switchView(activeBtn, activeView) {
+    // Désactive tout
+    btn3D.classList.remove('active');
+    btn2D.classList.remove('active');
+    btnOutillage.classList.remove('active');
+    view3D.classList.add('hidden');
+    view2D.classList.add('hidden');
+    viewOutillage.classList.add('hidden');
+    
+    // Active le bon
+    activeBtn.classList.add('active');
+    activeView.classList.remove('hidden');
+}
+
+btn3D.addEventListener('click', () => switchView(btn3D, view3D));
+btn2D.addEventListener('click', () => switchView(btn2D, view2D));
+btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
+
+// --- 4. BOUTON GRAVURE (En cours de dev) ---
+document.getElementById('btn-add-engraving').addEventListener('click', () => {
+    alert("La fonctionnalité Gravure n'est pas encore programmée ! 🛠️");
+});
+
+
+// --- 5. SLIDERS & ACCORDÉONS ---
 function setupListeners() {
+    // Sliders
     const inputs = document.querySelectorAll('input[type=range], input[type=number]');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
@@ -47,18 +80,27 @@ function setupListeners() {
                 const rng = input.parentElement.parentElement.querySelector('input[type=range]');
                 if (rng) rng.value = input.value;
             }
-            // Met à jour la 3D à chaque mouvement
             updateBouteille();
         });
     });
     
-    // Accordéons
+    // Accordéons (Corrigé pour les sous-menus)
     const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
         acc[i].onclick = function() {
             this.classList.toggle("active");
-            const p = this.nextElementSibling;
-            p.style.maxHeight = p.style.maxHeight && p.style.maxHeight !== "0px" ? "0px" : p.scrollHeight + "px";
+            const panel = this.nextElementSibling;
+            
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+                // L'astuce : dire au menu parent de s'agrandir aussi
+                const parentPanel = this.parentElement.closest('.panel-controls');
+                if (parentPanel) {
+                    parentPanel.style.maxHeight = "2000px"; // On lui donne beaucoup de place
+                }
+            }
         };
     }
 }
