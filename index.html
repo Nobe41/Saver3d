@@ -8,68 +8,6 @@
     <link rel="stylesheet" href="css/structure.css">
     <link rel="stylesheet" href="css/theme.css">
     
-    <style>
-        /* 1. On bloque complètement la page pour empêcher le "rebond" ou le défilement global */
-        body { 
-            overflow: hidden !important; 
-            margin: 0; 
-            height: 100vh; 
-            width: 100vw; 
-        }
-        
-        #Page-Bouteille { 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-        }
-        
-        #Panel-haut { 
-            flex-shrink: 0; /* La barre du haut garde sa taille fixe */
-            z-index: 10;
-        }
-        
-        #workspace-content { 
-            flex-grow: 1; 
-            display: flex; 
-            overflow: hidden; /* Rien ne dépasse de l'écran principal */
-            position: relative; 
-        }
-        
-        /* 2. ON FORCE LE SCROLL ICI POUR LE MENU DE GAUCHE */
-        #Panel-gauche { 
-            width: 320px; /* Largeur fixe du menu */
-            height: 100%; 
-            overflow-y: auto !important; /* Barre de scroll verticale obligatoire si ça dépasse */
-            overflow-x: hidden; 
-            flex-shrink: 0; 
-            padding-bottom: 80px; /* De l'espace en bas pour ne pas coincer le dernier bouton */
-            box-sizing: border-box; 
-        }
-        
-        /* 3. On stylise la barre de défilement pour faire joli (Style Mac/Windows moderne) */
-        #Panel-gauche::-webkit-scrollbar {
-            width: 6px;
-        }
-        #Panel-gauche::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        #Panel-gauche::-webkit-scrollbar-thumb {
-            background: #c1c1c1; 
-            border-radius: 10px;
-        }
-        #Panel-gauche::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8; 
-        }
-
-        /* 4. Zone 3D bloquée à droite */
-        main { 
-            flex-grow: 1; 
-            height: 100%; 
-            position: relative; 
-            overflow: hidden; 
-        }
-    </style>
-    
     <script src="https://unpkg.com/three@0.126.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/three@0.126.0/examples/js/exporters/STLExporter.js"></script>
