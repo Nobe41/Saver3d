@@ -45,15 +45,15 @@ body { background-color: #f5f5f5; color: #333333; font-family: sans-serif; }
 /* --- ACCORDÉONS & MENUS DE PARAMÉTRAGE --- */
 /* ========================================= */
 
-/* Angles parfaitement carrés */
-.setting-card { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 0; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+/* RETOUR DES ARRONDIS : 8px pour les menus principaux */
+.setting-card { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
 .accordion { background-color: #f9f9f9; color: #333; cursor: pointer; padding: 15px; width: 100%; border: none; text-align: left; outline: none; font-size: 0.95rem; font-weight: bold; border-bottom: 1px solid #eee; transition: 0.3s; }
 .accordion:hover { background-color: #f0f0f0; color: #0078d4; }
 .panel-controls { background-color: #ffffff; }
 
-/* Angles carrés pour les sous-blocs */
-.sub-block { margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 0; background-color: #fafafa; }
+/* RETOUR DES ARRONDIS : 6px pour les sous-blocs */
+.sub-block { margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; background-color: #fafafa; }
 
 .accordion.sub-accordion { font-size: 0.8rem; background-color: #fafafa; padding: 10px 15px; border: none; color: #555; margin-top: 0; width: 100%; border-bottom: 1px solid #f0f0f0; }
 .accordion.sub-accordion:hover { background-color: #f0f0f0; color: #333; }
