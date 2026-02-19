@@ -23,10 +23,9 @@ btnAddEngraving.addEventListener('click', () => {
     card.id = `gravure-${id}`;
     card.dataset.id = id;
     
-    // NOUVEAU : Labels épurés ("Miroir", "SUPPRIMER LA GRAVURE")
     card.innerHTML = `
         <button class="accordion sub-accordion active" style="text-transform: uppercase;">GRAVURE</button>
-        <div class="panel-controls sub-panel" style="max-height: 2000px;">
+        <div class="panel-controls sub-panel" style="max-height: 10000px;">
 
             <div class="control-group" style="margin-top: 10px;">
                 <label class="label-simple">Fichier Image (PNG)</label>
@@ -112,12 +111,13 @@ btnAddEngraving.addEventListener('click', () => {
         } else {
             panel.style.maxHeight = panel.scrollHeight + "px";
             const parentPanel = this.parentElement.closest('.panel-controls');
-            if (parentPanel) parentPanel.style.maxHeight = "2000px";
+            // NOUVEAU : 10000px au lieu de 2000px
+            if (parentPanel) parentPanel.style.maxHeight = "10000px";
         }
     };
 
     const parentPanel = card.parentElement.closest('.panel-controls');
-    if (parentPanel) parentPanel.style.maxHeight = "2000px";
+    if (parentPanel) parentPanel.style.maxHeight = "10000px";
 
     const fileInput = card.querySelector('.gravure-file');
     const fileNameDisplay = card.querySelector(`#gravure-filename-${id}`);
