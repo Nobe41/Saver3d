@@ -56,13 +56,14 @@ function updateBouteille() {
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
     bottleGroup.add(bottom);
 
-    // Arêtes
+    // Arêtes noires pour bien voir les angles à 90°
     const edges = new THREE.EdgesGeometry(geometry, 40); 
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
     scene.add(bottleGroup);
     
-    const H_tot = parseFloat(document.getElementById('height-slider').value);
-    controls.target.set(0, H_tot / 2, 0);
+    // NOUVEAU : La caméra lit la vraie hauteur finale pour toujours viser le milieu
+    const topY = profil[profil.length - 1].y;
+    controls.target.set(0, topY / 2, 0);
 }
