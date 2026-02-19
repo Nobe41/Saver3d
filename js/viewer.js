@@ -22,11 +22,24 @@ function initLogiciel() {
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const dL = new THREE.DirectionalLight(0xffffff, 0.6); dL.position.set(100, 500, 100);
-    scene.add(dL);
+    // ==========================================
+    // NOUVELLE LUMIÈRE (Attachée à la caméra)
+    // ==========================================
+    scene.add(camera); // Obligatoire pour attacher un objet à la caméra
+    
+    // Lumière directionnelle venant de l'objectif
+    const dL = new THREE.DirectionalLight(0xffffff, 0.8); 
+    dL.position.set(0, 0, 1); 
+    camera.add(dL);
+    
+    // Lumière d'ambiance globale pour adoucir le tout
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    // ==========================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
+    
+    // NOUVEAU : On définit la cible de la caméra UNE SEULE FOIS au démarrage
+    controls.target.set(0, 150, 0); 
     
     updateBouteille();
     setupListeners();
@@ -43,7 +56,17 @@ function updateBouteille() {
     const profil = generateBottleProfile();
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
-    const mat = new THREE.MeshStandardMaterial({ color: 0x7ca1ba, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide });
+    // ==========================================
+    // NOUVELLE MATIÈRE : Bleu clair et plus lisse
+    // ==========================================
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: 0x99ccff,   // Bleu clair
+        roughness: 0.2,    // Plus brillant/lisse
+        metalness: 0.1, 
+        side: THREE.DoubleSide 
+    });
+    // ==========================================
+
     bottleGroup.add(new THREE.Mesh(geometry, mat));
     
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
@@ -98,22 +121,19 @@ function updateBouteille() {
 
                 const R_base = getRadiusAtHeight(vy_base, profil);
                 
-                // NOUVEAU : Calcul de la pente du verre (Normale) pour éviter l'écrasement sur l'épaule
                 const R_up = getRadiusAtHeight(vy_base + 0.1, profil);
                 const R_down = getRadiusAtHeight(vy_base - 0.1, profil);
                 const dx = R_up - R_down;
-                const dy = 0.2; // La différence de hauteur utilisée (vy_base+0.1) - (vy_base-0.1)
+                const dy = 0.2; 
                 const len = Math.sqrt(dx*dx + dy*dy);
-                const nx = dy / len;  // Coefficient horizontal de la pente
-                const ny = -dx / len; // Coefficient vertical de la pente
+                const nx = dy / len;  
+                const ny = -dx / len; 
 
-                // On pousse l'épaisseur en suivant l'inclinaison exacte du verre !
                 const relief = -0.1 + (alpha / 255) * (eng.depth + 0.1);
                 
                 const finalR = R_base + relief * nx;
                 const vy = vy_base + relief * ny;
 
-                // Angle géré pour ne pas déformer horizontalement
                 const theta = eng.angle + (vx / R_base); 
                 
                 const finalX = finalR * Math.sin(theta);
@@ -129,6 +149,6 @@ function updateBouteille() {
 
     scene.add(bottleGroup);
     
-    const topY = profil[profil.length - 1].y;
-    controls.target.set(0, topY / 2, 0);
+    // NOUVEAU : On a retiré le controls.target.set() qui se trouvait ici.
+    // La caméra reste maintenant exactement là où tu l'as mise !
 }
