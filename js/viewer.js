@@ -41,14 +41,10 @@ function initLogiciel() {
 }
 
 function updateBouteille() {
-    const profil = generateBottleProfile();
-    
-    // SÉCURITÉ : Si la géométrie est impossible, on annule tout
-    if (!profil) return false; 
-
     if (bottleGroup) scene.remove(bottleGroup);
     bottleGroup = new THREE.Group();
 
+    const profil = generateBottleProfile();
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     const mat = new THREE.MeshStandardMaterial({ 
@@ -69,6 +65,4 @@ function updateBouteille() {
     
     const H_tot = parseFloat(document.getElementById('height-slider').value);
     controls.target.set(0, H_tot / 2, 0);
-    
-    return true; // Succès de la génération
 }
