@@ -5,7 +5,6 @@
 const btnAddEngraving = document.getElementById('btn-add-engraving');
 const engravingsContainer = document.getElementById('engravings-container');
 
-// NOUVEAU : Fonction qui renomme proprement "Gravure 1", "Gravure 2", etc.
 function updateEngravingTitles() {
     const items = document.querySelectorAll('.gravure-item');
     items.forEach((item, index) => {
@@ -24,6 +23,7 @@ btnAddEngraving.addEventListener('click', () => {
     card.id = `gravure-${id}`;
     card.dataset.id = id;
     
+    // NOUVEAU : Labels épurés ("Miroir", "SUPPRIMER LA GRAVURE")
     card.innerHTML = `
         <button class="accordion sub-accordion active" style="text-transform: uppercase;">GRAVURE</button>
         <div class="panel-controls sub-panel" style="max-height: 2000px;">
@@ -42,7 +42,7 @@ btnAddEngraving.addEventListener('click', () => {
             <div class="control-group" style="padding-top: 5px; padding-bottom: 5px;">
                 <label style="display:flex; align-items:center; cursor:pointer; font-size: 0.8rem; color: #555; font-weight: bold;">
                     <input type="checkbox" class="gravure-flip" id="gravure-flip-${id}" style="margin-right: 8px; transform: scale(1.2); cursor:pointer;">
-                    Effet Miroir (Inverser le sens)
+                    Miroir
                 </label>
             </div>
 
@@ -92,7 +92,7 @@ btnAddEngraving.addEventListener('click', () => {
 
             <div style="text-align: center; padding: 10px 15px 15px 15px; border-top: 1px solid #eee; margin-top: 10px;">
                 <button onclick="removeEngraving(${id})" style="color:#ff3333; background:none; border:1px solid #ff3333; border-radius: 4px; padding: 5px 10px; cursor:pointer; font-weight:bold; font-size: 0.75rem; transition: 0.3s;" onmouseover="this.style.background='#fff0f0'" onmouseout="this.style.background='none'">
-                    X SUPPRIMER LA GRAVURE
+                    SUPPRIMER LA GRAVURE
                 </button>
             </div>
 
@@ -101,7 +101,6 @@ btnAddEngraving.addEventListener('click', () => {
     
     engravingsContainer.appendChild(card);
     
-    // On met à jour les numéros (Gravure 1, Gravure 2...)
     updateEngravingTitles();
     
     const accBtn = card.querySelector('.accordion');
@@ -174,7 +173,7 @@ window.removeEngraving = function(id) {
     const card = document.getElementById(`gravure-${id}`);
     if (card) {
         card.remove();
-        updateEngravingTitles(); // On recompte après suppression !
+        updateEngravingTitles();
     }
     delete window.engravingImages[id]; 
     if (typeof updateBouteille === 'function') updateBouteille();
