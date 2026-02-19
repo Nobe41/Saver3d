@@ -15,7 +15,6 @@ btnAddEngraving.addEventListener('click', () => {
     card.id = `gravure-${id}`;
     card.dataset.id = id;
     
-    // Le design mis à jour : Input personnalisé et bouton supprimer en bas
     card.innerHTML = `
         <button class="accordion sub-accordion active" style="text-transform: uppercase;">Gravure ${gravureCounter}</button>
         <div class="panel-controls sub-panel" style="max-height: 2000px;">
@@ -29,6 +28,13 @@ btnAddEngraving.addEventListener('click', () => {
                     <input type="file" id="gravure-file-${id}" class="gravure-file" accept="image/png" data-id="${id}" style="display: none;">
                     <span id="gravure-filename-${id}" style="font-size: 0.75rem; color: #0078d4; margin-left: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"></span>
                 </div>
+            </div>
+
+            <div class="control-group" style="padding-top: 5px; padding-bottom: 5px;">
+                <label style="display:flex; align-items:center; cursor:pointer; font-size: 0.8rem; color: #555; font-weight: bold;">
+                    <input type="checkbox" class="gravure-flip" id="gravure-flip-${id}" style="margin-right: 8px; transform: scale(1.2); cursor:pointer;">
+                    Effet Miroir (Inverser le sens)
+                </label>
             </div>
 
             <div class="control-group">
@@ -86,7 +92,6 @@ btnAddEngraving.addEventListener('click', () => {
     
     engravingsContainer.appendChild(card);
     
-    // Logique de l'accordéon pour ce nouveau bloc
     const accBtn = card.querySelector('.accordion');
     accBtn.onclick = function() {
         this.classList.toggle("active");
@@ -100,22 +105,19 @@ btnAddEngraving.addEventListener('click', () => {
         }
     };
 
-    // Ajuste la taille du parent global
     const parentPanel = card.parentElement.closest('.panel-controls');
     if (parentPanel) parentPanel.style.maxHeight = "2000px";
 
-    // Gestion du chargement de l'image ET de l'affichage du nom du fichier
     const fileInput = card.querySelector('.gravure-file');
     const fileNameDisplay = card.querySelector(`#gravure-filename-${id}`);
     
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) {
-            fileNameDisplay.textContent = ""; // On efface le texte si on annule
+            fileNameDisplay.textContent = ""; 
             return;
         }
         
-        // On affiche le nom du fichier à côté du bouton
         fileNameDisplay.textContent = file.name;
         
         const reader = new FileReader();
@@ -130,7 +132,6 @@ btnAddEngraving.addEventListener('click', () => {
         reader.readAsDataURL(file);
     });
 
-    // Synchronisation bidirectionnelle entre le champ texte et le slider
     const syncInputs = (numId, sliderId) => {
         const num = document.getElementById(numId);
         const slider = document.getElementById(sliderId);
@@ -150,6 +151,12 @@ btnAddEngraving.addEventListener('click', () => {
     syncInputs(`gravure-angle-num-${id}`, `gravure-angle-slider-${id}`);
     syncInputs(`gravure-largeur-num-${id}`, `gravure-largeur-slider-${id}`);
     syncInputs(`gravure-profondeur-num-${id}`, `gravure-profondeur-slider-${id}`);
+
+    // NOUVEAU : Écouteur pour la case à cocher "Miroir"
+    const flipCheckbox = document.getElementById(`gravure-flip-${id}`);
+    flipCheckbox.addEventListener('change', () => {
+        if (typeof updateBouteille === 'function') updateBouteille();
+    });
 });
 
 window.removeEngraving = function(id) {
@@ -169,7 +176,8 @@ window.getEngravingsData = function() {
             y: parseFloat(item.querySelector('.gravure-y').value),
             angle: parseFloat(item.querySelector('.gravure-angle').value) * Math.PI / 180, 
             width: parseFloat(item.querySelector('.gravure-largeur').value),
-            depth: parseFloat(item.querySelector('.gravure-profondeur').value)
+            depth: parseFloat(item.querySelector('.gravure-profondeur').value),
+            flip: item.querySelector('.gravure-flip').checked // NOUVEAU : On récupère l'état du miroir
         });
     });
     return data;
