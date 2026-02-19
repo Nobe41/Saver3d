@@ -39,20 +39,16 @@ btnBackMenu.addEventListener('click', () => {
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
-// Quand on clique sur "OUVRIR", ça ouvre la fenêtre Windows/Mac
 btnOpenProject.addEventListener('click', () => {
     fileLoader.click(); 
 });
 
-// Quand l'utilisateur a choisi un fichier
 fileLoader.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Alerte temporaire pour montrer que le fichier est bien lu
     alert("Fichier sélectionné : " + file.name + "\nLe système de chargement complet arrive bientôt !");
     
-    // On passe quand même sur la page de travail
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
     setTimeout(() => { initLogiciel(); }, 50);
@@ -67,7 +63,6 @@ const view2D = document.getElementById('viewport-2d');
 const viewOutillage = document.getElementById('viewport-outillage');
 
 function switchView(activeBtn, activeView) {
-    // Désactive tout
     btn3D.classList.remove('active');
     btn2D.classList.remove('active');
     btnOutillage.classList.remove('active');
@@ -75,7 +70,6 @@ function switchView(activeBtn, activeView) {
     view2D.classList.add('hidden');
     viewOutillage.classList.add('hidden');
     
-    // Active le bon
     activeBtn.classList.add('active');
     activeView.classList.remove('hidden');
 }
@@ -84,30 +78,54 @@ btn3D.addEventListener('click', () => switchView(btn3D, view3D));
 btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
-// --- 4. BOUTON GRAVURE (En cours de dev) ---
+// --- 4. BOUTON GRAVURE ---
 document.getElementById('btn-add-engraving').addEventListener('click', () => {
     alert("La fonctionnalité Gravure n'est pas encore programmée ! 🛠️");
 });
 
 
-// --- 5. SLIDERS & ACCORDÉONS ---
+// --- 5. SLIDERS ET MÉMOIRE (Blocage si géométrie impossible) ---
+let lastValidState = {};
+
+function saveValidState() {
+    const inputs = document.querySelectorAll('input[type=range], input[type=number]');
+    inputs.forEach(input => {
+        lastValidState[input.id] = input.value;
+    });
+}
+
 function setupListeners() {
-    // Sliders
+    saveValidState(); // Première sauvegarde
+
     const inputs = document.querySelectorAll('input[type=range], input[type=number]');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
-            if (input.type === 'range') {
-                const num = input.parentElement.querySelector('input[type=number]');
-                if (num) num.value = input.value;
+            const isRange = input.type === 'range';
+            const num = isRange ? input.parentElement.querySelector('input[type=number]') : input;
+            const rng = isRange ? input : input.parentElement.parentElement.querySelector('input[type=range]');
+            
+            // On met à jour l'affichage
+            if (num) num.value = input.value;
+            if (rng) rng.value = input.value;
+
+            // On tente de créer la 3D
+            const success = updateBouteille();
+
+            if (success) {
+                // Si ça marche : On valide cette position
+                saveValidState();
             } else {
-                const rng = input.parentElement.parentElement.querySelector('input[type=range]');
-                if (rng) rng.value = input.value;
+                // SI ÇA CASSE : On remet les sliders à la position précédente
+                if (rng && lastValidState[rng.id]) rng.value = lastValidState[rng.id];
+                if (num && lastValidState[num.id]) num.value = lastValidState[num.id];
+                
+                // On redessine l'ancienne forme pour garder la 3D propre
+                updateBouteille();
             }
-            updateBouteille();
         });
     });
     
-    // Accordéons (Corrigé pour les sous-menus)
+    // Accordéons
     const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
         acc[i].onclick = function() {
@@ -118,10 +136,9 @@ function setupListeners() {
                 panel.style.maxHeight = "0px";
             } else {
                 panel.style.maxHeight = panel.scrollHeight + "px";
-                // L'astuce : dire au menu parent de s'agrandir aussi
                 const parentPanel = this.parentElement.closest('.panel-controls');
                 if (parentPanel) {
-                    parentPanel.style.maxHeight = "2000px"; // On lui donne beaucoup de place
+                    parentPanel.style.maxHeight = "2000px";
                 }
             }
         };
