@@ -4,11 +4,20 @@
 
 const btnAddEngraving = document.getElementById('btn-add-engraving');
 const engravingsContainer = document.getElementById('engravings-container');
-let gravureCounter = 0; // Compteur pour nommer "Gravure 1", "Gravure 2"...
+
+// NOUVEAU : Fonction qui renomme proprement "Gravure 1", "Gravure 2", etc.
+function updateEngravingTitles() {
+    const items = document.querySelectorAll('.gravure-item');
+    items.forEach((item, index) => {
+        const btn = item.querySelector('.accordion');
+        if (btn) {
+            btn.textContent = `GRAVURE ${index + 1}`;
+        }
+    });
+}
 
 btnAddEngraving.addEventListener('click', () => {
     const id = Date.now(); 
-    gravureCounter++; // On incrémente le numéro
     
     const card = document.createElement('div');
     card.className = 'sub-block gravure-item';
@@ -16,7 +25,7 @@ btnAddEngraving.addEventListener('click', () => {
     card.dataset.id = id;
     
     card.innerHTML = `
-        <button class="accordion sub-accordion active" style="text-transform: uppercase;">Gravure ${gravureCounter}</button>
+        <button class="accordion sub-accordion active" style="text-transform: uppercase;">GRAVURE</button>
         <div class="panel-controls sub-panel" style="max-height: 2000px;">
 
             <div class="control-group" style="margin-top: 10px;">
@@ -92,6 +101,9 @@ btnAddEngraving.addEventListener('click', () => {
     
     engravingsContainer.appendChild(card);
     
+    // On met à jour les numéros (Gravure 1, Gravure 2...)
+    updateEngravingTitles();
+    
     const accBtn = card.querySelector('.accordion');
     accBtn.onclick = function() {
         this.classList.toggle("active");
@@ -152,7 +164,6 @@ btnAddEngraving.addEventListener('click', () => {
     syncInputs(`gravure-largeur-num-${id}`, `gravure-largeur-slider-${id}`);
     syncInputs(`gravure-profondeur-num-${id}`, `gravure-profondeur-slider-${id}`);
 
-    // NOUVEAU : Écouteur pour la case à cocher "Miroir"
     const flipCheckbox = document.getElementById(`gravure-flip-${id}`);
     flipCheckbox.addEventListener('change', () => {
         if (typeof updateBouteille === 'function') updateBouteille();
@@ -161,7 +172,10 @@ btnAddEngraving.addEventListener('click', () => {
 
 window.removeEngraving = function(id) {
     const card = document.getElementById(`gravure-${id}`);
-    if (card) card.remove();
+    if (card) {
+        card.remove();
+        updateEngravingTitles(); // On recompte après suppression !
+    }
     delete window.engravingImages[id]; 
     if (typeof updateBouteille === 'function') updateBouteille();
 };
@@ -177,7 +191,7 @@ window.getEngravingsData = function() {
             angle: parseFloat(item.querySelector('.gravure-angle').value) * Math.PI / 180, 
             width: parseFloat(item.querySelector('.gravure-largeur').value),
             depth: parseFloat(item.querySelector('.gravure-profondeur').value),
-            flip: item.querySelector('.gravure-flip').checked // NOUVEAU : On récupère l'état du miroir
+            flip: item.querySelector('.gravure-flip').checked
         });
     });
     return data;
