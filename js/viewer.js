@@ -53,16 +53,15 @@ function updateBouteille() {
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
-    // 2. DESSINER LES GRAVURES (Moteur Pixels vers 3D)
+    // 2. DESSINER LES GRAVURES (Moteur HD Pixels vers 3D)
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
         const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
         
         engravings.forEach(eng => {
             const img = window.engravingImages[eng.id];
-            if (!img) return; // Pas encore d'image importée
+            if (!img) return;
 
-            // A. On lit les pixels de l'image via un Canvas invisible
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
@@ -70,42 +69,36 @@ function updateBouteille() {
             ctx.drawImage(img, 0, 0);
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-            // B. On prépare la grille 3D vierge
             const ratio = img.height / img.width;
             const physHeight = eng.width * ratio;
             
-            // On fait un maillage très fin pour capter le logo (100x100 faces = 10 000 points)
-            const resX = Math.min(150, img.width);
-            const resY = Math.min(150, img.height);
+            // RESOLUTION ULTRA-HD : On monte jusqu'à 350x350 (plus de 120 000 points de calcul)
+            const resX = Math.min(350, img.width);
+            const resY = Math.min(350, img.height);
             const textGeo = new THREE.PlaneGeometry(eng.width, physHeight, resX, resY);
             
             const pos = textGeo.attributes.position;
             const uv = textGeo.attributes.uv;
 
-            // C. On tord la grille sur le cylindre et on pousse les pixels
             for (let i = 0; i < pos.count; i++) {
                 const u = uv.getX(i);
                 const v = uv.getY(i);
 
-                // Trouver le pixel correspondant dans l'image
                 const px = Math.floor(u * (canvas.width - 1));
                 const py = Math.floor((1 - v) * (canvas.height - 1));
                 const idx = (py * canvas.width + px) * 4;
                 
-                const alpha = imgData[idx + 3]; // Canal de Transparence (0 = vide, 255 = plein)
+                const alpha = imgData[idx + 3];
 
-                // Coordonnées de base
-                const vx = pos.getX(i); // Emplacement horizontal sur le dessin
-                const vy = pos.getY(i) + eng.y; // Hauteur finale sur la bouteille
+                const vx = pos.getX(i); 
+                const vy = pos.getY(i) + eng.y;
 
                 const R_base = getRadiusAtHeight(vy, profil);
                 
-                // MAGIE : Si c'est transparent (alpha 0), on cache la grille LÉGÈREMENT à l'intérieur du verre (-0.1mm)
-                // Si c'est un pixel plein (alpha 255), on le pousse en relief à la profondeur voulue.
                 const relief = -0.1 + (alpha / 255) * (eng.depth + 0.1);
                 const finalR = R_base + relief;
 
-                const theta = eng.angle + (vx / R_base); // Angle sur le cylindre
+                const theta = eng.angle + (vx / R_base); 
                 
                 const finalX = finalR * Math.sin(theta);
                 const finalZ = finalR * Math.cos(theta);
@@ -113,7 +106,6 @@ function updateBouteille() {
                 pos.setXYZ(i, finalX, vy, finalZ);
             }
             
-            // On calcule la lumière sur les nouveaux reliefs
             textGeo.computeVertexNormals();
             bottleGroup.add(new THREE.Mesh(textGeo, matGravure));
         });
