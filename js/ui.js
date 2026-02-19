@@ -1,4 +1,3 @@
-// Sélection des éléments UI
 const pageLogin = document.getElementById('Page-login');
 const pageMenu = document.getElementById('Page-menu');
 const pageBouteille = document.getElementById('Page-Bouteille');
@@ -6,10 +5,8 @@ const passwordInput = document.getElementById('password-input');
 const btnNewProject = document.getElementById('btn-new-project');
 const btnBackMenu = document.getElementById('btn-back-menu');
 
-// On définit viewport3D ici pour que viewer.js puisse le trouver
 viewport3D = document.getElementById('viewport-3d');
 
-// --- 1. LOGIN ---
 passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         if (passwordInput.value.trim().toLowerCase() === 'axel') {
@@ -22,11 +19,9 @@ passwordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- 2. NAVIGATION ENTRE PAGES ---
 btnNewProject.addEventListener('click', () => {
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
-    // On lance la 3D quand on arrive sur la page
     setTimeout(() => { initLogiciel(); }, 50);
 });
 
@@ -35,7 +30,6 @@ btnBackMenu.addEventListener('click', () => {
     pageMenu.classList.remove('hidden');
 });
 
-// --- BRANCHEMENT DU BOUTON OUVRIR ---
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
@@ -46,15 +40,12 @@ btnOpenProject.addEventListener('click', () => {
 fileLoader.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     alert("Fichier sélectionné : " + file.name + "\nLe système de chargement complet arrive bientôt !");
-    
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
     setTimeout(() => { initLogiciel(); }, 50);
 });
 
-// --- 3. ONGLETS VUES (3D, 2D, Outillage) ---
 const btn3D = document.getElementById('btn-view-3d');
 const btn2D = document.getElementById('btn-view-2d');
 const btnOutillage = document.getElementById('btn-outillage');
@@ -78,16 +69,12 @@ btn3D.addEventListener('click', () => switchView(btn3D, view3D));
 btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
-// --- 4. BOUTON GRAVURE ---
-document.getElementById('btn-add-engraving').addEventListener('click', () => {
-    alert("La fonctionnalité Gravure n'est pas encore programmée ! 🛠️");
-});
-
-
-// --- 5. SLIDERS ET ACCORDÉONS CLASSIQUES ---
 function setupListeners() {
     const inputs = document.querySelectorAll('input[type=range], input[type=number]');
     inputs.forEach(input => {
+        // Ignore les inputs de gravure
+        if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
+
         input.addEventListener('input', () => {
             if (input.type === 'range') {
                 const num = input.parentElement.querySelector('input[type=number]');
@@ -96,25 +83,21 @@ function setupListeners() {
                 const rng = input.parentElement.parentElement.querySelector('input[type=range]');
                 if (rng) rng.value = input.value;
             }
-            updateBouteille();
+            if (typeof updateBouteille === 'function') updateBouteille();
         });
     });
     
-    // Accordéons
     const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
         acc[i].onclick = function() {
             this.classList.toggle("active");
             const panel = this.nextElementSibling;
-            
             if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
                 panel.style.maxHeight = "0px";
             } else {
                 panel.style.maxHeight = panel.scrollHeight + "px";
                 const parentPanel = this.parentElement.closest('.panel-controls');
-                if (parentPanel) {
-                    parentPanel.style.maxHeight = "2000px";
-                }
+                if (parentPanel) parentPanel.style.maxHeight = "2000px";
             }
         };
     }
