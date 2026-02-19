@@ -22,23 +22,15 @@ function initLogiciel() {
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
-    // ==========================================
-    // NOUVELLE LUMIÈRE (Attachée à la caméra)
-    // ==========================================
-    scene.add(camera); // Obligatoire pour attacher un objet à la caméra
+    scene.add(camera); 
     
-    // Lumière directionnelle venant de l'objectif
     const dL = new THREE.DirectionalLight(0xffffff, 0.8); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
     
-    // Lumière d'ambiance globale pour adoucir le tout
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    // ==========================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    
-    // NOUVEAU : On définit la cible de la caméra UNE SEULE FOIS au démarrage
     controls.target.set(0, 150, 0); 
     
     updateBouteille();
@@ -52,20 +44,15 @@ function updateBouteille() {
     if (bottleGroup) scene.remove(bottleGroup);
     bottleGroup = new THREE.Group();
 
-    // 1. DESSINER LA BOUTEILLE DE BASE
     const profil = generateBottleProfile();
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
-    // ==========================================
-    // NOUVELLE MATIÈRE : Bleu clair et plus lisse
-    // ==========================================
     const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x99ccff,   // Bleu clair
-        roughness: 0.2,    // Plus brillant/lisse
+        color: 0x99ccff, 
+        roughness: 0.2, 
         metalness: 0.1, 
         side: THREE.DoubleSide 
     });
-    // ==========================================
 
     bottleGroup.add(new THREE.Mesh(geometry, mat));
     
@@ -76,7 +63,6 @@ function updateBouteille() {
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
-    // 2. DESSINER LES GRAVURES SANS DÉFORMATION
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
         const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
@@ -148,7 +134,4 @@ function updateBouteille() {
     }
 
     scene.add(bottleGroup);
-    
-    // NOUVEAU : On a retiré le controls.target.set() qui se trouvait ici.
-    // La caméra reste maintenant exactement là où tu l'as mise !
 }
