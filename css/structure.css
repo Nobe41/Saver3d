@@ -12,7 +12,7 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    background-color: #f8f9fa; 
+    background-color: #f8f9fa; /* Gris très clair */
 }
 
 .hidden {
@@ -20,7 +20,7 @@ body {
 }
 
 /* ==========================================
-   PAGE MENU
+   PAGE LOGIN
 ========================================== */
 #Page-login {
     display: flex;
@@ -31,49 +31,63 @@ body {
 
 #password-input {
     padding: 10px 15px;
-    font-size: 1rem;
+    font-size: 1.2rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     text-align: center;
     outline: none;
+    width: 250px;
 }
 
+/* ==========================================
+   PAGE MENU (2 COLONNES)
+========================================== */
 #Page-menu {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    width: 100vw;
     height: 100vh;
-    padding-left: 15%; 
+}
+
+.menu-split-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.menu-col-left {
+    flex: 1; /* 50% de l'écran */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-col-right {
+    flex: 1; /* 50% de l'écran, vide pour le moment */
 }
 
 .menu-left-panel {
-    background: transparent; 
-    box-shadow: none; 
-    border: none;
-    width: 350px;
-    /* On force le centrage interne pour le texte et les boutons */
+    width: 100%;
+    max-width: 350px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .menu-title {
-    font-size: 3.5rem;
+    font-size: 4rem;
     color: #1a1a1a;
     font-weight: 900;
     line-height: 1;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     letter-spacing: -1px;
-    text-align: center; /* Centrage du texte */
-    width: 100%;
+    text-align: center;
 }
 
 .menu-big-btn {
     display: block;
     width: 100%;
-    padding: 12px;
+    padding: 15px;
     margin-bottom: 12px;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: bold;
     border-radius: 4px;
     cursor: pointer;
@@ -104,8 +118,9 @@ body {
     height: 100vh;
 }
 
+/* Barre du haut */
 #Panel-haut {
-    min-height: 60px; /* S'agrandit automatiquement pour le bouton au-dessus */
+    min-height: 60px;
     background-color: #f8f9fa;
     border-bottom: 1px solid #e0e0e0;
     display: flex;
@@ -115,12 +130,12 @@ body {
     flex-shrink: 0;
 }
 
-/* CORRECTION : Le bouton Exporter est maintenant AU-DESSUS des onglets */
+/* Boutons de la barre du haut */
 .right-controls {
     display: flex;
-    flex-direction: column; /* On empile verticalement */
-    align-items: flex-end; /* On aligne à droite */
-    gap: 8px; /* On met un petit espace entre Exporter et les onglets */
+    flex-direction: column;
+    align-items: flex-end; /* Aligne le bouton Exporter à droite au-dessus des onglets */
+    gap: 8px;
 }
 
 #Panel-haut button, .view-switcher button {
@@ -138,25 +153,39 @@ body {
 .view-switcher { display: flex; gap: 5px; }
 .view-switcher button.active { background: #dddddd; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
 
-/* Zone de travail */
-#workspace-content { display: flex; flex-grow: 1; overflow: hidden; }
+/* Zone de travail globale */
+#workspace-content { 
+    display: flex; 
+    flex-grow: 1; 
+    overflow: hidden; 
+}
 
+/* Panneau Gauche avec Scroll Automatique */
 #Panel-gauche {
     width: 300px;
     background-color: #ffffff;
     border-right: 1px solid #e0e0e0;
-    overflow-y: auto;
+    overflow-y: auto; /* Scroll normal */
     height: 100%;
     padding: 15px;
     flex-shrink: 0;
 }
 
-main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; }
+main { 
+    flex-grow: 1; 
+    background: #ffffff; 
+    position: relative; 
+    overflow: hidden; 
+}
 
 /* ==========================================
    ACCORDÉONS ET BLOCS
 ========================================== */
-.setting-card { border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 10px; }
+.setting-card { 
+    border: 1px solid #e0e0e0; 
+    border-radius: 4px; 
+    margin-bottom: 10px; 
+}
 
 .accordion {
     width: 100%;
@@ -170,10 +199,18 @@ main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; 
     font-size: 0.85rem;
     cursor: pointer;
 }
-.accordion:hover { background: #f1f1f1; }
-.panel-controls { padding: 0 15px; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: white; }
 
-/* CORRECTION : De l'espace (padding/margin) pour ne pas coller à la ligne du dessus */
+.accordion:hover { background: #f1f1f1; }
+
+.panel-controls { 
+    padding: 0 15px; 
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.2s ease-out; 
+    background: white; 
+}
+
+/* Espacement pour les sous-blocs */
 .sub-block {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -185,21 +222,70 @@ main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; 
     border-bottom: none;
     padding: 5px 0;
     margin-bottom: 5px;
+    color: #666; /* Couleur un peu plus claire pour la hiérarchie */
 }
 
 /* ==========================================
    SLIDERS ET INPUTS
 ========================================== */
-.control-group { margin: 10px 0 15px 0; }
-.label-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #555; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+.control-group { 
+    margin: 10px 0 15px 0; 
+}
 
-.input-wrapper { display: flex; align-items: center; background: #f5f5f5; border: 1px solid #e0e0e0; padding: 2px 5px; border-radius: 3px; }
-.input-wrapper input[type="number"] { width: 40px; border: none; background: transparent; text-align: right; outline: none; font-size: 0.8rem; color: #333; }
-.unit { font-size: 0.7rem; color: #888; margin-left: 3px; }
+.label-row { 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 0.75rem; 
+    color: #555; 
+    margin-bottom: 5px; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+}
 
-input[type="range"] { width: 100%; cursor: pointer; }
-input[type="text"], .input-select, .input-select-disabled { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.8rem; margin-top: 5px; }
-.input-select-disabled { background-color: #f5f5f5; color: #888; cursor: not-allowed; }
+.input-wrapper { 
+    display: flex; 
+    align-items: center; 
+    background: #f5f5f5; 
+    border: 1px solid #e0e0e0; 
+    padding: 2px 5px; 
+    border-radius: 3px; 
+}
+
+.input-wrapper input[type="number"] { 
+    width: 40px; 
+    border: none; 
+    background: transparent; 
+    text-align: right; 
+    outline: none; 
+    font-size: 0.8rem; 
+    color: #333; 
+}
+
+.unit { 
+    font-size: 0.7rem; 
+    color: #888; 
+    margin-left: 3px; 
+}
+
+input[type="range"] { 
+    width: 100%; 
+    cursor: pointer; 
+}
+
+input[type="text"], .input-select, .input-select-disabled { 
+    width: 100%; 
+    padding: 6px; 
+    border: 1px solid #ccc; 
+    border-radius: 3px; 
+    font-size: 0.8rem; 
+    margin-top: 5px; 
+}
+
+.input-select-disabled { 
+    background-color: #f5f5f5; 
+    color: #888; 
+    cursor: not-allowed; 
+}
 
 .btn-add-gravure {
     width: 100%;
@@ -213,4 +299,7 @@ input[type="text"], .input-select, .input-select-disabled { width: 100%; padding
     font-size: 0.8rem;
     margin-top: 10px;
 }
-.btn-add-gravure:hover { background: #f1f1f1; }
+
+.btn-add-gravure:hover { 
+    background: #f1f1f1; 
+}
