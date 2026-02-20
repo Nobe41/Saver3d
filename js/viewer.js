@@ -2,6 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
+    // MODIFICATION ICI : Fond blanc pur (0xffffff) comme dans ton CSS
     scene.background = new THREE.Color(0xffffff);
 
     const w = viewport3D.clientWidth;
@@ -18,13 +19,15 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    const grid = new THREE.GridHelper(400, 20, 0x888888, 0xeeeeee);
+    // Grille un peu plus discrète sur fond blanc
+    const grid = new THREE.GridHelper(400, 20, 0xdddddd, 0xeeeeee);
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
     scene.add(camera); 
     
-    const dL = new THREE.DirectionalLight(0xffffff, 0.8); 
+    // Lumière un peu plus forte pour faire briller le reflet
+    const dL = new THREE.DirectionalLight(0xffffff, 1.0); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
     
@@ -47,12 +50,16 @@ function updateBouteille() {
     const profil = generateBottleProfile();
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
+    // ====================================================
+    // MODIFICATIONS MATÉRIAU (Couleur douce + Reflets nets)
+    // ====================================================
     const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x99ccff, 
-        roughness: 0.2, 
-        metalness: 0.1, 
+        color: 0xb8d8f8,   // Nouveau bleu : plus doux, pastel, moins "fluo"
+        roughness: 0.08,   // Rugosité très faible = reflets très nets et brillants
+        metalness: 0.1,    // Un léger aspect métallique pour la brillance
         side: THREE.DoubleSide 
     });
+    // ====================================================
 
     bottleGroup.add(new THREE.Mesh(geometry, mat));
     
@@ -60,7 +67,8 @@ function updateBouteille() {
     bottleGroup.add(bottom);
 
     const edges = new THREE.EdgesGeometry(geometry, 40); 
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
+    // Lignes noires un peu plus discrètes pour ne pas gâcher le rendu
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
     if (typeof getEngravingsData === 'function') {
