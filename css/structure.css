@@ -12,7 +12,7 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    background-color: #f8f9fa; /* Fond gris très clair comme sur ta photo */
+    background-color: #f8f9fa; 
 }
 
 .hidden {
@@ -20,7 +20,7 @@ body {
 }
 
 /* ==========================================
-   PAGE MENU (COMME SUR TA PHOTO)
+   PAGE MENU
 ========================================== */
 #Page-login {
     display: flex;
@@ -40,18 +40,21 @@ body {
 
 #Page-menu {
     display: flex;
-    justify-content: flex-start; /* Aligné sur la gauche */
+    justify-content: flex-start;
     align-items: center;
     height: 100vh;
-    padding-left: 15%; /* Décalage depuis le bord gauche */
+    padding-left: 15%; 
 }
 
 .menu-left-panel {
-    background: transparent; /* Pas de fond blanc derrière */
-    box-shadow: none; /* Pas d'ombre */
+    background: transparent; 
+    box-shadow: none; 
     border: none;
-    text-align: center;
     width: 350px;
+    /* On force le centrage interne pour le texte et les boutons */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .menu-title {
@@ -61,9 +64,10 @@ body {
     line-height: 1;
     margin-bottom: 25px;
     letter-spacing: -1px;
+    text-align: center; /* Centrage du texte */
+    width: 100%;
 }
 
-/* Les boutons identiques à ta capture d'écran */
 .menu-big-btn {
     display: block;
     width: 100%;
@@ -74,6 +78,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     transition: 0.2s;
+    text-align: center;
 }
 
 #btn-new-project {
@@ -99,16 +104,23 @@ body {
     height: 100vh;
 }
 
-/* Barre du haut simplifiée, sans couleurs flashy */
 #Panel-haut {
-    height: 50px;
+    min-height: 60px; /* S'agrandit automatiquement pour le bouton au-dessus */
     background-color: #f8f9fa;
     border-bottom: 1px solid #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 10px 20px;
     flex-shrink: 0;
+}
+
+/* CORRECTION : Le bouton Exporter est maintenant AU-DESSUS des onglets */
+.right-controls {
+    display: flex;
+    flex-direction: column; /* On empile verticalement */
+    align-items: flex-end; /* On aligne à droite */
+    gap: 8px; /* On met un petit espace entre Exporter et les onglets */
 }
 
 #Panel-haut button, .view-switcher button {
@@ -120,7 +132,6 @@ body {
     cursor: pointer;
     font-weight: bold;
     font-size: 0.8rem;
-    margin-left: 5px;
 }
 
 #Panel-haut button:hover, .view-switcher button:hover { background: #eeeeee; }
@@ -130,7 +141,6 @@ body {
 /* Zone de travail */
 #workspace-content { display: flex; flex-grow: 1; overflow: hidden; }
 
-/* Panneau Gauche (Scroll simple) */
 #Panel-gauche {
     width: 300px;
     background-color: #ffffff;
@@ -144,7 +154,7 @@ body {
 main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; }
 
 /* ==========================================
-   ACCORDÉONS ET BLOCS (TEXTES EN NOIR)
+   ACCORDÉONS ET BLOCS
 ========================================== */
 .setting-card { border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 10px; }
 
@@ -153,7 +163,7 @@ main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; 
     text-align: left;
     padding: 10px 15px;
     background: #f8f9fa;
-    color: #333333; /* Texte noir/gris, fini le bleu */
+    color: #333333; 
     border: none;
     border-bottom: 1px solid #eeeeee;
     font-weight: bold;
@@ -161,12 +171,26 @@ main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; 
     cursor: pointer;
 }
 .accordion:hover { background: #f1f1f1; }
-.panel-controls { padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: white; }
+.panel-controls { padding: 0 15px; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: white; }
+
+/* CORRECTION : De l'espace (padding/margin) pour ne pas coller à la ligne du dessus */
+.sub-block {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-top: 5px;
+}
+
+.accordion.sub-accordion {
+    background: transparent;
+    border-bottom: none;
+    padding: 5px 0;
+    margin-bottom: 5px;
+}
 
 /* ==========================================
    SLIDERS ET INPUTS
 ========================================== */
-.control-group { margin: 15px 0; }
+.control-group { margin: 10px 0 15px 0; }
 .label-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #555; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
 
 .input-wrapper { display: flex; align-items: center; background: #f5f5f5; border: 1px solid #e0e0e0; padding: 2px 5px; border-radius: 3px; }
@@ -174,7 +198,7 @@ main { flex-grow: 1; background: #ffffff; position: relative; overflow: hidden; 
 .unit { font-size: 0.7rem; color: #888; margin-left: 3px; }
 
 input[type="range"] { width: 100%; cursor: pointer; }
-input[type="text"], .input-select, .input-select-disabled { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.8rem; }
+input[type="text"], .input-select, .input-select-disabled { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.8rem; margin-top: 5px; }
 .input-select-disabled { background-color: #f5f5f5; color: #888; cursor: not-allowed; }
 
 .btn-add-gravure {
@@ -187,5 +211,6 @@ input[type="text"], .input-select, .input-select-disabled { width: 100%; padding
     cursor: pointer;
     border-radius: 3px;
     font-size: 0.8rem;
+    margin-top: 10px;
 }
 .btn-add-gravure:hover { background: #f1f1f1; }
