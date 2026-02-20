@@ -2,7 +2,6 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    // Le fond gris clair demandé
     scene.background = new THREE.Color(0xeef2f5);
 
     const w = viewport3D.clientWidth;
@@ -19,20 +18,17 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    // Grille subtile
     const grid = new THREE.GridHelper(400, 20, 0xcccccc, 0xe5e5e5);
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
-    // On attache la lumière à la caméra
     scene.add(camera); 
     
-    // Lumière directionnelle équilibrée (Crée le reflet)
-    const dL = new THREE.DirectionalLight(0xffffff, 0.8); 
+    // On remonte un tout petit peu la lumière directionnelle pour que le blanc "claque"
+    const dL = new THREE.DirectionalLight(0xffffff, 1.2); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
     
-    // Lumière globale modérée pour ne pas "brûler" les couleurs
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -53,12 +49,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU OPTIMISÉ (Contraste + Reflet blanc net)
+    // ASTUCE REFLET : Passage en "MeshPhongMaterial"
     // ====================================================
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x7aa5c7,   // Un bleu plus "verre", qui se détache bien du fond clair
-        roughness: 0.1,    // Surface très lisse = un point de reflet très concentré et net
-        metalness: 0.05,   // Faible pour ne pas assombrir la bouteille
+    const mat = new THREE.MeshPhongMaterial({ 
+        color: 0x7aa5c7,     // Ta couleur exacte, inchangée
+        specular: 0xffffff,  // REFLET FORCÉ EN BLANC PUR
+        shininess: 120,      // Puissance et netteté du reflet blanc
         side: THREE.DoubleSide 
     });
     // ====================================================
@@ -68,7 +64,6 @@ function updateBouteille() {
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
     bottleGroup.add(bottom);
 
-    // Des arêtes légèrement plus visibles pour bien définir la forme
     const edges = new THREE.EdgesGeometry(geometry, 40); 
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
