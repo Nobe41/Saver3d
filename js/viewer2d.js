@@ -239,8 +239,8 @@ function draw2D() {
 
     let mainViewOffsetX = 0;
     if (showBottomView) {
-        // Décalage asynchrone parfait : -25% de la largeur de la feuille (plus spacieux)
-        mainViewOffsetX = -paperW / 4; 
+        // Retour au décalage moins important : 1/6 de la feuille
+        mainViewOffsetX = -paperW / 6; 
     }
 
     const scaleValue = scaleSelect ? scaleSelect.value : '1:1';
@@ -325,16 +325,16 @@ function draw2D() {
         drawLeaderLine(ctx2d, -D_epaule/2, H_corps_fin, fText(r1), drawingScale);
         drawLeaderLine(ctx2d, -D_bas_col/2, H_col_vertical_start, fText(r2), drawingScale);
 
-        ctx2d.restore(); // Fin du dessin de la vue de base
+        ctx2d.restore(); 
 
         // TITRE DE LA VUE DE FACE (Au-dessus)
         if (showBottomView) {
             ctx2d.fillStyle = '#000000';
-            ctx2d.font = '4px Arial'; // Typographie fine
+            ctx2d.font = '4px Arial'; 
             ctx2d.textAlign = 'center';
             ctx2d.textBaseline = 'bottom';
-            // On calcule la position Y tout en haut de la bouteille
-            const titleY = - (bottleHeight * drawingScale) / 2 - 10;
+            // Remonté plus haut (de 10 à 20) pour bien aérer
+            const titleY = - (bottleHeight * drawingScale) / 2 - 20;
             ctx2d.fillText("VUE DE FACE", mainViewOffsetX, titleY);
         }
 
@@ -344,7 +344,6 @@ function draw2D() {
         if (showBottomView) {
             ctx2d.save();
             
-            // Centrage de cette vue au-dessus du cartouche (à droite)
             const bottomViewX = cartX + (cartW / 2);
             const maxRadiusScaled = max_R * drawingScale;
             const bottomViewY = cartY - maxRadiusScaled - 25; 
@@ -366,44 +365,37 @@ function draw2D() {
             ctx2d.strokeStyle = '#000000';
             ctx2d.lineWidth = 0.6; 
             
-            // Diamètre de base
             ctx2d.beginPath();
             ctx2d.arc(0, 0, (D_bas / 2) * drawingScale, 0, Math.PI * 2);
             ctx2d.stroke();
 
-            // Diamètre de l'épaule
             if (D_epaule - D_bas > 1) {
                 ctx2d.beginPath();
                 ctx2d.arc(0, 0, (D_epaule / 2) * drawingScale, 0, Math.PI * 2);
                 ctx2d.stroke();
             }
 
-            // Titre de la vue (Placé au-dessus, typo fine)
+            // Titre de la vue
             ctx2d.fillStyle = '#000000';
             ctx2d.font = '4px Arial';
             ctx2d.textAlign = 'center';
             ctx2d.textBaseline = 'bottom';
             ctx2d.fillText("VUE DU DESSOUS", 0, -crossLen - 8);
 
-            // ====================================================
-            // COTATION MANUELLE DU DIAMÈTRE SOUS LA VUE
-            // ====================================================
+            // COTATION MANUELLE DU DIAMÈTRE
             const scaledRad = (D_bas / 2) * drawingScale;
-            const dimY = scaledRad + 10; // Positionnée 10mm en dessous du cercle
+            const dimY = scaledRad + 10; 
             
             ctx2d.beginPath();
             ctx2d.strokeStyle = '#000000';
             ctx2d.lineWidth = 0.15;
             
-            // Lignes d'attache
             ctx2d.moveTo(-scaledRad, 1); ctx2d.lineTo(-scaledRad, dimY + 2);
             ctx2d.moveTo(scaledRad, 1); ctx2d.lineTo(scaledRad, dimY + 2);
             
-            // Ligne de cote
             ctx2d.moveTo(-scaledRad, dimY); ctx2d.lineTo(scaledRad, dimY);
             ctx2d.stroke();
 
-            // Flèches
             const aSize = 2.0;
             const drawArrow = (ax, ay, angle) => {
                 ctx2d.beginPath();
@@ -415,7 +407,6 @@ function draw2D() {
             drawArrow(scaledRad, dimY, 0); 
             drawArrow(-scaledRad, dimY, Math.PI); 
 
-            // Texte de la cote
             ctx2d.fillStyle = '#000000';
             ctx2d.font = '3px Arial';
             ctx2d.textAlign = 'center';
