@@ -130,23 +130,23 @@ body {
     flex-shrink: 0;
 }
 
-/* MODIFICATION ICI : Remis sur une seule ligne (row) */
 .right-controls {
     display: flex;
     flex-direction: row; 
     align-items: center; 
-    gap: 15px; /* Espace entre Exporter et les vues */
+    gap: 15px; 
 }
 
+/* MODIFICATION ICI : Réduction des blocs blancs des boutons */
 #Panel-haut button, .view-switcher button {
     background: #ffffff;
     color: #333333;
     border: 1px solid #cccccc;
-    padding: 6px 12px;
+    padding: 4px 10px; /* Moins épais */
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Un peu plus petit */
 }
 
 #Panel-haut button:hover, .view-switcher button:hover { background: #eeeeee; }
@@ -160,12 +160,12 @@ body {
     overflow: hidden; 
 }
 
-/* Panneau Gauche avec Scroll Automatique */
+/* Panneau Gauche */
 #Panel-gauche {
     width: 300px;
     background-color: #ffffff;
     border-right: 1px solid #e0e0e0;
-    overflow-y: auto; /* Scroll normal */
+    overflow-y: auto; 
     height: 100%;
     padding: 15px;
     flex-shrink: 0;
@@ -210,7 +210,6 @@ main {
     background: white; 
 }
 
-/* Espacement pour les sous-blocs */
 .sub-block {
     margin-top: 10px;
     margin-bottom: 10px;
