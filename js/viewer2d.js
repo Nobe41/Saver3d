@@ -2,7 +2,6 @@ const canvas2d = document.getElementById('canvas-2d');
 const ctx2d = canvas2d.getContext('2d');
 const view2DContainer = document.getElementById('viewport-2d');
 
-// Variables de la caméra 2D
 let cam2D = { x: 0, y: 0, zoom: 0 }; 
 let isDragging2D = false;
 let lastMouse2D = { x: 0, y: 0 };
@@ -47,7 +46,6 @@ function centerPaper() {
     cam2D.y = canvas2d.height / 2;
 }
 
-// ---- COMMANDES DE DÉPLACEMENT ----
 canvas2d.addEventListener('mousedown', (e) => {
     isDragging2D = true;
     lastMouse2D = { x: e.clientX, y: e.clientY };
@@ -78,9 +76,6 @@ canvas2d.addEventListener('wheel', (e) => {
     }
 });
 
-// ====================================================
-// OUTILS DE DESSIN TECHNIQUE (CAO)
-// ====================================================
 const fText = (v) => Number.isInteger(v) ? v : v.toFixed(1);
 
 function drawCotation(ctx, x1, y1, x2, y2, dimPos, text, isVertical, drawingScale) {
@@ -244,8 +239,8 @@ function draw2D() {
 
     let mainViewOffsetX = 0;
     if (showBottomView) {
-        // Décale la vue de base vers la gauche pour faire de la place
-        mainViewOffsetX = -paperW / 6; 
+        // Décalage asynchrone parfait : -25% de la largeur de la feuille (plus spacieux)
+        mainViewOffsetX = -paperW / 4; 
     }
 
     const scaleValue = scaleSelect ? scaleSelect.value : '1:1';
@@ -282,7 +277,6 @@ function draw2D() {
         const bottleHeight = points[points.length - 1].y;
         
         ctx2d.save();
-        // On applique le décalage (offsetX) ICI
         ctx2d.translate(mainViewOffsetX, (bottleHeight * drawingScale) / 2); 
         ctx2d.scale(drawingScale, -drawingScale); 
 
@@ -331,7 +325,18 @@ function draw2D() {
         drawLeaderLine(ctx2d, -D_epaule/2, H_corps_fin, fText(r1), drawingScale);
         drawLeaderLine(ctx2d, -D_bas_col/2, H_col_vertical_start, fText(r2), drawingScale);
 
-        ctx2d.restore(); 
+        ctx2d.restore(); // Fin du dessin de la vue de base
+
+        // TITRE DE LA VUE DE FACE (Au-dessus)
+        if (showBottomView) {
+            ctx2d.fillStyle = '#000000';
+            ctx2d.font = '4px Arial'; // Typographie fine
+            ctx2d.textAlign = 'center';
+            ctx2d.textBaseline = 'bottom';
+            // On calcule la position Y tout en haut de la bouteille
+            const titleY = - (bottleHeight * drawingScale) / 2 - 10;
+            ctx2d.fillText("VUE DE FACE", mainViewOffsetX, titleY);
+        }
 
         // ====================================================
         // 4. VUE DU DESSOUS (GÉNÉRÉE MATHÉMATIQUEMENT)
@@ -341,7 +346,6 @@ function draw2D() {
             
             // Centrage de cette vue au-dessus du cartouche (à droite)
             const bottomViewX = cartX + (cartW / 2);
-            // On calcule l'espace en fonction de l'échelle (pour ne pas empiéter sur le cartouche)
             const maxRadiusScaled = max_R * drawingScale;
             const bottomViewY = cartY - maxRadiusScaled - 25; 
             
@@ -367,19 +371,60 @@ function draw2D() {
             ctx2d.arc(0, 0, (D_bas / 2) * drawingScale, 0, Math.PI * 2);
             ctx2d.stroke();
 
-            // Diamètre de l'épaule (seulement si plus grand que le bas pour être visible du dessus/dessous)
+            // Diamètre de l'épaule
             if (D_epaule - D_bas > 1) {
                 ctx2d.beginPath();
                 ctx2d.arc(0, 0, (D_epaule / 2) * drawingScale, 0, Math.PI * 2);
                 ctx2d.stroke();
             }
 
-            // Titre de la vue
+            // Titre de la vue (Placé au-dessus, typo fine)
             ctx2d.fillStyle = '#000000';
-            ctx2d.font = 'bold 4px Arial';
+            ctx2d.font = '4px Arial';
             ctx2d.textAlign = 'center';
-            ctx2d.textBaseline = 'top';
-            ctx2d.fillText("VUE DU DESSOUS", 0, crossLen + 5);
+            ctx2d.textBaseline = 'bottom';
+            ctx2d.fillText("VUE DU DESSOUS", 0, -crossLen - 8);
+
+            // ====================================================
+            // COTATION MANUELLE DU DIAMÈTRE SOUS LA VUE
+            // ====================================================
+            const scaledRad = (D_bas / 2) * drawingScale;
+            const dimY = scaledRad + 10; // Positionnée 10mm en dessous du cercle
+            
+            ctx2d.beginPath();
+            ctx2d.strokeStyle = '#000000';
+            ctx2d.lineWidth = 0.15;
+            
+            // Lignes d'attache
+            ctx2d.moveTo(-scaledRad, 1); ctx2d.lineTo(-scaledRad, dimY + 2);
+            ctx2d.moveTo(scaledRad, 1); ctx2d.lineTo(scaledRad, dimY + 2);
+            
+            // Ligne de cote
+            ctx2d.moveTo(-scaledRad, dimY); ctx2d.lineTo(scaledRad, dimY);
+            ctx2d.stroke();
+
+            // Flèches
+            const aSize = 2.0;
+            const drawArrow = (ax, ay, angle) => {
+                ctx2d.beginPath();
+                ctx2d.moveTo(ax, ay);
+                ctx2d.lineTo(ax - aSize * Math.cos(angle - Math.PI/10), ay - aSize * Math.sin(angle - Math.PI/10));
+                ctx2d.lineTo(ax - aSize * Math.cos(angle + Math.PI/10), ay - aSize * Math.sin(angle + Math.PI/10));
+                ctx2d.fill();
+            };
+            drawArrow(scaledRad, dimY, 0); 
+            drawArrow(-scaledRad, dimY, Math.PI); 
+
+            // Texte de la cote
+            ctx2d.fillStyle = '#000000';
+            ctx2d.font = '3px Arial';
+            ctx2d.textAlign = 'center';
+            ctx2d.textBaseline = 'middle';
+            let txtW = ctx2d.measureText("Ø " + fText(D_bas)).width;
+            ctx2d.fillStyle = '#ffffff';
+            ctx2d.fillRect(-txtW/2 - 0.5, dimY - 2, txtW + 1, 4);
+            ctx2d.fillStyle = '#000000';
+            ctx2d.fillText("Ø " + fText(D_bas), 0, dimY);
 
             ctx2d.restore();
         }
@@ -387,11 +432,9 @@ function draw2D() {
     ctx2d.restore(); 
 }
 
-// Lancement automatique et ajout de l'écouteur sur la case "Vues"
 window.addEventListener('load', () => {
     setTimeout(resizeCanvas2D, 100);
     
-    // Écouteur spécifique pour re-dessiner le plan quand on clique sur la case à cocher
     const cbVueDessous = document.getElementById('cb-vue-dessous');
     if (cbVueDessous) {
         cbVueDessous.addEventListener('change', draw2D);
