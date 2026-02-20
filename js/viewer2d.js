@@ -3,7 +3,7 @@ const ctx2d = canvas2d.getContext('2d');
 const view2DContainer = document.getElementById('viewport-2d');
 
 // Variables de la caméra 2D
-let cam2D = { x: 0, y: 0, zoom: 1 };
+let cam2D = { x: 0, y: 0, zoom: 0 }; // Initialisé à 0 pour forcer le premier centrage
 let isDragging2D = false;
 let lastMouse2D = { x: 0, y: 0 };
 
@@ -17,11 +17,14 @@ const paperFormats = {
 
 // Initialisation et Redimensionnement
 function resizeCanvas2D() {
+    // Si le conteneur est caché ou a une taille de 0, on annule pour éviter les bugs de taille microscopique
+    if (view2DContainer.clientWidth === 0 || view2DContainer.clientHeight === 0) return;
+    
     canvas2d.width = view2DContainer.clientWidth;
     canvas2d.height = view2DContainer.clientHeight;
     
-    // Si c'est le premier affichage, on centre la feuille
-    if (cam2D.zoom === 1 && cam2D.x === 0 && cam2D.y === 0) {
+    // Si c'est le premier affichage (zoom à 0), on centre la feuille à la bonne taille
+    if (cam2D.zoom === 0) {
         centerPaper();
     }
     draw2D();
@@ -33,13 +36,26 @@ window.addEventListener('resize', () => {
     }
 });
 
+// NOUVEAU : Détecteur qui observe quand tu ouvres l'onglet 2D
+const observer2D = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (!view2DContainer.classList.contains('hidden')) {
+            // Laisse un petit délai au CSS pour s'afficher avant de calculer la taille
+            setTimeout(resizeCanvas2D, 20); 
+        }
+    });
+});
+observer2D.observe(view2DContainer, { attributes: true, attributeFilter: ['class'] });
+
 function centerPaper() {
+    if (canvas2d.width === 0 || canvas2d.height === 0) return;
+    
     const format = document.getElementById('paper-format-select').value;
     const paper = paperFormats[format] || paperFormats['A4_P'];
     
-    // On calcule un zoom pour que la feuille prenne environ 80% de l'écran
-    const scaleX = (canvas2d.width * 0.8) / paper.w;
-    const scaleY = (canvas2d.height * 0.8) / paper.h;
+    // On calcule un zoom pour que la feuille prenne 85% de l'écran (belle taille)
+    const scaleX = (canvas2d.width * 0.85) / paper.w;
+    const scaleY = (canvas2d.height * 0.85) / paper.h;
     cam2D.zoom = Math.min(scaleX, scaleY);
     
     // On centre
@@ -76,9 +92,8 @@ canvas2d.addEventListener('wheel', (e) => {
     const zoomAmount = -e.deltaY * 0.001;
     const newZoom = cam2D.zoom * (1 + zoomAmount);
     
-    // On limite le zoom entre très petit et très grand
-    if (newZoom > 0.1 && newZoom < 10) {
-        // Zoom centré sur la souris
+    // On limite le zoom (ni trop petit, ni trop grand)
+    if (newZoom > 0.1 && newZoom < 20) {
         const rect = canvas2d.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
@@ -94,9 +109,9 @@ canvas2d.addEventListener('wheel', (e) => {
 // DESSIN (Le cœur de la CAO)
 // ----------------------------------------------------
 function draw2D() {
-    if (!ctx2d) return;
+    if (!ctx2d || canvas2d.width === 0) return;
 
-    // 1. On nettoie tout et on peint le fond du logiciel (Gris/Bleuté comme la 3D)
+    // 1. On nettoie tout et on peint le fond du logiciel
     ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
     ctx2d.fillStyle = '#eef2f5';
     ctx2d.fillRect(0, 0, canvas2d.width, canvas2d.height);
@@ -117,7 +132,7 @@ function draw2D() {
     const startX = -paperW / 2;
     const startY = -paperH / 2;
 
-    // Ombre de la feuille
+    // Ombre de la feuille pour le style
     ctx2d.shadowColor = 'rgba(0, 0, 0, 0.2)';
     ctx2d.shadowBlur = 10;
     ctx2d.shadowOffsetX = 5;
@@ -154,71 +169,72 @@ function draw2D() {
     ctx2d.fillText("Vérificateur: " + document.getElementById('cartouche-checker').value, cartX + 2, cartY + 27);
     ctx2d.fillText("Contenance: " + document.getElementById('cartouche-capacity').value, cartX + 2, cartY + 37);
     
-    const scaleText = document.getElementById('drawing-scale-select').options[document.getElementById('drawing-scale-select').selectedIndex].text;
+    const scaleSelect = document.getElementById('drawing-scale-select');
+    const scaleText = scaleSelect.options[scaleSelect.selectedIndex].text;
     ctx2d.fillText("Echelle: " + scaleText, cartX + 70, cartY + 37);
 
     // ---- DESSIN DE LA BOUTEILLE (Le profil mathématique) ----
-    const scaleValue = document.getElementById('drawing-scale-select').value;
-    // Traduction de l'échelle (ex: "1:2" -> 0.5)
+    const scaleValue = scaleSelect.value;
     let drawingScale = 1;
     if (scaleValue === "1:2") drawingScale = 0.5;
     if (scaleValue === "1:5") drawingScale = 0.2;
     if (scaleValue === "2:1") drawingScale = 2;
 
-    const points = generateBottleProfile(); // On récupère la géométrie exacte
-    if (!points || points.length === 0) {
-        ctx2d.restore();
-        return;
+    if (typeof generateBottleProfile === 'function') {
+        const points = generateBottleProfile(); 
+        if (!points || points.length === 0) {
+            ctx2d.restore();
+            return;
+        }
+
+        const bottleHeight = points[points.length - 1].y;
+        
+        ctx2d.save();
+        // On place la base de la bouteille au centre de la feuille (décalée vers le bas)
+        ctx2d.translate(0, (bottleHeight * drawingScale) / 2); 
+        ctx2d.scale(drawingScale, -drawingScale); // L'axe Y de l'écran descend, celui des maths monte
+
+        // Axe de symétrie (Trait long, petit espace, trait court)
+        ctx2d.beginPath();
+        ctx2d.setLineDash([10, 2, 2, 2]);
+        ctx2d.moveTo(0, -10);
+        ctx2d.lineTo(0, bottleHeight + 20);
+        ctx2d.strokeStyle = '#888888';
+        ctx2d.lineWidth = 0.3 / drawingScale; 
+        ctx2d.stroke();
+        ctx2d.setLineDash([]);
+
+        // Tracé du contour principal
+        ctx2d.strokeStyle = '#000000';
+        ctx2d.lineWidth = 0.8 / drawingScale; 
+        ctx2d.lineJoin = 'round';
+
+        // Moitié Droite
+        ctx2d.beginPath();
+        ctx2d.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx2d.lineTo(points[i].x, points[i].y);
+        }
+        ctx2d.lineTo(0, points[points.length-1].y);
+        ctx2d.stroke();
+
+        // Moitié Gauche (Miroir)
+        ctx2d.beginPath();
+        ctx2d.moveTo(-points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx2d.lineTo(-points[i].x, points[i].y);
+        }
+        ctx2d.lineTo(0, points[points.length-1].y);
+        ctx2d.moveTo(points[0].x, points[0].y);
+        ctx2d.lineTo(-points[0].x, points[0].y);
+        ctx2d.stroke();
+
+        ctx2d.restore(); 
     }
-
-    const bottleHeight = points[points.length - 1].y;
-    
-    ctx2d.save();
-    // On place la base de la bouteille au centre de la feuille (décalée vers le bas)
-    ctx2d.translate(0, (bottleHeight * drawingScale) / 2); 
-    ctx2d.scale(drawingScale, -drawingScale); // L'axe Y de l'écran descend, celui des maths monte
-
-    // Axe de symétrie (Trait d'axe: long-court-long)
-    ctx2d.beginPath();
-    ctx2d.setLineDash([10, 2, 2, 2]);
-    ctx2d.moveTo(0, -10);
-    ctx2d.lineTo(0, bottleHeight + 20);
-    ctx2d.strokeStyle = '#888888';
-    ctx2d.lineWidth = 0.3 / drawingScale; // Ligne très fine
-    ctx2d.stroke();
-    ctx2d.setLineDash([]);
-
-    // Tracé du contour principal (Traits continus noirs)
-    ctx2d.strokeStyle = '#000000';
-    ctx2d.lineWidth = 0.8 / drawingScale; // Trait technique
-    ctx2d.lineJoin = 'round';
-
-    // Moitié Droite
-    ctx2d.beginPath();
-    ctx2d.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-        ctx2d.lineTo(points[i].x, points[i].y);
-    }
-    // Haut plat
-    ctx2d.lineTo(0, points[points.length-1].y);
-    ctx2d.stroke();
-
-    // Moitié Gauche (Miroir)
-    ctx2d.beginPath();
-    ctx2d.moveTo(-points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-        ctx2d.lineTo(-points[i].x, points[i].y);
-    }
-    // Haut plat
-    ctx2d.lineTo(0, points[points.length-1].y);
-    // Fond plat
-    ctx2d.moveTo(points[0].x, points[0].y);
-    ctx2d.lineTo(-points[0].x, points[0].y);
-    ctx2d.stroke();
-
-    ctx2d.restore(); // Fin du dessin de la bouteille
-    ctx2d.restore(); // Fin de l'espace feuille
+    ctx2d.restore(); 
 }
 
-// Premier centrage manuel au cas où
-setTimeout(centerPaper, 500);
+// Sécurité au chargement
+window.addEventListener('load', () => {
+    setTimeout(resizeCanvas2D, 100);
+});
