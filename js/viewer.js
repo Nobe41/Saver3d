@@ -2,8 +2,8 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    // MODIFICATION ICI : Fond blanc pur (0xffffff) comme dans ton CSS
-    scene.background = new THREE.Color(0xffffff);
+    // MODIFICATION ICI : La couleur de fond exacte demandée
+    scene.background = new THREE.Color(0xeef2f5);
 
     const w = viewport3D.clientWidth;
     const h = viewport3D.clientHeight;
@@ -19,19 +19,20 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    // Grille un peu plus discrète sur fond blanc
-    const grid = new THREE.GridHelper(400, 20, 0xdddddd, 0xeeeeee);
+    // Grille un peu plus subtile sur ce nouveau fond gris clair
+    const grid = new THREE.GridHelper(400, 20, 0xcccccc, 0xe5e5e5);
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
     scene.add(camera); 
     
-    // Lumière un peu plus forte pour faire briller le reflet
-    const dL = new THREE.DirectionalLight(0xffffff, 1.0); 
+    // Lumière directionnelle forte (pour les reflets nets)
+    const dL = new THREE.DirectionalLight(0xffffff, 1.2); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
     
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    // MODIFICATION ICI : Lumière ambiante plus faible pour diminuer la luminosité globale
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 150, 0); 
@@ -51,12 +52,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MODIFICATIONS MATÉRIAU (Couleur douce + Reflets nets)
+    // MODIFICATIONS MATÉRIAU (Reflets accentués)
     // ====================================================
     const mat = new THREE.MeshStandardMaterial({ 
-        color: 0xb8d8f8,   // Nouveau bleu : plus doux, pastel, moins "fluo"
-        roughness: 0.08,   // Rugosité très faible = reflets très nets et brillants
-        metalness: 0.1,    // Un léger aspect métallique pour la brillance
+        color: 0xaad4f5,   // Bleu pastel légèrement plus profond
+        roughness: 0.02,   // Quasi miroir : surface très lisse pour des reflets ultra nets
+        metalness: 0.35,   // Augmenté pour faire "claquer" la lumière blanche dessus
         side: THREE.DoubleSide 
     });
     // ====================================================
@@ -67,7 +68,6 @@ function updateBouteille() {
     bottleGroup.add(bottom);
 
     const edges = new THREE.EdgesGeometry(geometry, 40); 
-    // Lignes noires un peu plus discrètes pour ne pas gâcher le rendu
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
