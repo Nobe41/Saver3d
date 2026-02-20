@@ -26,19 +26,18 @@ function initLogiciel() {
     scene.add(camera); 
     
     // ====================================================
-    // ÉCLAIRAGE "STUDIO" (2 Lumières pour les reflets)
+    // ÉCLAIRAGE ADOUCI (Moins agressif)
     // ====================================================
-    // Lumière 1 (décalée à gauche)
-    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.75); 
+    // Lumière 1 
+    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.55); // Puissance baissée
     dL1.position.set(-1.5, 0, 3); 
     camera.add(dL1);
 
-    // Lumière 2 (décalée à droite)
-    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.75); 
+    // Lumière 2 
+    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.55); // Puissance baissée
     dL2.position.set(1.5, 0, 3); 
     camera.add(dL2);
     
-    // Lumière ambiante très douce pour ne pas saturer le bleu
     scene.add(new THREE.AmbientLight(0xffffff, 0.45));
     // ====================================================
 
@@ -60,12 +59,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU "SATINÉ" (Bleu d'origine + Reflets doux)
+    // MATÉRIAU "SATINÉ DOUX"
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x99ccff,     // Le bleu d'origine
-        specular: 0xbbbbbb,  // Reflet adouci (gris clair, pas blanc pur)
-        shininess: 45,       // Assez bas = le reflet s'étale (effet mat/brillant) au lieu de piquer
+        color: 0x99ccff,     
+        specular: 0x555555,  // Reflet beaucoup plus sombre (moins flash)
+        shininess: 40,       // Douceur du reflet
         side: THREE.DoubleSide 
     });
     // ====================================================
