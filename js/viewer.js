@@ -18,13 +18,14 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    const grid = new THREE.GridHelper(400, 20, 0xcccccc, 0xe5e5e5);
-    grid.material.opacity = 0.5; grid.material.transparent = true;
+    // MODIFICATION ICI : Grille légèrement plus foncée et un peu plus opaque
+    const grid = new THREE.GridHelper(400, 20, 0xaaaaaa, 0xcccccc);
+    grid.material.opacity = 0.6; 
+    grid.material.transparent = true;
     scene.add(grid);
 
     scene.add(camera); 
     
-    // On remonte un tout petit peu la lumière directionnelle pour que le blanc "claque"
     const dL = new THREE.DirectionalLight(0xffffff, 1.2); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
@@ -49,12 +50,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // ASTUCE REFLET : Passage en "MeshPhongMaterial"
+    // MODIFICATION ICI : Couleur bleu grisé beaucoup moins fluo
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x7aa5c7,     // Ta couleur exacte, inchangée
-        specular: 0xffffff,  // REFLET FORCÉ EN BLANC PUR
-        shininess: 120,      // Puissance et netteté du reflet blanc
+        color: 0x8aa3b8,     // Bleu ardoise / pastel (désaturé)
+        specular: 0xffffff,  // Reflet blanc pur toujours présent
+        shininess: 120,      // Netteté du reflet
         side: THREE.DoubleSide 
     });
     // ====================================================
