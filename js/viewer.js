@@ -25,9 +25,6 @@ function initLogiciel() {
 
     scene.add(camera); 
     
-    // ====================================================
-    // ÉCLAIRAGE STUDIO (Inchangé)
-    // ====================================================
     const dL1 = new THREE.DirectionalLight(0xffffff, 0.45); 
     dL1.position.set(-3, 0, 1.5);
     camera.add(dL1);
@@ -37,7 +34,6 @@ function initLogiciel() {
     camera.add(dL2);
     
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    // ====================================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 150, 0); 
@@ -57,13 +53,11 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU : REFLET BLEU CLAIR ET FIN
+    // MATÉRIAU PRINCIPAL (Bouteille + Gravure)
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x82b5e0,     // Le bleu de base (inchangé)
-        // MODIFICATION 1 : Reflet bleu clair distinct (pas blanc)
+        color: 0x82b5e0,     
         specular: 0x9ec9e8,  
-        // MODIFICATION 2 : Valeur élevée = reflet fin, net et vertical
         shininess: 90,       
         side: THREE.DoubleSide 
     });
@@ -80,7 +74,8 @@ function updateBouteille() {
 
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
-        const matGravure = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.4 });
+        
+        // MODIFICATION ICI : J'ai supprimé le "matGravure" gris qui posait problème !
         
         engravings.forEach(eng => {
             const img = window.engravingImages[eng.id];
@@ -144,7 +139,9 @@ function updateBouteille() {
             }
             
             textGeo.computeVertexNormals();
-            bottleGroup.add(new THREE.Mesh(textGeo, matGravure));
+            
+            // MODIFICATION ICI : On applique "mat" (le matériau de la bouteille) sur la géométrie de la gravure
+            bottleGroup.add(new THREE.Mesh(textGeo, mat));
         });
     }
 
