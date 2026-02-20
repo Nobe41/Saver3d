@@ -2,7 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xeef2f5);
+    scene.background = new THREE.Color(0xeef2f5); // Fond gris clair conservé
 
     const w = viewport3D.clientWidth;
     const h = viewport3D.clientHeight;
@@ -26,20 +26,20 @@ function initLogiciel() {
     scene.add(camera); 
     
     // ====================================================
-    // ÉCLAIRAGE SUBTIL (Projecteurs baissés)
+    // ÉCLAIRAGE "STUDIO SOFTBOX" (Bien séparé sur les côtés)
     // ====================================================
-    // Lumière 1 
-    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.4); 
-    dL1.position.set(-1.5, 0, 3); 
+    // Lumière 1 (Écartée loin à gauche)
+    const dL1 = new THREE.DirectionalLight(0xffffff, 0.45); 
+    dL1.position.set(-3, 0, 1.5); // Le -3 la pousse bien sur le côté
     camera.add(dL1);
 
-    // Lumière 2 
-    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.4); 
-    dL2.position.set(1.5, 0, 3); 
+    // Lumière 2 (Écartée loin à droite)
+    const dL2 = new THREE.DirectionalLight(0xffffff, 0.45); 
+    dL2.position.set(3, 0, 1.5);  // Le 3 la pousse de l'autre côté
     camera.add(dL2);
     
-    // Lumière ambiante légèrement augmentée pour compenser
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    // Lumière ambiante pour éclairer globalement
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
     // ====================================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -60,12 +60,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU "MAT AVEC LÉGER REFLET"
+    // MATÉRIAU "SATINÉ" (Comme sur ta photo)
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x99ccff,     
-        specular: 0x222222,  // Gris très sombre pour un reflet presque effacé
-        shininess: 30,       // Reflet très diffus et doux
+        color: 0x82b5e0,     // Le bleu exact de ta capture d'écran
+        specular: 0x777777,  // Reflet gris doux pour ne pas éblouir
+        shininess: 20,       // Valeur basse = reflet large, doux et diffus
         side: THREE.DoubleSide 
     });
     // ====================================================
@@ -76,7 +76,7 @@ function updateBouteille() {
     bottleGroup.add(bottom);
 
     const edges = new THREE.EdgesGeometry(geometry, 40); 
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
     if (typeof getEngravingsData === 'function') {
