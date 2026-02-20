@@ -18,7 +18,6 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    // MODIFICATION ICI : Grille légèrement plus foncée et un peu plus opaque
     const grid = new THREE.GridHelper(400, 20, 0xaaaaaa, 0xcccccc);
     grid.material.opacity = 0.6; 
     grid.material.transparent = true;
@@ -26,11 +25,22 @@ function initLogiciel() {
 
     scene.add(camera); 
     
-    const dL = new THREE.DirectionalLight(0xffffff, 1.2); 
-    dL.position.set(0, 0, 1); 
-    camera.add(dL);
+    // ====================================================
+    // ÉCLAIRAGE "STUDIO" (2 Lumières pour les reflets)
+    // ====================================================
+    // Lumière 1 (décalée à gauche)
+    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.75); 
+    dL1.position.set(-1.5, 0, 3); 
+    camera.add(dL1);
+
+    // Lumière 2 (décalée à droite)
+    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.75); 
+    dL2.position.set(1.5, 0, 3); 
+    camera.add(dL2);
     
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    // Lumière ambiante très douce pour ne pas saturer le bleu
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    // ====================================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 150, 0); 
@@ -50,12 +60,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MODIFICATION ICI : Couleur bleu grisé beaucoup moins fluo
+    // MATÉRIAU "SATINÉ" (Bleu d'origine + Reflets doux)
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x8aa3b8,     // Bleu ardoise / pastel (désaturé)
-        specular: 0xffffff,  // Reflet blanc pur toujours présent
-        shininess: 120,      // Netteté du reflet
+        color: 0x99ccff,     // Le bleu d'origine
+        specular: 0xbbbbbb,  // Reflet adouci (gris clair, pas blanc pur)
+        shininess: 45,       // Assez bas = le reflet s'étale (effet mat/brillant) au lieu de piquer
         side: THREE.DoubleSide 
     });
     // ====================================================
