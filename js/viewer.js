@@ -26,19 +26,20 @@ function initLogiciel() {
     scene.add(camera); 
     
     // ====================================================
-    // ÉCLAIRAGE ADOUCI (Moins agressif)
+    // ÉCLAIRAGE SUBTIL (Projecteurs baissés)
     // ====================================================
     // Lumière 1 
-    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.55); // Puissance baissée
+    const dL1 = new THREE.DirectionalLight(0xe8f0f8, 0.4); 
     dL1.position.set(-1.5, 0, 3); 
     camera.add(dL1);
 
     // Lumière 2 
-    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.55); // Puissance baissée
+    const dL2 = new THREE.DirectionalLight(0xe8f0f8, 0.4); 
     dL2.position.set(1.5, 0, 3); 
     camera.add(dL2);
     
-    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    // Lumière ambiante légèrement augmentée pour compenser
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
     // ====================================================
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -59,12 +60,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU "SATINÉ DOUX"
+    // MATÉRIAU "MAT AVEC LÉGER REFLET"
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
         color: 0x99ccff,     
-        specular: 0x555555,  // Reflet beaucoup plus sombre (moins flash)
-        shininess: 40,       // Douceur du reflet
+        specular: 0x222222,  // Gris très sombre pour un reflet presque effacé
+        shininess: 30,       // Reflet très diffus et doux
         side: THREE.DoubleSide 
     });
     // ====================================================
