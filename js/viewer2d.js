@@ -82,43 +82,55 @@ canvas2d.addEventListener('wheel', (e) => {
 // ====================================================
 const fText = (v) => Number.isInteger(v) ? v : v.toFixed(1);
 
-function drawCotation(ctx, x1, y1, x2, y2, offset, text, isVertical, drawingScale) {
+function drawCotation(ctx, x1, y1, x2, y2, dimPos, text, isVertical, drawingScale) {
     ctx.save();
-    ctx.strokeStyle = '#0055aa'; // Bleu technique
-    ctx.fillStyle = '#0055aa';
-    ctx.lineWidth = 0.3 / drawingScale;
+    // Noir et trait très fin (type trait d'axe/attache)
+    ctx.strokeStyle = '#000000'; 
+    ctx.fillStyle = '#000000';
+    ctx.lineWidth = 0.15 / drawingScale; 
     
-    let dimX1 = x1, dimY1 = y1, dimX2 = x2, dimY2 = y2;
-    let sign = offset >= 0 ? 1 : -1;
+    let dimX1, dimY1, dimX2, dimY2;
+    let sign;
 
     ctx.beginPath();
     if (isVertical) {
-        dimX1 += offset; dimX2 += offset;
-        // Lignes d'attache avec décalage de 1mm du bord
-        ctx.moveTo(x1 + sign*1/drawingScale, y1); ctx.lineTo(dimX1 + sign*2/drawingScale, y1);
-        ctx.moveTo(x2 + sign*1/drawingScale, y2); ctx.lineTo(dimX2 + sign*2/drawingScale, y2);
+        sign = dimPos > Math.max(x1, x2) ? 1 : -1;
+        dimX1 = dimPos; dimY1 = y1;
+        dimX2 = dimPos; dimY2 = y2;
+        
+        // Lignes d'attache : partent exactement du point mesuré sur la bouteille
+        // Le petit "sign*1" laisse 1mm de blanc réglementaire entre la pièce et le trait de cote
+        ctx.moveTo(x1 + sign*1/drawingScale, y1); 
+        ctx.lineTo(dimPos + sign*2/drawingScale, y1);
+        
+        ctx.moveTo(x2 + sign*1/drawingScale, y2); 
+        ctx.lineTo(dimPos + sign*2/drawingScale, y2);
     } else {
-        dimY1 += offset; dimY2 += offset;
-        if (offset !== 0) {
-            ctx.moveTo(x1, y1 + sign*1/drawingScale); ctx.lineTo(x1, dimY1 + sign*2/drawingScale);
-            ctx.moveTo(x2, y2 + sign*1/drawingScale); ctx.lineTo(x2, dimY2 + sign*2/drawingScale);
+        sign = dimPos > Math.max(y1, y2) ? 1 : -1;
+        dimX1 = x1; dimY1 = dimPos;
+        dimX2 = x2; dimY2 = dimPos;
+        
+        // Lignes d'attache horizontales si décalage
+        if (Math.abs(dimPos - y1) > 0.1) {
+            ctx.moveTo(x1, y1 + sign*1/drawingScale); 
+            ctx.lineTo(x1, dimPos + sign*2/drawingScale);
+            ctx.moveTo(x2, y2 + sign*1/drawingScale); 
+            ctx.lineTo(x2, dimPos + sign*2/drawingScale);
         }
     }
-    ctx.stroke();
-
-    // Ligne de cote principale
-    ctx.beginPath();
+    
+    // Ligne de cote (entre les flèches)
     ctx.moveTo(dimX1, dimY1);
     ctx.lineTo(dimX2, dimY2);
     ctx.stroke();
 
-    // Flèches
-    const aSize = 2.5 / drawingScale;
+    // Flèches fines (type architecture/meca)
+    const aSize = 2.0 / drawingScale;
     const drawArrow = (ax, ay, angle) => {
         ctx.beginPath();
         ctx.moveTo(ax, ay);
-        ctx.lineTo(ax - aSize * Math.cos(angle - Math.PI/8), ay - aSize * Math.sin(angle - Math.PI/8));
-        ctx.lineTo(ax - aSize * Math.cos(angle + Math.PI/8), ay - aSize * Math.sin(angle + Math.PI/8));
+        ctx.lineTo(ax - aSize * Math.cos(angle - Math.PI/10), ay - aSize * Math.sin(angle - Math.PI/10));
+        ctx.lineTo(ax - aSize * Math.cos(angle + Math.PI/10), ay - aSize * Math.sin(angle + Math.PI/10));
         ctx.fill();
     };
 
@@ -131,7 +143,7 @@ function drawCotation(ctx, x1, y1, x2, y2, offset, text, isVertical, drawingScal
     ctx.translate((dimX1 + dimX2) / 2, (dimY1 + dimY2) / 2);
     ctx.scale(1, -1); // Remettre à l'endroit
     
-    ctx.font = 'bold ' + (3 / drawingScale) + 'px Arial';
+    ctx.font = (3 / drawingScale) + 'px Arial'; // Sans gras pour plus de finesse
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
@@ -142,7 +154,7 @@ function drawCotation(ctx, x1, y1, x2, y2, offset, text, isVertical, drawingScal
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(-textWidth/2 - 0.5/drawingScale, -textHeight/2, textWidth + 1/drawingScale, textHeight);
     
-    ctx.fillStyle = '#0055aa';
+    ctx.fillStyle = '#000000';
     ctx.fillText(text, 0, 0);
     ctx.restore();
     ctx.restore();
@@ -150,16 +162,16 @@ function drawCotation(ctx, x1, y1, x2, y2, offset, text, isVertical, drawingScal
 
 function drawLeaderLine(ctx, x, y, text, drawingScale) {
     ctx.save();
-    ctx.strokeStyle = '#0055aa';
-    ctx.fillStyle = '#0055aa';
-    ctx.lineWidth = 0.3 / drawingScale;
+    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = '#000000';
+    ctx.lineWidth = 0.15 / drawingScale;
     
-    // Point d'accroche
+    // Point d'accroche très fin
     ctx.beginPath();
-    ctx.arc(x, y, 0.6/drawingScale, 0, Math.PI*2);
+    ctx.arc(x, y, 0.4/drawingScale, 0, Math.PI*2);
     ctx.fill();
     
-    // Ligne oblique et horizontale vers la gauche
+    // Ligne oblique et horizontale
     let endX = x - 15/drawingScale;
     let endY = y + 15/drawingScale;
     
@@ -169,11 +181,11 @@ function drawLeaderLine(ctx, x, y, text, drawingScale) {
     ctx.lineTo(endX - 5/drawingScale, endY);
     ctx.stroke();
     
-    // Texte
+    // Texte fin
     ctx.save();
     ctx.translate(endX - 6/drawingScale, endY);
     ctx.scale(1, -1); 
-    ctx.font = 'bold ' + (3 / drawingScale) + 'px Arial';
+    ctx.font = (3 / drawingScale) + 'px Arial';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText("R" + text, 0, -0.5/drawingScale);
@@ -183,7 +195,7 @@ function drawLeaderLine(ctx, x, y, text, drawingScale) {
 }
 
 // ====================================================
-// DESSIN DU PLAN (Le cœur de la CAO)
+// DESSIN DU PLAN
 // ====================================================
 function draw2D() {
     if (!ctx2d || canvas2d.width === 0) return;
@@ -253,7 +265,6 @@ function draw2D() {
             return;
         }
 
-        // Récupération de toutes les valeurs exactes des sliders
         const H_base = parseFloat(document.getElementById('height-slider').value) || 320;
         const H_corps_fin = parseFloat(document.getElementById('body-height-slider').value) || 200;
         const H_col_vertical_start = parseFloat(document.getElementById('neck-height-slider').value) || 270;
@@ -288,9 +299,9 @@ function draw2D() {
         ctx2d.stroke();
         ctx2d.setLineDash([]);
 
-        // 2. Tracé du contour principal (Bouteille)
+        // 2. Tracé du contour principal (Bouteille) = Trait fort
         ctx2d.strokeStyle = '#000000';
-        ctx2d.lineWidth = 0.8 / drawingScale; 
+        ctx2d.lineWidth = 0.6 / drawingScale; 
         ctx2d.lineJoin = 'round';
 
         ctx2d.beginPath();
@@ -308,23 +319,24 @@ function draw2D() {
         ctx2d.stroke();
 
         // ====================================================
-        // 3. MISE EN PLACE DES COTATIONS EXACTES
+        // 3. COTATIONS EXACTES
         // ====================================================
         
-        // HAUTEURS (À droite de la bouteille)
-        drawCotation(ctx2d, max_R, 0, max_R, H_corps_fin, 15, fText(H_corps_fin), true, drawingScale);
-        drawCotation(ctx2d, max_R, 0, max_R, H_col_vertical_start, 30, fText(H_col_vertical_start), true, drawingScale);
-        drawCotation(ctx2d, max_R, 0, max_R, H_tot_reel, 45, fText(H_tot_reel), true, drawingScale);
-        drawCotation(ctx2d, max_R, Y_bague_start, max_R, H_tot_reel, 15, fText(H_finish), true, drawingScale); // Hauteur Bague
+        // HAUTEURS (Lignes d'attache partent exactement du rayon (x1) de la zone mesurée)
+        // drawCotation(ctx, x1, y1, x2, y2, PosX_de_la_ligne, texte, isVertical, scale)
+        drawCotation(ctx2d, D_bas/2, 0, D_epaule/2, H_corps_fin, max_R + 15, fText(H_corps_fin), true, drawingScale);
+        drawCotation(ctx2d, D_bas/2, 0, D_bas_col/2, H_col_vertical_start, max_R + 30, fText(H_col_vertical_start), true, drawingScale);
+        drawCotation(ctx2d, D_bas/2, 0, D_finish/2, H_tot_reel, max_R + 45, fText(H_tot_reel), true, drawingScale);
+        drawCotation(ctx2d, D_haut_col/2, Y_bague_start, D_finish/2, H_tot_reel, max_R + 15, fText(H_finish), true, drawingScale);
 
-        // DIAMÈTRES (Traversant horizontaux)
+        // DIAMÈTRES 
         drawCotation(ctx2d, -D_bas/2, 0, D_bas/2, 0, -15, "Ø " + fText(D_bas), false, drawingScale);
-        drawCotation(ctx2d, -D_epaule/2, H_corps_fin, D_epaule/2, H_corps_fin, 0, "Ø " + fText(D_epaule), false, drawingScale);
-        drawCotation(ctx2d, -D_bas_col/2, H_col_vertical_start, D_bas_col/2, H_col_vertical_start, 0, "Ø " + fText(D_bas_col), false, drawingScale);
-        drawCotation(ctx2d, -D_haut_col/2, Y_bague_start, D_haut_col/2, Y_bague_start, 0, "Ø " + fText(D_haut_col), false, drawingScale);
-        drawCotation(ctx2d, -D_finish/2, H_tot_reel, D_finish/2, H_tot_reel, 15, "Ø " + fText(D_finish), false, drawingScale);
+        drawCotation(ctx2d, -D_epaule/2, H_corps_fin, D_epaule/2, H_corps_fin, H_corps_fin, "Ø " + fText(D_epaule), false, drawingScale);
+        drawCotation(ctx2d, -D_bas_col/2, H_col_vertical_start, D_bas_col/2, H_col_vertical_start, H_col_vertical_start, "Ø " + fText(D_bas_col), false, drawingScale);
+        drawCotation(ctx2d, -D_haut_col/2, Y_bague_start, D_haut_col/2, Y_bague_start, Y_bague_start, "Ø " + fText(D_haut_col), false, drawingScale);
+        drawCotation(ctx2d, -D_finish/2, H_tot_reel, D_finish/2, H_tot_reel, H_tot_reel + 15, "Ø " + fText(D_finish), false, drawingScale);
 
-        // RAYONS (Pointés à gauche)
+        // RAYONS (Lignes de repères)
         drawLeaderLine(ctx2d, -D_bas/2, R_pied, fText(R_pied), drawingScale);
         drawLeaderLine(ctx2d, -D_epaule/2, H_corps_fin, fText(r1), drawingScale);
         drawLeaderLine(ctx2d, -D_bas_col/2, H_col_vertical_start, fText(r2), drawingScale);
