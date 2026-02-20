@@ -2,7 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xeef2f5); // Fond gris clair conservé
+    scene.background = new THREE.Color(0xeef2f5);
 
     const w = viewport3D.clientWidth;
     const h = viewport3D.clientHeight;
@@ -26,7 +26,7 @@ function initLogiciel() {
     scene.add(camera); 
     
     // ====================================================
-    // ÉCLAIRAGE "STUDIO SOFTBOX" (Inchangé)
+    // ÉCLAIRAGE STUDIO (Inchangé)
     // ====================================================
     const dL1 = new THREE.DirectionalLight(0xffffff, 0.45); 
     dL1.position.set(-3, 0, 1.5);
@@ -57,12 +57,14 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU "SATINÉ TON SUR TON"
+    // MATÉRIAU : REFLET BLEU CLAIR ET FIN
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
         color: 0x82b5e0,     // Le bleu de base (inchangé)
-        specular: 0xaed4f0,  // MODIFICATION ICI : Reflet bleu clair (ton sur ton) au lieu de gris
-        shininess: 20,       // Douceur inchangée
+        // MODIFICATION 1 : Reflet bleu clair distinct (pas blanc)
+        specular: 0x9ec9e8,  
+        // MODIFICATION 2 : Valeur élevée = reflet fin, net et vertical
+        shininess: 90,       
         side: THREE.DoubleSide 
     });
     // ====================================================
