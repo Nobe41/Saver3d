@@ -130,12 +130,12 @@ body {
     flex-shrink: 0;
 }
 
-/* Boutons de la barre du haut */
+/* MODIFICATION ICI : Remis sur une seule ligne (row) */
 .right-controls {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end; /* Aligne le bouton Exporter à droite au-dessus des onglets */
-    gap: 8px;
+    flex-direction: row; 
+    align-items: center; 
+    gap: 15px; /* Espace entre Exporter et les vues */
 }
 
 #Panel-haut button, .view-switcher button {
@@ -222,7 +222,7 @@ main {
     border-bottom: none;
     padding: 5px 0;
     margin-bottom: 5px;
-    color: #666; /* Couleur un peu plus claire pour la hiérarchie */
+    color: #666; 
 }
 
 /* ==========================================
