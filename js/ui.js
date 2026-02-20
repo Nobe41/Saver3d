@@ -63,6 +63,12 @@ function switchView(activeBtn, activeView) {
     
     activeBtn.classList.add('active');
     activeView.classList.remove('hidden');
+
+    // NOUVEAU : Met à jour la vue 2D quand on clique sur l'onglet
+    if (activeBtn === btn2D) {
+        if (typeof resizeCanvas2D === 'function') resizeCanvas2D();
+        if (typeof draw2D === 'function') draw2D();
+    }
 }
 
 btn3D.addEventListener('click', () => switchView(btn3D, view3D));
@@ -70,7 +76,7 @@ btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
 function setupListeners() {
-    const inputs = document.querySelectorAll('input[type=range], input[type=number]');
+    const inputs = document.querySelectorAll('input[type=range], input[type=number], select, input[type=text]');
     inputs.forEach(input => {
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
@@ -78,11 +84,14 @@ function setupListeners() {
             if (input.type === 'range') {
                 const num = input.parentElement.querySelector('input[type=number]');
                 if (num) num.value = input.value;
-            } else {
+            } else if (input.type === 'number') {
                 const rng = input.parentElement.parentElement.querySelector('input[type=range]');
                 if (rng) rng.value = input.value;
             }
+            
+            // Met à jour la 3D ET la 2D en temps réel
             if (typeof updateBouteille === 'function') updateBouteille();
+            if (typeof draw2D === 'function' && !view2D.classList.contains('hidden')) draw2D();
         });
     });
     
