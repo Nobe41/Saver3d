@@ -2,7 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    // MODIFICATION ICI : La couleur de fond exacte demandée
+    // Le fond gris clair demandé
     scene.background = new THREE.Color(0xeef2f5);
 
     const w = viewport3D.clientWidth;
@@ -19,20 +19,21 @@ function initLogiciel() {
 
     scene.add(new THREE.AxesHelper(100));
     
-    // Grille un peu plus subtile sur ce nouveau fond gris clair
+    // Grille subtile
     const grid = new THREE.GridHelper(400, 20, 0xcccccc, 0xe5e5e5);
     grid.material.opacity = 0.5; grid.material.transparent = true;
     scene.add(grid);
 
+    // On attache la lumière à la caméra
     scene.add(camera); 
     
-    // Lumière directionnelle forte (pour les reflets nets)
-    const dL = new THREE.DirectionalLight(0xffffff, 1.2); 
+    // Lumière directionnelle équilibrée (Crée le reflet)
+    const dL = new THREE.DirectionalLight(0xffffff, 0.8); 
     dL.position.set(0, 0, 1); 
     camera.add(dL);
     
-    // MODIFICATION ICI : Lumière ambiante plus faible pour diminuer la luminosité globale
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    // Lumière globale modérée pour ne pas "brûler" les couleurs
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 150, 0); 
@@ -52,12 +53,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MODIFICATIONS MATÉRIAU (Reflets accentués)
+    // MATÉRIAU OPTIMISÉ (Contraste + Reflet blanc net)
     // ====================================================
     const mat = new THREE.MeshStandardMaterial({ 
-        color: 0xaad4f5,   // Bleu pastel légèrement plus profond
-        roughness: 0.02,   // Quasi miroir : surface très lisse pour des reflets ultra nets
-        metalness: 0.35,   // Augmenté pour faire "claquer" la lumière blanche dessus
+        color: 0x7aa5c7,   // Un bleu plus "verre", qui se détache bien du fond clair
+        roughness: 0.1,    // Surface très lisse = un point de reflet très concentré et net
+        metalness: 0.05,   // Faible pour ne pas assombrir la bouteille
         side: THREE.DoubleSide 
     });
     // ====================================================
@@ -67,8 +68,9 @@ function updateBouteille() {
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
     bottleGroup.add(bottom);
 
+    // Des arêtes légèrement plus visibles pour bien définir la forme
     const edges = new THREE.EdgesGeometry(geometry, 40); 
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
     bottleGroup.add(new THREE.LineSegments(edges, lineMat));
 
     if (typeof getEngravingsData === 'function') {
