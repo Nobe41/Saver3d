@@ -25,7 +25,6 @@ btnAddEngraving.addEventListener('click', () => {
     card.id = `gravure-${id}`;
     card.dataset.id = id;
     
-    // Modifications : "Miroir" et "SUPPRIMER LA GRAVURE"
     card.innerHTML = `
         <button class="accordion sub-accordion active" style="text-transform: uppercase;">Gravure ${gravureCounter}</button>
         <div class="panel-controls sub-panel" style="max-height: 2000px;">
@@ -72,7 +71,7 @@ btnAddEngraving.addEventListener('click', () => {
 
             <div class="control-group">
                 <div class="label-row">
-                    <label>Largeur de la gravure</label>
+                    <label>Taille</label>
                     <div class="input-wrapper">
                         <input type="number" id="gravure-largeur-num-${id}" value="50" min="10" max="150">
                         <span class="unit">mm</span>
@@ -83,7 +82,7 @@ btnAddEngraving.addEventListener('click', () => {
 
             <div class="control-group">
                 <div class="label-row">
-                    <label>Profondeur du Relief</label>
+                    <label>Relief</label>
                     <div class="input-wrapper">
                         <input type="number" id="gravure-profondeur-num-${id}" value="1.5" min="0.1" max="5" step="0.1">
                         <span class="unit">mm</span>
