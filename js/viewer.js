@@ -26,19 +26,16 @@ function initLogiciel() {
     scene.add(camera); 
     
     // ====================================================
-    // ÉCLAIRAGE "STUDIO SOFTBOX" (Bien séparé sur les côtés)
+    // ÉCLAIRAGE "STUDIO SOFTBOX" (Inchangé)
     // ====================================================
-    // Lumière 1 (Écartée loin à gauche)
     const dL1 = new THREE.DirectionalLight(0xffffff, 0.45); 
-    dL1.position.set(-3, 0, 1.5); // Le -3 la pousse bien sur le côté
+    dL1.position.set(-3, 0, 1.5);
     camera.add(dL1);
 
-    // Lumière 2 (Écartée loin à droite)
     const dL2 = new THREE.DirectionalLight(0xffffff, 0.45); 
-    dL2.position.set(3, 0, 1.5);  // Le 3 la pousse de l'autre côté
+    dL2.position.set(3, 0, 1.5);
     camera.add(dL2);
     
-    // Lumière ambiante pour éclairer globalement
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
     // ====================================================
 
@@ -60,12 +57,12 @@ function updateBouteille() {
     const geometry = new THREE.LatheGeometry(profil, 128); 
     
     // ====================================================
-    // MATÉRIAU "SATINÉ" (Comme sur ta photo)
+    // MATÉRIAU "SATINÉ TON SUR TON"
     // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
-        color: 0x82b5e0,     // Le bleu exact de ta capture d'écran
-        specular: 0x777777,  // Reflet gris doux pour ne pas éblouir
-        shininess: 20,       // Valeur basse = reflet large, doux et diffus
+        color: 0x82b5e0,     // Le bleu de base (inchangé)
+        specular: 0xaed4f0,  // MODIFICATION ICI : Reflet bleu clair (ton sur ton) au lieu de gris
+        shininess: 20,       // Douceur inchangée
         side: THREE.DoubleSide 
     });
     // ====================================================
