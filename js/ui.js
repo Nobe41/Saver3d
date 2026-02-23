@@ -7,8 +7,9 @@ const btnBackMenu = document.getElementById('btn-back-menu');
 
 viewport3D = document.getElementById('viewport-3d');
 
-// Variable globale pour mémoriser le fichier ouvert ou sauvegardé
+// Variable globale pour mémoriser le fichier et l'état d'allumage de la 3D
 let currentFileHandle = null;
+let isLogicielInit = false; // Permet de savoir si la 3D est déjà allumée
 
 passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -27,8 +28,11 @@ btnNewProject.addEventListener('click', () => {
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
     setTimeout(() => { 
-        if(typeof initLogiciel === 'function') initLogiciel(); 
-        if(typeof updateBouteille === 'function') updateBouteille();
+        if (typeof initLogiciel === 'function' && !isLogicielInit) {
+            initLogiciel(); 
+            isLogicielInit = true;
+        }
+        if (typeof updateBouteille === 'function') updateBouteille();
     }, 50);
 });
 
@@ -44,7 +48,7 @@ btnBackMenu.addEventListener('click', () => {
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
-// Fonction commune pour appliquer les données JSON
+// Fonction commune pour appliquer les données JSON instantanément
 function loadProjectData(jsonString) {
     try {
         const savedData = JSON.parse(jsonString);
@@ -57,7 +61,7 @@ function loadProjectData(jsonString) {
                 } else {
                     element.value = savedData[id];
                 }
-                element.dispatchEvent(new Event('input', { bubbles: true }));
+                // (On ne simule plus de clic ici pour éviter de recalculer la 3D 30 fois !)
             }
         }
 
@@ -65,6 +69,12 @@ function loadProjectData(jsonString) {
         pageBouteille.classList.remove('hidden');
         
         setTimeout(() => {
+            // On vérifie si la 3D a été allumée (vital pour l'ouverture directe)
+            if (typeof initLogiciel === 'function' && !isLogicielInit) {
+                initLogiciel(); 
+                isLogicielInit = true;
+            }
+            // On recalcule la bouteille UNE SEULE FOIS maintenant que tout est en place
             if (typeof updateBouteille === 'function') updateBouteille();
             if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
         }, 50);
@@ -77,7 +87,6 @@ function loadProjectData(jsonString) {
 
 // Ouvrir un projet (avec la nouvelle API si possible)
 btnOpenProject.addEventListener('click', async () => {
-    // Si le navigateur supporte l'ouverture de fichier native (Chrome, Edge...)
     if ('showOpenFilePicker' in window) {
         try {
             const [fileHandle] = await window.showOpenFilePicker({
@@ -86,7 +95,7 @@ btnOpenProject.addEventListener('click', async () => {
                     accept: {'application/json': ['.json']},
                 }],
             });
-            currentFileHandle = fileHandle; // On mémorise le fichier
+            currentFileHandle = fileHandle; 
             const file = await fileHandle.getFile();
             const text = await file.text();
             loadProjectData(text);
@@ -94,7 +103,6 @@ btnOpenProject.addEventListener('click', async () => {
             console.log("Ouverture annulée ou erreur", err);
         }
     } else {
-        // Méthode de secours pour les vieux navigateurs
         fileLoader.click(); 
     }
 });
@@ -147,7 +155,6 @@ async function saveProject(isSaveAs = false) {
     // Utilisation de la nouvelle API (Écrase le fichier existant)
     if ('showSaveFilePicker' in window) {
         try {
-            // Si c'est "Enregistrer Sous" OU qu'aucun fichier n'est encore lié
             if (isSaveAs || !currentFileHandle) {
                 currentFileHandle = await window.showSaveFilePicker({
                     suggestedName: fileName + '.json',
@@ -158,12 +165,10 @@ async function saveProject(isSaveAs = false) {
                 });
             }
             
-            // Écriture silencieuse dans le fichier existant
             const writable = await currentFileHandle.createWritable();
             await writable.write(jsonString);
             await writable.close();
             
-            // Petit bonus visuel pour confirmer la sauvegarde
             btnSaveMenu.innerText = "SAUVEGARDÉ ✓";
             setTimeout(() => { btnSaveMenu.innerText = "ENREGISTRER ▼"; }, 1500);
 
@@ -186,7 +191,7 @@ async function saveProject(isSaveAs = false) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        currentFileHandle = true; // Simule qu'un fichier existe pour la session
+        currentFileHandle = true; 
     }
 }
 
