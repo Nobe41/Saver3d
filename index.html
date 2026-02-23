@@ -47,8 +47,14 @@
             </div>
             
             <div class="right-controls">
-                <button id="btn-export-3d" class="btn-export">EXPORTER 3D (STL)</button>
-                <button id="btn-export-2d" class="btn-export hidden">EXPORTER 2D (PDF)</button>
+                
+                <div class="dropdown">
+                    <button id="btn-export-menu" class="btn-export">EXPORTER ▼</button>
+                    <div id="export-dropdown" class="dropdown-content hidden" style="right: 0; left: auto;">
+                        <button id="btn-export-3d">Exporter 3D</button>
+                        <button id="btn-export-2d">Exporter 2D</button>
+                    </div>
+                </div>
 
                 <div class="view-switcher">
                     <button id="btn-view-3d" class="active">3D</button>
