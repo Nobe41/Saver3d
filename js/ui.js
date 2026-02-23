@@ -113,7 +113,6 @@ fileLoader.addEventListener('change', (event) => {
     reader.readAsText(file);
 });
 
-
 // ==========================================
 // GESTION DES MENUS DÉROULANTS (SAUVEGARDE ET EXPORT)
 // ==========================================
@@ -128,13 +127,13 @@ const exportDropdown = document.getElementById('export-dropdown');
 btnSaveMenu.addEventListener('click', (e) => {
     e.stopPropagation(); 
     saveDropdown.classList.toggle('hidden');
-    exportDropdown.classList.add('hidden'); // Ferme l'autre menu
+    exportDropdown.classList.add('hidden'); 
 });
 
 btnExportMenu.addEventListener('click', (e) => {
     e.stopPropagation(); 
     exportDropdown.classList.toggle('hidden');
-    saveDropdown.classList.add('hidden'); // Ferme l'autre menu
+    saveDropdown.classList.add('hidden'); 
 });
 
 document.addEventListener('click', (e) => {
@@ -203,9 +202,8 @@ async function saveProject(isSaveAs = false) {
 btnSave.addEventListener('click', () => saveProject(false)); 
 btnSaveAs.addEventListener('click', () => saveProject(true)); 
 
-
 // ==========================================
-// NAVIGATION ONGLETS (3D / 2D / OUTILLAGE)
+// NAVIGATION ONGLETS ET EXPORTS
 // ==========================================
 
 const btn3D = document.getElementById('btn-view-3d');
@@ -214,6 +212,10 @@ const btnOutillage = document.getElementById('btn-outillage');
 const view3D = document.getElementById('viewport-3d');
 const view2D = document.getElementById('viewport-2d');
 const viewOutillage = document.getElementById('viewport-outillage');
+
+// Boutons d'exportation
+const btnExport3D = document.getElementById('btn-export-3d');
+const btnExport2D = document.getElementById('btn-export-2d');
 
 function switchView(activeBtn, activeView) {
     btn3D.classList.remove('active');
@@ -240,23 +242,19 @@ btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutill
 // FONCTIONS D'EXPORTATION 3D ET 2D
 // ==========================================
 
-const btnExport3D = document.getElementById('btn-export-3d');
-const btnExport2D = document.getElementById('btn-export-2d');
-
 // EXPORT 3D
 btnExport3D.addEventListener('click', () => {
-    exportDropdown.classList.add('hidden'); // On ferme le menu
+    exportDropdown.classList.add('hidden'); 
 
     if (typeof THREE === 'undefined' || typeof THREE.STLExporter === 'undefined') {
         alert("La librairie d'exportation STL n'est pas chargée.");
         return;
     }
     
-    // On sécurise l'accès à la scène 3D
     let targetScene = typeof scene !== 'undefined' ? scene : window.scene;
     
     if (!targetScene) {
-        alert("La scène 3D n'a pas pu être trouvée. Assurez-vous que la bouteille est affichée.");
+        alert("La scène 3D n'a pas pu être trouvée.");
         return;
     }
     
@@ -279,9 +277,9 @@ btnExport3D.addEventListener('click', () => {
     }
 });
 
-// EXPORT 2D
+// EXPORT 2D (SANS DÉFORMATION ET HAUTE DÉFINITION)
 btnExport2D.addEventListener('click', () => {
-    exportDropdown.classList.add('hidden'); // On ferme le menu
+    exportDropdown.classList.add('hidden'); 
 
     if (!window.jspdf) {
         alert("La librairie jsPDF n'est pas chargée.");
@@ -290,26 +288,61 @@ btnExport2D.addEventListener('click', () => {
     
     const canvas = document.getElementById('canvas-2d');
     if (!canvas || canvas.width === 0) {
-        alert("Le plan 2D n'est pas affiché. Veuillez cliquer sur l'onglet 2D d'abord.");
+        alert("Le plan 2D n'est pas affiché.");
         return;
     }
 
     const formatSelect = document.getElementById('paper-format-select');
     const formatVal = formatSelect ? formatSelect.value : 'A4_P';
     
+    // On récupère les dimensions exactes de la feuille depuis viewer2d.js
+    const paper = typeof paperFormats !== 'undefined' ? paperFormats[formatVal] : { w: 210, h: 297 };
+    
     let orientation = 'p'; 
     let formatArgs = 'a4';
-    let w = 210, h = 297;
+    let w = paper.w, h = paper.h;
     
-    if (formatVal === 'A4_L') { orientation = 'l'; w = 297; h = 210; }
-    if (formatVal === 'A3_P') { formatArgs = 'a3'; w = 297; h = 420; }
-    if (formatVal === 'A3_L') { orientation = 'l'; formatArgs = 'a3'; w = 420; h = 297; }
+    if (formatVal === 'A4_L') { orientation = 'l'; formatArgs = 'a4'; }
+    if (formatVal === 'A3_P') { orientation = 'p'; formatArgs = 'a3'; }
+    if (formatVal === 'A3_L') { orientation = 'l'; formatArgs = 'a3'; }
     
     try {
+        // --- ASTUCE POUR UN RENDU PARFAIT ---
+        // 1. Sauvegarde de la vue actuelle de l'utilisateur
+        const savedW = canvas.width;
+        const savedH = canvas.height;
+        const savedCam = { x: cam2D.x, y: cam2D.y, zoom: cam2D.zoom };
+        
+        // 2. On force le canvas à prendre exactement les proportions du papier
+        // On multiplie par 8 pour une qualité HD incroyable
+        const scaleFactor = 8; 
+        canvas.width = w * scaleFactor;
+        canvas.height = h * scaleFactor;
+        
+        // 3. On cadre parfaitement la feuille pour qu'elle remplisse tout le canvas
+        cam2D.x = canvas.width / 2;
+        cam2D.y = canvas.height / 2;
+        cam2D.zoom = scaleFactor;
+        
+        // 4. On dessine la version HD
+        draw2D();
+        
+        // 5. On prend la photo (elle sera parfaitement proportionnelle)
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        // 6. On restaure l'affichage normal pour l'utilisateur
+        canvas.width = savedW;
+        canvas.height = savedH;
+        cam2D.x = savedCam.x;
+        cam2D.y = savedCam.y;
+        cam2D.zoom = savedCam.zoom;
+        draw2D();
+
+        // 7. Création du PDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: formatArgs });
         
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        // L'image rentre parfaitement sans être écrasée
         pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
         
         const titleInput = document.getElementById('cartouche-title');
