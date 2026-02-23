@@ -114,20 +114,35 @@ fileLoader.addEventListener('change', (event) => {
 });
 
 
-// Enregistrer le projet
+// ==========================================
+// GESTION DES MENUS DÉROULANTS (SAUVEGARDE ET EXPORT)
+// ==========================================
 const btnSaveMenu = document.getElementById('btn-save-menu');
 const saveDropdown = document.getElementById('save-dropdown');
 const btnSave = document.getElementById('btn-save');
 const btnSaveAs = document.getElementById('btn-save-as');
 
+const btnExportMenu = document.getElementById('btn-export-menu');
+const exportDropdown = document.getElementById('export-dropdown');
+
 btnSaveMenu.addEventListener('click', (e) => {
     e.stopPropagation(); 
     saveDropdown.classList.toggle('hidden');
+    exportDropdown.classList.add('hidden'); // Ferme l'autre menu
+});
+
+btnExportMenu.addEventListener('click', (e) => {
+    e.stopPropagation(); 
+    exportDropdown.classList.toggle('hidden');
+    saveDropdown.classList.add('hidden'); // Ferme l'autre menu
 });
 
 document.addEventListener('click', (e) => {
     if (!saveDropdown.contains(e.target) && e.target !== btnSaveMenu) {
         saveDropdown.classList.add('hidden');
+    }
+    if (!exportDropdown.contains(e.target) && e.target !== btnExportMenu) {
+        exportDropdown.classList.add('hidden');
     }
 });
 
@@ -190,7 +205,7 @@ btnSaveAs.addEventListener('click', () => saveProject(true));
 
 
 // ==========================================
-// NAVIGATION ONGLETS ET EXPORTS
+// NAVIGATION ONGLETS (3D / 2D / OUTILLAGE)
 // ==========================================
 
 const btn3D = document.getElementById('btn-view-3d');
@@ -199,10 +214,6 @@ const btnOutillage = document.getElementById('btn-outillage');
 const view3D = document.getElementById('viewport-3d');
 const view2D = document.getElementById('viewport-2d');
 const viewOutillage = document.getElementById('viewport-outillage');
-
-// Boutons d'exportation
-const btnExport3D = document.getElementById('btn-export-3d');
-const btnExport2D = document.getElementById('btn-export-2d');
 
 function switchView(activeBtn, activeView) {
     btn3D.classList.remove('active');
@@ -215,18 +226,9 @@ function switchView(activeBtn, activeView) {
     activeBtn.classList.add('active');
     activeView.classList.remove('hidden');
 
-    // Visibilité des boutons d'export
-    if (activeBtn === btn3D) {
-        btnExport3D.classList.remove('hidden');
-        btnExport2D.classList.add('hidden');
-    } else if (activeBtn === btn2D) {
-        btnExport3D.classList.add('hidden');
-        btnExport2D.classList.remove('hidden');
+    if (activeBtn === btn2D) {
         if (typeof resizeCanvas2D === 'function') resizeCanvas2D();
         if (typeof draw2D === 'function') draw2D();
-    } else {
-        btnExport3D.classList.add('hidden');
-        btnExport2D.classList.add('hidden');
     }
 }
 
@@ -234,39 +236,64 @@ btn3D.addEventListener('click', () => switchView(btn3D, view3D));
 btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
-// --- LOGIQUE EXPORT STL ---
+// ==========================================
+// FONCTIONS D'EXPORTATION 3D ET 2D
+// ==========================================
+
+const btnExport3D = document.getElementById('btn-export-3d');
+const btnExport2D = document.getElementById('btn-export-2d');
+
+// EXPORT 3D
 btnExport3D.addEventListener('click', () => {
+    exportDropdown.classList.add('hidden'); // On ferme le menu
+
     if (typeof THREE === 'undefined' || typeof THREE.STLExporter === 'undefined') {
         alert("La librairie d'exportation STL n'est pas chargée.");
         return;
     }
-    if (typeof scene === 'undefined') {
-        alert("La scène 3D n'a pas pu être trouvée.");
+    
+    // On sécurise l'accès à la scène 3D
+    let targetScene = typeof scene !== 'undefined' ? scene : window.scene;
+    
+    if (!targetScene) {
+        alert("La scène 3D n'a pas pu être trouvée. Assurez-vous que la bouteille est affichée.");
         return;
     }
     
-    const exporter = new THREE.STLExporter();
-    const stlString = exporter.parse(scene);
-    const blob = new Blob([stlString], { type: 'text/plain' });
-    
-    const titleInput = document.getElementById('cartouche-title');
-    let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille";
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName + '.stl';
-    link.click();
-    URL.revokeObjectURL(link.href);
+    try {
+        const exporter = new THREE.STLExporter();
+        const stlString = exporter.parse(targetScene);
+        const blob = new Blob([stlString], { type: 'text/plain' });
+        
+        const titleInput = document.getElementById('cartouche-title');
+        let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille";
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName + '.stl';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    } catch (error) {
+        console.error("Erreur lors de l'exportation 3D :", error);
+        alert("Une erreur est survenue pendant l'export 3D.");
+    }
 });
 
-// --- LOGIQUE EXPORT PDF ---
+// EXPORT 2D
 btnExport2D.addEventListener('click', () => {
+    exportDropdown.classList.add('hidden'); // On ferme le menu
+
     if (!window.jspdf) {
         alert("La librairie jsPDF n'est pas chargée.");
         return;
     }
     
     const canvas = document.getElementById('canvas-2d');
+    if (!canvas || canvas.width === 0) {
+        alert("Le plan 2D n'est pas affiché. Veuillez cliquer sur l'onglet 2D d'abord.");
+        return;
+    }
+
     const formatSelect = document.getElementById('paper-format-select');
     const formatVal = formatSelect ? formatSelect.value : 'A4_P';
     
@@ -278,16 +305,21 @@ btnExport2D.addEventListener('click', () => {
     if (formatVal === 'A3_P') { formatArgs = 'a3'; w = 297; h = 420; }
     if (formatVal === 'A3_L') { orientation = 'l'; formatArgs = 'a3'; w = 420; h = 297; }
     
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: formatArgs });
-    
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
-    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-    
-    const titleInput = document.getElementById('cartouche-title');
-    let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Plan_Bouteille";
-    
-    pdf.save(fileName + '.pdf');
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: formatArgs });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+        
+        const titleInput = document.getElementById('cartouche-title');
+        let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Plan_Bouteille";
+        
+        pdf.save(fileName + '.pdf');
+    } catch (error) {
+        console.error("Erreur lors de l'exportation 2D :", error);
+        alert("Une erreur est survenue pendant l'export PDF.");
+    }
 });
 
 
