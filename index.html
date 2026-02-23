@@ -35,7 +35,17 @@
 
     <section id="Page-Bouteille" class="hidden">
         <div id="Panel-haut">
-            <button id="btn-back-menu">MENU</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="btn-back-menu">MENU</button>
+                <div class="dropdown">
+                    <button id="btn-save-menu">ENREGISTRER ▼</button>
+                    <div id="save-dropdown" class="dropdown-content hidden">
+                        <button id="btn-save">Enregistrer</button>
+                        <button id="btn-save-as">Enregistrer sous...</button>
+                    </div>
+                </div>
+            </div>
+            
             <div class="right-controls">
                 <button id="btn-export">EXPORTER 3D</button>
                 <div class="view-switcher">
@@ -143,7 +153,7 @@
                                 </div>
                             </div>
                         </div>
-
+                        
                         <div class="sub-block">
                             <button class="accordion sub-accordion">VUES</button>
                             <div class="panel-controls sub-panel">
@@ -153,7 +163,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="sub-block">
                             <button class="accordion sub-accordion">INFORMATIONS</button>
                             <div class="panel-controls sub-panel">
