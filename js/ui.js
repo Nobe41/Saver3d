@@ -113,6 +113,7 @@ fileLoader.addEventListener('change', (event) => {
     reader.readAsText(file);
 });
 
+
 // ==========================================
 // GESTION DES MENUS DÉROULANTS (SAUVEGARDE ET EXPORT)
 // ==========================================
@@ -202,6 +203,7 @@ async function saveProject(isSaveAs = false) {
 btnSave.addEventListener('click', () => saveProject(false)); 
 btnSaveAs.addEventListener('click', () => saveProject(true)); 
 
+
 // ==========================================
 // NAVIGATION ONGLETS ET EXPORTS
 // ==========================================
@@ -242,7 +244,7 @@ btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutill
 // FONCTIONS D'EXPORTATION 3D ET 2D
 // ==========================================
 
-// EXPORT 3D
+// EXPORT 3D (STL BINAIRE HAUTE PERFORMANCE)
 btnExport3D.addEventListener('click', () => {
     exportDropdown.classList.add('hidden'); 
 
@@ -260,8 +262,11 @@ btnExport3D.addEventListener('click', () => {
     
     try {
         const exporter = new THREE.STLExporter();
-        const stlString = exporter.parse(targetScene);
-        const blob = new Blob([stlString], { type: 'text/plain' });
+        // L'astuce magique est ici : { binary: true }
+        const stlData = exporter.parse(targetScene, { binary: true });
+        
+        // On stocke les données binaires (application/octet-stream)
+        const blob = new Blob([stlData], { type: 'application/octet-stream' });
         
         const titleInput = document.getElementById('cartouche-title');
         let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille";
@@ -295,7 +300,6 @@ btnExport2D.addEventListener('click', () => {
     const formatSelect = document.getElementById('paper-format-select');
     const formatVal = formatSelect ? formatSelect.value : 'A4_P';
     
-    // On récupère les dimensions exactes de la feuille depuis viewer2d.js
     const paper = typeof paperFormats !== 'undefined' ? paperFormats[formatVal] : { w: 210, h: 297 };
     
     let orientation = 'p'; 
@@ -307,30 +311,22 @@ btnExport2D.addEventListener('click', () => {
     if (formatVal === 'A3_L') { orientation = 'l'; formatArgs = 'a3'; }
     
     try {
-        // --- ASTUCE POUR UN RENDU PARFAIT ---
-        // 1. Sauvegarde de la vue actuelle de l'utilisateur
         const savedW = canvas.width;
         const savedH = canvas.height;
         const savedCam = { x: cam2D.x, y: cam2D.y, zoom: cam2D.zoom };
         
-        // 2. On force le canvas à prendre exactement les proportions du papier
-        // On multiplie par 8 pour une qualité HD incroyable
         const scaleFactor = 8; 
         canvas.width = w * scaleFactor;
         canvas.height = h * scaleFactor;
         
-        // 3. On cadre parfaitement la feuille pour qu'elle remplisse tout le canvas
         cam2D.x = canvas.width / 2;
         cam2D.y = canvas.height / 2;
         cam2D.zoom = scaleFactor;
         
-        // 4. On dessine la version HD
         draw2D();
         
-        // 5. On prend la photo (elle sera parfaitement proportionnelle)
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
-        // 6. On restaure l'affichage normal pour l'utilisateur
         canvas.width = savedW;
         canvas.height = savedH;
         cam2D.x = savedCam.x;
@@ -338,11 +334,9 @@ btnExport2D.addEventListener('click', () => {
         cam2D.zoom = savedCam.zoom;
         draw2D();
 
-        // 7. Création du PDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: formatArgs });
         
-        // L'image rentre parfaitement sans être écrasée
         pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
         
         const titleInput = document.getElementById('cartouche-title');
