@@ -7,7 +7,6 @@ const btnBackMenu = document.getElementById('btn-back-menu');
 
 viewport3D = document.getElementById('viewport-3d');
 
-// Variable globale pour mémoriser le fichier et l'état d'allumage de la 3D
 let currentFileHandle = null;
 let isLogicielInit = false; 
 
@@ -42,7 +41,7 @@ btnBackMenu.addEventListener('click', () => {
 });
 
 // ==========================================
-// SYSTEME DE SAUVEGARDE ET CHARGEMENT AVANCÉ
+// SYSTEME DE SAUVEGARDE ET CHARGEMENT
 // ==========================================
 
 const btnOpenProject = document.getElementById('btn-open-project');
@@ -76,7 +75,7 @@ function loadProjectData(jsonString) {
         }, 50);
 
     } catch (err) {
-        alert("Erreur : Le fichier sélectionné n'est pas un fichier de sauvegarde valide.");
+        alert("Erreur : Le fichier de sauvegarde n'est pas valide.");
         console.error(err);
     }
 }
@@ -95,7 +94,7 @@ btnOpenProject.addEventListener('click', async () => {
             const text = await file.text();
             loadProjectData(text);
         } catch (err) {
-            console.log("Ouverture annulée ou erreur", err);
+            console.log("Ouverture annulée", err);
         }
     } else {
         fileLoader.click(); 
@@ -165,7 +164,7 @@ async function saveProject(isSaveAs = false) {
             setTimeout(() => { btnSaveMenu.innerText = "ENREGISTRER ▼"; }, 1500);
 
         } catch (err) {
-            console.log("Sauvegarde annulée ou erreur", err);
+            console.log("Sauvegarde annulée", err);
         }
     } else {
         if (isSaveAs || !currentFileHandle) {
@@ -191,7 +190,7 @@ btnSaveAs.addEventListener('click', () => saveProject(true));
 
 
 // ==========================================
-// NAVIGATION ONGLETS (3D / 2D / OUTILLAGE)
+// NAVIGATION ONGLETS ET EXPORTS
 // ==========================================
 
 const btn3D = document.getElementById('btn-view-3d');
@@ -200,6 +199,10 @@ const btnOutillage = document.getElementById('btn-outillage');
 const view3D = document.getElementById('viewport-3d');
 const view2D = document.getElementById('viewport-2d');
 const viewOutillage = document.getElementById('viewport-outillage');
+
+// Boutons d'exportation
+const btnExport3D = document.getElementById('btn-export-3d');
+const btnExport2D = document.getElementById('btn-export-2d');
 
 function switchView(activeBtn, activeView) {
     btn3D.classList.remove('active');
@@ -212,9 +215,18 @@ function switchView(activeBtn, activeView) {
     activeBtn.classList.add('active');
     activeView.classList.remove('hidden');
 
-    if (activeBtn === btn2D) {
+    // Visibilité des boutons d'export
+    if (activeBtn === btn3D) {
+        btnExport3D.classList.remove('hidden');
+        btnExport2D.classList.add('hidden');
+    } else if (activeBtn === btn2D) {
+        btnExport3D.classList.add('hidden');
+        btnExport2D.classList.remove('hidden');
         if (typeof resizeCanvas2D === 'function') resizeCanvas2D();
         if (typeof draw2D === 'function') draw2D();
+    } else {
+        btnExport3D.classList.add('hidden');
+        btnExport2D.classList.add('hidden');
     }
 }
 
@@ -222,11 +234,67 @@ btn3D.addEventListener('click', () => switchView(btn3D, view3D));
 btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
+// --- LOGIQUE EXPORT STL ---
+btnExport3D.addEventListener('click', () => {
+    if (typeof THREE === 'undefined' || typeof THREE.STLExporter === 'undefined') {
+        alert("La librairie d'exportation STL n'est pas chargée.");
+        return;
+    }
+    if (typeof scene === 'undefined') {
+        alert("La scène 3D n'a pas pu être trouvée.");
+        return;
+    }
+    
+    const exporter = new THREE.STLExporter();
+    const stlString = exporter.parse(scene);
+    const blob = new Blob([stlString], { type: 'text/plain' });
+    
+    const titleInput = document.getElementById('cartouche-title');
+    let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille";
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName + '.stl';
+    link.click();
+    URL.revokeObjectURL(link.href);
+});
+
+// --- LOGIQUE EXPORT PDF ---
+btnExport2D.addEventListener('click', () => {
+    if (!window.jspdf) {
+        alert("La librairie jsPDF n'est pas chargée.");
+        return;
+    }
+    
+    const canvas = document.getElementById('canvas-2d');
+    const formatSelect = document.getElementById('paper-format-select');
+    const formatVal = formatSelect ? formatSelect.value : 'A4_P';
+    
+    let orientation = 'p'; 
+    let formatArgs = 'a4';
+    let w = 210, h = 297;
+    
+    if (formatVal === 'A4_L') { orientation = 'l'; w = 297; h = 210; }
+    if (formatVal === 'A3_P') { formatArgs = 'a3'; w = 297; h = 420; }
+    if (formatVal === 'A3_L') { orientation = 'l'; formatArgs = 'a3'; w = 420; h = 297; }
+    
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: orientation, unit: 'mm', format: formatArgs });
+    
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+    
+    const titleInput = document.getElementById('cartouche-title');
+    let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Plan_Bouteille";
+    
+    pdf.save(fileName + '.pdf');
+});
+
+
 // ==========================================
 // GESTION DES INPUTS ET ACCORDEONS
 // ==========================================
 
-// Variable globale pour gérer le délai (Anti-lag)
 let updateTimer;
 
 function setupListeners() {
@@ -235,8 +303,6 @@ function setupListeners() {
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
         input.addEventListener('input', () => {
-            
-            // 1. Synchronisation parfaite des cases textes et sliders
             const controlGroup = input.closest('.control-group');
             if (controlGroup) {
                 if (input.type === 'range') {
@@ -248,12 +314,11 @@ function setupListeners() {
                 }
             }
             
-            // 2. Optimisation des calculs 3D/2D (Debounce)
             clearTimeout(updateTimer);
             updateTimer = setTimeout(() => {
                 if (typeof updateBouteille === 'function') updateBouteille();
                 if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
-            }, 20); // Attend 20 millisecondes avant de calculer (Fluidité maximale)
+            }, 20); 
         });
     });
     
