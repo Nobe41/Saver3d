@@ -22,7 +22,11 @@ passwordInput.addEventListener('keydown', (e) => {
 btnNewProject.addEventListener('click', () => {
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
-    setTimeout(() => { initLogiciel(); }, 50);
+    // On pourrait réinitialiser les valeurs par défaut ici si besoin
+    setTimeout(() => { 
+        if(typeof initLogiciel === 'function') initLogiciel(); 
+        if(typeof updateBouteille === 'function') updateBouteille();
+    }, 50);
 });
 
 btnBackMenu.addEventListener('click', () => {
@@ -30,6 +34,11 @@ btnBackMenu.addEventListener('click', () => {
     pageMenu.classList.remove('hidden');
 });
 
+// ==========================================
+// SYSTEME DE SAUVEGARDE ET CHARGEMENT
+// ==========================================
+
+// 1. Ouvrir un projet existant
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
@@ -40,11 +49,113 @@ btnOpenProject.addEventListener('click', () => {
 fileLoader.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    alert("Fichier sélectionné : " + file.name + "\nLe système de chargement complet arrive bientôt !");
-    pageMenu.classList.add('hidden');
-    pageBouteille.classList.remove('hidden');
-    setTimeout(() => { initLogiciel(); }, 50);
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const savedData = JSON.parse(e.target.result);
+            
+            // On applique toutes les données sauvegardées aux inputs
+            for (const id in savedData) {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = savedData[id];
+                    } else {
+                        element.value = savedData[id];
+                    }
+                    // Déclenche l'événement 'input' pour synchroniser les sliders/nombres
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+
+            // Basculer sur la page de travail
+            pageMenu.classList.add('hidden');
+            pageBouteille.classList.remove('hidden');
+            
+            // Mettre à jour la 3D et la 2D
+            setTimeout(() => {
+                if (typeof updateBouteille === 'function') updateBouteille();
+                if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
+            }, 50);
+
+        } catch (err) {
+            alert("Erreur : Le fichier sélectionné n'est pas un fichier de sauvegarde valide.");
+            console.error(err);
+        }
+        // Reset le loader pour pouvoir re-sélectionner le même fichier si besoin
+        fileLoader.value = "";
+    };
+    reader.readAsText(file);
 });
+
+// 2. Enregistrer le projet
+const btnSaveMenu = document.getElementById('btn-save-menu');
+const saveDropdown = document.getElementById('save-dropdown');
+const btnSave = document.getElementById('btn-save');
+const btnSaveAs = document.getElementById('btn-save-as');
+
+// Afficher/Cacher le menu déroulant
+btnSaveMenu.addEventListener('click', (e) => {
+    e.stopPropagation(); // Évite que le clic ferme immédiatement le menu
+    saveDropdown.classList.toggle('hidden');
+});
+
+// Fermer le menu si on clique ailleurs
+document.addEventListener('click', (e) => {
+    if (!saveDropdown.contains(e.target) && e.target !== btnSaveMenu) {
+        saveDropdown.classList.add('hidden');
+    }
+});
+
+// Fonction principale pour générer le fichier JSON
+function downloadProjectFile(promptForName = false) {
+    saveDropdown.classList.add('hidden');
+
+    // Récupérer toutes les données du panneau de gauche
+    const inputs = document.querySelectorAll('#Panel-gauche input, #Panel-gauche select');
+    const projectData = {};
+    
+    inputs.forEach(input => {
+        if (input.id) { // On ne sauvegarde que les éléments qui ont un ID propre
+            projectData[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+        }
+    });
+
+    // Définir le nom du fichier (basé sur le cartouche)
+    const titleInput = document.getElementById('cartouche-title');
+    let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille_SansNom";
+
+    if (promptForName) {
+        const userFileName = prompt("Entrez le nom de la sauvegarde :", fileName);
+        if (!userFileName) return; // L'utilisateur a cliqué sur Annuler
+        fileName = userFileName;
+    }
+
+    // Création du fichier JSON
+    const jsonString = JSON.stringify(projectData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    // Téléchargement invisible
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName + ".json";
+    document.body.appendChild(a);
+    a.click();
+    
+    // Nettoyage
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+btnSave.addEventListener('click', () => downloadProjectFile(false));
+btnSaveAs.addEventListener('click', () => downloadProjectFile(true));
+
+
+// ==========================================
+// NAVIGATION ONGLETS (3D / 2D / OUTILLAGE)
+// ==========================================
 
 const btn3D = document.getElementById('btn-view-3d');
 const btn2D = document.getElementById('btn-view-2d');
@@ -64,7 +175,6 @@ function switchView(activeBtn, activeView) {
     activeBtn.classList.add('active');
     activeView.classList.remove('hidden');
 
-    // NOUVEAU : Met à jour la vue 2D quand on clique sur l'onglet
     if (activeBtn === btn2D) {
         if (typeof resizeCanvas2D === 'function') resizeCanvas2D();
         if (typeof draw2D === 'function') draw2D();
@@ -75,8 +185,12 @@ btn3D.addEventListener('click', () => switchView(btn3D, view3D));
 btn2D.addEventListener('click', () => switchView(btn2D, view2D));
 btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutillage));
 
+// ==========================================
+// GESTION DES INPUTS ET ACCORDEONS
+// ==========================================
+
 function setupListeners() {
-    const inputs = document.querySelectorAll('input[type=range], input[type=number], select, input[type=text]');
+    const inputs = document.querySelectorAll('input[type=range], input[type=number], select, input[type=checkbox]');
     inputs.forEach(input => {
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
@@ -89,7 +203,6 @@ function setupListeners() {
                 if (rng) rng.value = input.value;
             }
             
-            // Met à jour la 3D ET la 2D en temps réel
             if (typeof updateBouteille === 'function') updateBouteille();
             if (typeof draw2D === 'function' && !view2D.classList.contains('hidden')) draw2D();
         });
