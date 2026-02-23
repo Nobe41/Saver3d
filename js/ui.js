@@ -7,6 +7,9 @@ const btnBackMenu = document.getElementById('btn-back-menu');
 
 viewport3D = document.getElementById('viewport-3d');
 
+// Variable globale pour mémoriser le fichier ouvert ou sauvegardé
+let currentFileHandle = null;
+
 passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         if (passwordInput.value.trim().toLowerCase() === 'axel') {
@@ -20,9 +23,9 @@ passwordInput.addEventListener('keydown', (e) => {
 });
 
 btnNewProject.addEventListener('click', () => {
+    currentFileHandle = null; // Nouveau projet = aucun fichier lié
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
-    // On pourrait réinitialiser les valeurs par défaut ici si besoin
     setTimeout(() => { 
         if(typeof initLogiciel === 'function') initLogiciel(); 
         if(typeof updateBouteille === 'function') updateBouteille();
@@ -35,122 +38,160 @@ btnBackMenu.addEventListener('click', () => {
 });
 
 // ==========================================
-// SYSTEME DE SAUVEGARDE ET CHARGEMENT
+// SYSTEME DE SAUVEGARDE ET CHARGEMENT AVANCÉ
 // ==========================================
 
-// 1. Ouvrir un projet existant
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
-btnOpenProject.addEventListener('click', () => {
-    fileLoader.click(); 
+// Fonction commune pour appliquer les données JSON
+function loadProjectData(jsonString) {
+    try {
+        const savedData = JSON.parse(jsonString);
+        
+        for (const id in savedData) {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = savedData[id];
+                } else {
+                    element.value = savedData[id];
+                }
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        pageMenu.classList.add('hidden');
+        pageBouteille.classList.remove('hidden');
+        
+        setTimeout(() => {
+            if (typeof updateBouteille === 'function') updateBouteille();
+            if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
+        }, 50);
+
+    } catch (err) {
+        alert("Erreur : Le fichier sélectionné n'est pas un fichier de sauvegarde valide.");
+        console.error(err);
+    }
+}
+
+// Ouvrir un projet (avec la nouvelle API si possible)
+btnOpenProject.addEventListener('click', async () => {
+    // Si le navigateur supporte l'ouverture de fichier native (Chrome, Edge...)
+    if ('showOpenFilePicker' in window) {
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Fichier Bouteille JSON',
+                    accept: {'application/json': ['.json']},
+                }],
+            });
+            currentFileHandle = fileHandle; // On mémorise le fichier
+            const file = await fileHandle.getFile();
+            const text = await file.text();
+            loadProjectData(text);
+        } catch (err) {
+            console.log("Ouverture annulée ou erreur", err);
+        }
+    } else {
+        // Méthode de secours pour les vieux navigateurs
+        fileLoader.click(); 
+    }
 });
 
 fileLoader.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
+    currentFileHandle = null; 
     const reader = new FileReader();
     reader.onload = function(e) {
-        try {
-            const savedData = JSON.parse(e.target.result);
-            
-            // On applique toutes les données sauvegardées aux inputs
-            for (const id in savedData) {
-                const element = document.getElementById(id);
-                if (element) {
-                    if (element.type === 'checkbox') {
-                        element.checked = savedData[id];
-                    } else {
-                        element.value = savedData[id];
-                    }
-                    // Déclenche l'événement 'input' pour synchroniser les sliders/nombres
-                    element.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            }
-
-            // Basculer sur la page de travail
-            pageMenu.classList.add('hidden');
-            pageBouteille.classList.remove('hidden');
-            
-            // Mettre à jour la 3D et la 2D
-            setTimeout(() => {
-                if (typeof updateBouteille === 'function') updateBouteille();
-                if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
-            }, 50);
-
-        } catch (err) {
-            alert("Erreur : Le fichier sélectionné n'est pas un fichier de sauvegarde valide.");
-            console.error(err);
-        }
-        // Reset le loader pour pouvoir re-sélectionner le même fichier si besoin
+        loadProjectData(e.target.result);
         fileLoader.value = "";
     };
     reader.readAsText(file);
 });
 
-// 2. Enregistrer le projet
+
+// Enregistrer le projet
 const btnSaveMenu = document.getElementById('btn-save-menu');
 const saveDropdown = document.getElementById('save-dropdown');
 const btnSave = document.getElementById('btn-save');
 const btnSaveAs = document.getElementById('btn-save-as');
 
-// Afficher/Cacher le menu déroulant
 btnSaveMenu.addEventListener('click', (e) => {
-    e.stopPropagation(); // Évite que le clic ferme immédiatement le menu
+    e.stopPropagation(); 
     saveDropdown.classList.toggle('hidden');
 });
 
-// Fermer le menu si on clique ailleurs
 document.addEventListener('click', (e) => {
     if (!saveDropdown.contains(e.target) && e.target !== btnSaveMenu) {
         saveDropdown.classList.add('hidden');
     }
 });
 
-// Fonction principale pour générer le fichier JSON
-function downloadProjectFile(promptForName = false) {
+// Fonction principale pour Sauvegarder
+async function saveProject(isSaveAs = false) {
     saveDropdown.classList.add('hidden');
 
-    // Récupérer toutes les données du panneau de gauche
+    // Récupérer les données
     const inputs = document.querySelectorAll('#Panel-gauche input, #Panel-gauche select');
     const projectData = {};
-    
     inputs.forEach(input => {
-        if (input.id) { // On ne sauvegarde que les éléments qui ont un ID propre
-            projectData[input.id] = input.type === 'checkbox' ? input.checked : input.value;
-        }
+        if (input.id) projectData[input.id] = input.type === 'checkbox' ? input.checked : input.value;
     });
 
-    // Définir le nom du fichier (basé sur le cartouche)
     const titleInput = document.getElementById('cartouche-title');
     let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille_SansNom";
-
-    if (promptForName) {
-        const userFileName = prompt("Entrez le nom de la sauvegarde :", fileName);
-        if (!userFileName) return; // L'utilisateur a cliqué sur Annuler
-        fileName = userFileName;
-    }
-
-    // Création du fichier JSON
     const jsonString = JSON.stringify(projectData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    // Téléchargement invisible
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName + ".json";
-    document.body.appendChild(a);
-    a.click();
-    
-    // Nettoyage
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // Utilisation de la nouvelle API (Écrase le fichier existant)
+    if ('showSaveFilePicker' in window) {
+        try {
+            // Si c'est "Enregistrer Sous" OU qu'aucun fichier n'est encore lié
+            if (isSaveAs || !currentFileHandle) {
+                currentFileHandle = await window.showSaveFilePicker({
+                    suggestedName: fileName + '.json',
+                    types: [{
+                        description: 'Fichier Bouteille JSON',
+                        accept: {'application/json': ['.json']},
+                    }],
+                });
+            }
+            
+            // Écriture silencieuse dans le fichier existant
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(jsonString);
+            await writable.close();
+            
+            // Petit bonus visuel pour confirmer la sauvegarde
+            btnSaveMenu.innerText = "SAUVEGARDÉ ✓";
+            setTimeout(() => { btnSaveMenu.innerText = "ENREGISTRER ▼"; }, 1500);
+
+        } catch (err) {
+            console.log("Sauvegarde annulée ou erreur", err);
+        }
+    } else {
+        // Plan B : Ancienne méthode si l'API n'est pas supportée
+        if (isSaveAs || !currentFileHandle) {
+            const userFileName = prompt("Entrez le nom de la sauvegarde :", fileName);
+            if (!userFileName) return; 
+            fileName = userFileName;
+        }
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        currentFileHandle = true; // Simule qu'un fichier existe pour la session
+    }
 }
 
-btnSave.addEventListener('click', () => downloadProjectFile(false));
-btnSaveAs.addEventListener('click', () => downloadProjectFile(true));
+btnSave.addEventListener('click', () => saveProject(false)); // Enregistrer (écrase)
+btnSaveAs.addEventListener('click', () => saveProject(true)); // Enregistrer Sous (ouvre la fenêtre)
 
 
 // ==========================================
