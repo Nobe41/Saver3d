@@ -9,7 +9,7 @@ viewport3D = document.getElementById('viewport-3d');
 
 // Variable globale pour mémoriser le fichier et l'état d'allumage de la 3D
 let currentFileHandle = null;
-let isLogicielInit = false; // Permet de savoir si la 3D est déjà allumée
+let isLogicielInit = false; 
 
 passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -24,7 +24,7 @@ passwordInput.addEventListener('keydown', (e) => {
 });
 
 btnNewProject.addEventListener('click', () => {
-    currentFileHandle = null; // Nouveau projet = aucun fichier lié
+    currentFileHandle = null; 
     pageMenu.classList.add('hidden');
     pageBouteille.classList.remove('hidden');
     setTimeout(() => { 
@@ -48,7 +48,6 @@ btnBackMenu.addEventListener('click', () => {
 const btnOpenProject = document.getElementById('btn-open-project');
 const fileLoader = document.getElementById('file-loader');
 
-// Fonction commune pour appliquer les données JSON instantanément
 function loadProjectData(jsonString) {
     try {
         const savedData = JSON.parse(jsonString);
@@ -61,7 +60,6 @@ function loadProjectData(jsonString) {
                 } else {
                     element.value = savedData[id];
                 }
-                // (On ne simule plus de clic ici pour éviter de recalculer la 3D 30 fois !)
             }
         }
 
@@ -69,12 +67,10 @@ function loadProjectData(jsonString) {
         pageBouteille.classList.remove('hidden');
         
         setTimeout(() => {
-            // On vérifie si la 3D a été allumée (vital pour l'ouverture directe)
             if (typeof initLogiciel === 'function' && !isLogicielInit) {
                 initLogiciel(); 
                 isLogicielInit = true;
             }
-            // On recalcule la bouteille UNE SEULE FOIS maintenant que tout est en place
             if (typeof updateBouteille === 'function') updateBouteille();
             if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
         }, 50);
@@ -85,7 +81,6 @@ function loadProjectData(jsonString) {
     }
 }
 
-// Ouvrir un projet (avec la nouvelle API si possible)
 btnOpenProject.addEventListener('click', async () => {
     if ('showOpenFilePicker' in window) {
         try {
@@ -137,11 +132,9 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Fonction principale pour Sauvegarder
 async function saveProject(isSaveAs = false) {
     saveDropdown.classList.add('hidden');
 
-    // Récupérer les données
     const inputs = document.querySelectorAll('#Panel-gauche input, #Panel-gauche select');
     const projectData = {};
     inputs.forEach(input => {
@@ -152,7 +145,6 @@ async function saveProject(isSaveAs = false) {
     let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille_SansNom";
     const jsonString = JSON.stringify(projectData, null, 2);
 
-    // Utilisation de la nouvelle API (Écrase le fichier existant)
     if ('showSaveFilePicker' in window) {
         try {
             if (isSaveAs || !currentFileHandle) {
@@ -176,7 +168,6 @@ async function saveProject(isSaveAs = false) {
             console.log("Sauvegarde annulée ou erreur", err);
         }
     } else {
-        // Plan B : Ancienne méthode si l'API n'est pas supportée
         if (isSaveAs || !currentFileHandle) {
             const userFileName = prompt("Entrez le nom de la sauvegarde :", fileName);
             if (!userFileName) return; 
@@ -195,8 +186,8 @@ async function saveProject(isSaveAs = false) {
     }
 }
 
-btnSave.addEventListener('click', () => saveProject(false)); // Enregistrer (écrase)
-btnSaveAs.addEventListener('click', () => saveProject(true)); // Enregistrer Sous (ouvre la fenêtre)
+btnSave.addEventListener('click', () => saveProject(false)); 
+btnSaveAs.addEventListener('click', () => saveProject(true)); 
 
 
 // ==========================================
@@ -235,22 +226,34 @@ btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutill
 // GESTION DES INPUTS ET ACCORDEONS
 // ==========================================
 
+// Variable globale pour gérer le délai (Anti-lag)
+let updateTimer;
+
 function setupListeners() {
     const inputs = document.querySelectorAll('input[type=range], input[type=number], select, input[type=checkbox]');
     inputs.forEach(input => {
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
         input.addEventListener('input', () => {
-            if (input.type === 'range') {
-                const num = input.parentElement.querySelector('input[type=number]');
-                if (num) num.value = input.value;
-            } else if (input.type === 'number') {
-                const rng = input.parentElement.parentElement.querySelector('input[type=range]');
-                if (rng) rng.value = input.value;
+            
+            // 1. Synchronisation parfaite des cases textes et sliders
+            const controlGroup = input.closest('.control-group');
+            if (controlGroup) {
+                if (input.type === 'range') {
+                    const num = controlGroup.querySelector('input[type=number]');
+                    if (num && num !== input) num.value = input.value;
+                } else if (input.type === 'number') {
+                    const rng = controlGroup.querySelector('input[type=range]');
+                    if (rng && rng !== input) rng.value = input.value;
+                }
             }
             
-            if (typeof updateBouteille === 'function') updateBouteille();
-            if (typeof draw2D === 'function' && !view2D.classList.contains('hidden')) draw2D();
+            // 2. Optimisation des calculs 3D/2D (Debounce)
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(() => {
+                if (typeof updateBouteille === 'function') updateBouteille();
+                if (typeof draw2D === 'function' && !document.getElementById('viewport-2d').classList.contains('hidden')) draw2D();
+            }, 20); // Attend 20 millisecondes avant de calculer (Fluidité maximale)
         });
     });
     
