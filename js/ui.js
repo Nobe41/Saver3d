@@ -203,7 +203,6 @@ async function saveProject(isSaveAs = false) {
 btnSave.addEventListener('click', () => saveProject(false)); 
 btnSaveAs.addEventListener('click', () => saveProject(true)); 
 
-
 // ==========================================
 // NAVIGATION ONGLETS ET EXPORTS
 // ==========================================
@@ -215,7 +214,6 @@ const view3D = document.getElementById('viewport-3d');
 const view2D = document.getElementById('viewport-2d');
 const viewOutillage = document.getElementById('viewport-outillage');
 
-// Boutons d'exportation
 const btnExport3D = document.getElementById('btn-export-3d');
 const btnExport2D = document.getElementById('btn-export-2d');
 
@@ -244,8 +242,8 @@ btnOutillage.addEventListener('click', () => switchView(btnOutillage, viewOutill
 // FONCTIONS D'EXPORTATION 3D ET 2D
 // ==========================================
 
-// EXPORT 3D (STL BINAIRE HAUTE PERFORMANCE)
-btnExport3D.addEventListener('click', () => {
+// EXPORT 3D (STL BINAIRE AVEC EXPLORATEUR DE FICHIERS)
+btnExport3D.addEventListener('click', async () => {
     exportDropdown.classList.add('hidden'); 
 
     if (typeof THREE === 'undefined' || typeof THREE.STLExporter === 'undefined') {
@@ -262,28 +260,43 @@ btnExport3D.addEventListener('click', () => {
     
     try {
         const exporter = new THREE.STLExporter();
-        // L'astuce magique est ici : { binary: true }
         const stlData = exporter.parse(targetScene, { binary: true });
-        
-        // On stocke les données binaires (application/octet-stream)
         const blob = new Blob([stlData], { type: 'application/octet-stream' });
         
         const titleInput = document.getElementById('cartouche-title');
         let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Bouteille";
         
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName + '.stl';
-        link.click();
-        URL.revokeObjectURL(link.href);
+        if ('showSaveFilePicker' in window) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: fileName + '.stl',
+                    types: [{
+                        description: 'Fichier 3D STL',
+                        accept: {'model/stl': ['.stl']}
+                    }],
+                });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } catch (err) {
+                console.log("Export 3D annulé", err);
+            }
+        } else {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName + '.stl';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
     } catch (error) {
         console.error("Erreur lors de l'exportation 3D :", error);
         alert("Une erreur est survenue pendant l'export 3D.");
     }
 });
 
-// EXPORT 2D (SANS DÉFORMATION ET HAUTE DÉFINITION)
-btnExport2D.addEventListener('click', () => {
+// EXPORT 2D (PDF AVEC EXPLORATEUR DE FICHIERS)
+btnExport2D.addEventListener('click', async () => {
     exportDropdown.classList.add('hidden'); 
 
     if (!window.jspdf) {
@@ -342,7 +355,27 @@ btnExport2D.addEventListener('click', () => {
         const titleInput = document.getElementById('cartouche-title');
         let fileName = titleInput && titleInput.value.trim() !== "" ? titleInput.value.trim() : "Plan_Bouteille";
         
-        pdf.save(fileName + '.pdf');
+        const pdfBlob = pdf.output('blob');
+
+        if ('showSaveFilePicker' in window) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: fileName + '.pdf',
+                    types: [{
+                        description: 'Plan 2D PDF',
+                        accept: {'application/pdf': ['.pdf']}
+                    }],
+                });
+                const writable = await fileHandle.createWritable();
+                await writable.write(pdfBlob);
+                await writable.close();
+            } catch (err) {
+                console.log("Export 2D annulé", err);
+            }
+        } else {
+            pdf.save(fileName + '.pdf');
+        }
+
     } catch (error) {
         console.error("Erreur lors de l'exportation 2D :", error);
         alert("Une erreur est survenue pendant l'export PDF.");
