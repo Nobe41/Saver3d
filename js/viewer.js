@@ -50,7 +50,18 @@ function updateBouteille() {
     bottleGroup = new THREE.Group();
 
     const profil = generateBottleProfile();
-    const geometry = new THREE.LatheGeometry(profil, 128); 
+    
+    // ====================================================
+    // NOUVEAUTÉ : FERMETURE DU VOLUME (POUR NX)
+    // On rajoute un point au centre en bas, et un au centre en haut
+    // ====================================================
+    const latheProfile = [
+        new THREE.Vector2(0, profil[0].y), // Ferme le culot au sol
+        ...profil,
+        new THREE.Vector2(0, profil[profil.length - 1].y) // Ferme le goulot en haut
+    ];
+
+    const geometry = new THREE.LatheGeometry(latheProfile, 128); 
     
     // ====================================================
     // MATÉRIAU PRINCIPAL (Bouteille + Gravure)
@@ -65,8 +76,7 @@ function updateBouteille() {
 
     bottleGroup.add(new THREE.Mesh(geometry, mat));
     
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(profil[0].x, 64).rotateX(-Math.PI/2), mat);
-    bottleGroup.add(bottom);
+    // (L'ancien cercle "bottom" a été supprimé car la bouteille se ferme toute seule)
 
     const edges = new THREE.EdgesGeometry(geometry, 40); 
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
@@ -74,8 +84,6 @@ function updateBouteille() {
 
     if (typeof getEngravingsData === 'function') {
         const engravings = getEngravingsData();
-        
-        // MODIFICATION ICI : J'ai supprimé le "matGravure" gris qui posait problème !
         
         engravings.forEach(eng => {
             const img = window.engravingImages[eng.id];
@@ -139,8 +147,6 @@ function updateBouteille() {
             }
             
             textGeo.computeVertexNormals();
-            
-            // MODIFICATION ICI : On applique "mat" (le matériau de la bouteille) sur la géométrie de la gravure
             bottleGroup.add(new THREE.Mesh(textGeo, mat));
         });
     }
