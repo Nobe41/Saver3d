@@ -116,13 +116,13 @@ body {
     overflow: hidden;
 }
 
-/* Barre du haut */
+/* Barre du haut (Moins haute) */
 #Panel-haut {
-    min-height: 50px;
+    min-height: 40px; /* <-- HAUTEUR RÉDUITE ICI */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 15px 15px 10px 15px; 
+    margin: 10px 15px 8px 15px; /* <-- MARGES RÉDUITES ICI */
     padding: 0; 
     flex-shrink: 0;
 }
@@ -140,7 +140,6 @@ body {
     gap: 10px; 
 }
 
-/* Boutons plus compacts */
 #Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
     padding: 5px 10px;
     font-size: 0.75rem; 
@@ -202,17 +201,17 @@ main {
 }
 
 /* ==========================================
-   ACCORDÉONS ET BLOCS (Rendus plus compacts)
+   ACCORDÉONS ET BLOCS
 ========================================== */
 .setting-card { 
-    margin-bottom: 10px; /* Moins d'espace entre les cartes */
+    margin-bottom: 10px; 
     overflow: hidden; 
 }
 
 .accordion {
     width: 100%;
     text-align: left;
-    padding: 10px 12px; /* Hauteur réduite */
+    padding: 10px 12px; 
     font-size: 0.9rem;
 }
 
@@ -223,15 +222,15 @@ main {
 }
 
 .sub-block {
-    margin-top: 6px; /* Moins d'espace au-dessus */
-    margin-bottom: 6px; /* Moins d'espace en-dessous */
+    margin-top: 6px; 
+    margin-bottom: 6px; 
     padding-top: 4px;
     overflow: hidden;
 }
 
 .accordion.sub-accordion {
     width: 100%;
-    padding: 6px 12px; /* Hauteur fortement réduite */
+    padding: 6px 12px; 
     margin-top: 0;
     font-size: 0.8rem;
 }
@@ -242,10 +241,10 @@ main {
 }
 
 /* ==========================================
-   SLIDERS ET INPUTS (Rendus plus compacts)
+   SLIDERS ET INPUTS
 ========================================== */
 .control-group { 
-    margin: 6px 0 10px 0; /* Espaces réduits autour des sliders */
+    margin: 6px 0 10px 0; 
 }
 
 .label-row { 
@@ -293,7 +292,7 @@ input[type="range"] {
 
 input[type="text"], .input-select, .input-select-disabled { 
     width: 100%; 
-    padding: 6px; /* Hauteur réduite */
+    padding: 6px; 
     margin-top: 4px; 
     font-size: 0.8rem; 
 }
