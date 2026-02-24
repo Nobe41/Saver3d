@@ -5,19 +5,16 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    background-color: #f8f9fa; /* Gris très clair */
 }
 
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
+.hidden-file { display: none; }
 
 /* ==========================================
    PAGE LOGIN
@@ -32,11 +29,8 @@ body {
 #password-input {
     padding: 10px 15px;
     font-size: 1.2rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    text-align: center;
-    outline: none;
     width: 250px;
+    text-align: center;
 }
 
 /* ==========================================
@@ -54,14 +48,14 @@ body {
 }
 
 .menu-col-left {
-    flex: 1; /* 50% de l'écran */
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .menu-col-right {
-    flex: 1; /* 50% de l'écran, vide pour le moment */
+    flex: 1;
 }
 
 .menu-left-panel {
@@ -74,40 +68,24 @@ body {
 
 .menu-title {
     font-size: 4rem;
-    color: #1a1a1a;
-    font-weight: 900;
-    line-height: 1;
     margin-bottom: 30px;
-    letter-spacing: -1px;
+    line-height: 0.9;
     text-align: center;
+    text-transform: uppercase;
 }
 
 .menu-big-btn {
     display: block;
     width: 100%;
-    padding: 15px;
+    padding: 15px 40px;
     margin-bottom: 12px;
-    font-size: 1rem;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 0.2s;
+    font-size: 1.2rem;
     text-align: center;
 }
 
-#btn-new-project {
-    background-color: #ffffff;
-    color: #555555;
-    border: 1px solid #dddddd;
+.menu-big-btn span {
+    font-size: 1.5rem;
 }
-#btn-new-project:hover { background-color: #f1f1f1; }
-
-#btn-open-project {
-    background-color: #555555;
-    color: #ffffff;
-    border: none;
-}
-#btn-open-project:hover { background-color: #444444; }
 
 /* ==========================================
    INTERFACE LOGICIEL (BOUTEILLE)
@@ -121,13 +99,17 @@ body {
 /* Barre du haut */
 #Panel-haut {
     min-height: 60px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
     flex-shrink: 0;
+}
+
+.header-left-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .right-controls {
@@ -137,21 +119,15 @@ body {
     gap: 15px; 
 }
 
-/* MODIFICATION ICI : Réduction des blocs blancs des boutons */
-#Panel-haut button, .view-switcher button {
-    background: #ffffff;
-    color: #333333;
-    border: 1px solid #cccccc;
-    padding: 4px 10px; /* Moins épais */
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.75rem; /* Un peu plus petit */
+#Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
+    padding: 4px 10px;
+    font-size: 0.75rem; 
 }
 
-#Panel-haut button:hover, .view-switcher button:hover { background: #eeeeee; }
-.view-switcher { display: flex; gap: 5px; }
-.view-switcher button.active { background: #dddddd; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+.view-switcher {
+    display: flex;
+    gap: 5px;
+}
 
 /* Zone de travail globale */
 #workspace-content { 
@@ -163,65 +139,89 @@ body {
 /* Panneau Gauche */
 #Panel-gauche {
     width: 300px;
-    background-color: #ffffff;
-    border-right: 1px solid #e0e0e0;
-    overflow-y: auto; 
     height: 100%;
     padding: 15px;
+    overflow-y: auto; 
     flex-shrink: 0;
 }
 
 main { 
     flex-grow: 1; 
-    background: #ffffff; 
     position: relative; 
     overflow: hidden; 
+}
+
+/* ==========================================
+   MENUS DÉROULANTS
+========================================== */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content { 
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 170px;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.dropdown-right {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-content button { 
+    width: 100%;
+    padding: 10px 15px !important; 
+    text-align: left;
+    margin: 0 !important; 
+    font-size: 0.8rem !important;
 }
 
 /* ==========================================
    ACCORDÉONS ET BLOCS
 ========================================== */
 .setting-card { 
-    border: 1px solid #e0e0e0; 
-    border-radius: 4px; 
-    margin-bottom: 10px; 
+    margin-bottom: 15px;
+    overflow: hidden; 
 }
 
 .accordion {
     width: 100%;
     text-align: left;
-    padding: 10px 15px;
-    background: #f8f9fa;
-    color: #333333; 
-    border: none;
-    border-bottom: 1px solid #eeeeee;
-    font-weight: bold;
-    font-size: 0.85rem;
-    cursor: pointer;
+    padding: 15px;
+    font-size: 0.95rem;
 }
-
-.accordion:hover { background: #f1f1f1; }
 
 .panel-controls { 
     padding: 0 15px; 
     max-height: 0; 
     overflow: hidden; 
-    transition: max-height 0.2s ease-out; 
-    background: white; 
 }
 
 .sub-block {
     margin-top: 10px;
     margin-bottom: 10px;
     padding-top: 5px;
+    overflow: hidden;
 }
 
 .accordion.sub-accordion {
-    background: transparent;
-    border-bottom: none;
-    padding: 5px 0;
-    margin-bottom: 5px;
-    color: #666; 
+    width: 100%;
+    padding: 10px 15px;
+    margin-top: 0;
+    font-size: 0.8rem;
+}
+
+.accordion.sub-accordion:after {
+    float: right;
+    margin-left: 5px;
 }
 
 /* ==========================================
@@ -234,59 +234,53 @@ main {
 .label-row { 
     display: flex; 
     justify-content: space-between; 
-    font-size: 0.75rem; 
-    color: #555; 
     margin-bottom: 5px; 
-    font-weight: bold; 
-    text-transform: uppercase; 
+    font-size: 0.75rem; 
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+
+.label-simple {
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+}
+
+.badge-fictif {
+    font-size: 0.7rem;
 }
 
 .input-wrapper { 
     display: flex; 
     align-items: center; 
-    background: #f5f5f5; 
-    border: 1px solid #e0e0e0; 
     padding: 2px 5px; 
-    border-radius: 3px; 
 }
 
 .input-wrapper input[type="number"] { 
-    width: 40px; 
-    border: none; 
-    background: transparent; 
+    width: 45px; 
     text-align: right; 
-    outline: none; 
-    font-size: 0.8rem; 
-    color: #333; 
+    font-size: 0.85rem; 
 }
 
 .unit { 
-    font-size: 0.7rem; 
-    color: #888; 
     margin-left: 3px; 
+    font-size: 0.7rem; 
 }
 
 input[type="range"] { 
     width: 100%; 
-    cursor: pointer; 
 }
 
 input[type="text"], .input-select, .input-select-disabled { 
     width: 100%; 
-    padding: 6px; 
-    border: 1px solid #ccc; 
-    border-radius: 3px; 
-    font-size: 0.8rem; 
+    padding: 8px; 
     margin-top: 5px; 
+    font-size: 0.85rem; 
 }
 
-.input-select-disabled { 
-    background-color: #f5f5f5; 
-    color: #888; 
-    cursor: not-allowed; 
-}
-
-/* NOUVEAU BLOC: Alignement des cases à cocher */
 .checkbox-row {
     display: flex;
     flex-direction: row;
@@ -295,33 +289,26 @@ input[type="text"], .input-select, .input-select-disabled {
     margin-top: 5px;
 }
 
-.checkbox-row input[type="checkbox"] {
+.checkbox-row input[type="checkbox"], .checkbox-row label {
     margin: 0;
-    cursor: pointer;
-}
-
-.checkbox-row label {
-    margin: 0;
-    cursor: pointer;
 }
 
 /* ==========================================
    DIVERS
 ========================================== */
-.placeholder-outillage h1 { color: #ddd; font-size: 3rem; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; }
+.engraving-btn-container {
+    padding: 10px 0;
+}
+
 .btn-add-gravure {
     width: 100%;
     padding: 10px;
-    background: #ffffff;
-    border: 1px dashed #cccccc;
-    color: #333333;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 3px;
-    font-size: 0.8rem;
     margin-top: 10px;
+    font-size: 0.8rem;
 }
 
-.btn-add-gravure:hover { 
-    background: #f1f1f1; 
+.placeholder-outillage h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 5px;
 }
