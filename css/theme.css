@@ -48,7 +48,7 @@ body {
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03); /* Ombre très douce */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
     transition: 0.3s;
 }
 
@@ -105,22 +105,22 @@ body {
    LES BOUTONS DU HAUT (Panel Haut)
 ========================================== */
 #Panel-haut button, .view-switcher button, #btn-back-menu {
-    background: #70809d; /* Remplacement du blanc */
-    color: #ffffff;      /* Texte blanc pour contraster */
+    background: #70809d; 
+    color: #ffffff;      
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Ombre à peine visible */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); 
 }
 
 #Panel-haut button:hover, .view-switcher button:hover, #btn-back-menu:hover {
-    background-color: #8393b0; /* Légèrement plus clair au survol */
+    background-color: #8393b0; 
 }
 
 .btn-export {
-    background-color: #70809d !important; /* Remplacement du blanc */
+    background-color: #70809d !important; 
     color: #ffffff !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -157,33 +157,33 @@ body {
    LA CARTE FLOTTANTE (WORKSPACE)
 ========================================== */
 #workspace-content {
-    background-color: #ffffff;
+    background-color: #dde1e8; /* <-- NOUVEAU FOND ICI */
     border-radius: 12px; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); /* Ombre de flottaison très douce */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); 
 }
 
 main { 
-    background: #ffffff; 
+    background: #dde1e8; /* <-- NOUVEAU FOND ICI */
     border-radius: inherit;
 }
-#viewport-3d { background-color: #ffffff; }
-#viewport-2d { background-color: #eef2f5; }
-#canvas-2d { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.02); cursor: move; }
-#viewport-outillage { background-color: #f5f5f5; }
+#viewport-3d { background-color: #dde1e8; } /* <-- NOUVEAU FOND ICI */
+#viewport-2d { background-color: #dde1e8; } /* <-- NOUVEAU FOND ICI */
+#canvas-2d { background: transparent; box-shadow: 0 0 20px rgba(0,0,0,0.02); cursor: move; }
+#viewport-outillage { background-color: #dde1e8; } /* <-- NOUVEAU FOND ICI */
 
 /* ==========================================
    MENUS DÉROULANTS
 ========================================== */
 .dropdown-content {
-    background-color: #70809d; /* Remplacement du blanc */
+    background-color: #70809d; 
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.05); /* Ombre douce */
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.05); 
 }
 
 .dropdown-content button {
     background-color: transparent !important;
-    color: #ffffff !important; /* Texte blanc */
+    color: #ffffff !important; 
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -198,15 +198,15 @@ main {
    ACCORDÉONS ET BLOCS PARAMÈTRES (Panel Gauche)
 ========================================== */
 .setting-card {
-    background-color: #70809d; /* Remplacement du blanc */
+    background-color: #70809d; 
     border: none;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Ombre douce */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); 
 }
 
 .accordion {
-    background-color: #70809d; /* Remplacement du blanc */
-    color: #ffffff;            /* Texte blanc */
+    background-color: #70809d; 
+    color: #ffffff;            
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-weight: bold;
@@ -216,23 +216,23 @@ main {
 }
 
 .accordion:hover {
-    color: #aed6f1; /* Bleu très clair au survol */
+    color: #aed6f1; 
 }
 
 .panel-controls {
-    background-color: #70809d; /* Remplacement du blanc */
+    background-color: #70809d; 
     transition: max-height 0.2s ease-out;
 }
 
 .sub-block {
-    background-color: rgba(0, 0, 0, 0.1); /* Légèrement plus foncé pour séparer */
+    background-color: rgba(0, 0, 0, 0.1); 
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 6px;
 }
 
 .accordion.sub-accordion {
     background-color: transparent;
-    color: #e0e0e0; /* Texte gris clair */
+    color: #e0e0e0; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -243,7 +243,7 @@ main {
 
 .accordion.sub-accordion.active {
     background-color: rgba(0, 0, 0, 0.15);
-    color: #ffffff; /* Texte blanc quand ouvert */
+    color: #ffffff; 
 }
 
 .accordion.sub-accordion:after {
@@ -266,7 +266,7 @@ main {
 .label-row label { color: #ffffff; }
 .input-label { color: #cccccc; }
 .label-simple { color: #ffffff; }
-.badge-fictif { color: #ff9999; font-weight: bold; } /* Rouge clair pour fond sombre */
+.badge-fictif { color: #ff9999; font-weight: bold; } 
 
 .input-wrapper {
     background-color: rgba(0, 0, 0, 0.2);
@@ -276,7 +276,7 @@ main {
 
 .input-wrapper input[type="number"] {
     background: transparent;
-    color: #aed6f1; /* Bleu clair lisible sur fond sombre */
+    color: #aed6f1; 
     font-weight: bold;
     border: none;
     outline: none;
@@ -299,7 +299,7 @@ input[type="text"], .input-select, .input-select-disabled {
 }
 
 .input-select option {
-    background-color: #70809d; /* Le fond des options déroulantes */
+    background-color: #70809d; 
     color: #ffffff;
 }
 
@@ -318,7 +318,7 @@ input[type="text"], .input-select, .input-select-disabled {
 ========================================== */
 .btn-add-gravure {
     background-color: transparent;
-    color: #cccccc; /* Gris clair */
+    color: #cccccc; 
     border: 1px dashed rgba(255, 255, 255, 0.3);
     border-radius: 5px;
     font-weight: bold;
@@ -333,6 +333,6 @@ input[type="text"], .input-select, .input-select-disabled {
 }
 
 .placeholder-outillage h1 {
-    color: #ddd;
+    color: #8393b0; /* Un texte un peu plus foncé pour qu'il se fonde dans le nouveau fond gris-bleu */
     font-weight: 900;
 }
