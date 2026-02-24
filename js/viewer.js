@@ -2,7 +2,7 @@ function initLogiciel() {
     if (renderer) return; 
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xeef2f5);
+    scene.background = new THREE.Color(0xdde1e8); // <-- NOUVEAU FOND ICI (Code hexadécimal)
 
     const w = viewport3D.clientWidth;
     const h = viewport3D.clientHeight;
@@ -51,32 +51,22 @@ function updateBouteille() {
 
     const profil = generateBottleProfile();
     
-    // ====================================================
-    // NOUVEAUTÉ : FERMETURE DU VOLUME (POUR NX)
-    // On rajoute un point au centre en bas, et un au centre en haut
-    // ====================================================
     const latheProfile = [
-        new THREE.Vector2(0, profil[0].y), // Ferme le culot au sol
+        new THREE.Vector2(0, profil[0].y),
         ...profil,
-        new THREE.Vector2(0, profil[profil.length - 1].y) // Ferme le goulot en haut
+        new THREE.Vector2(0, profil[profil.length - 1].y)
     ];
 
     const geometry = new THREE.LatheGeometry(latheProfile, 128); 
     
-    // ====================================================
-    // MATÉRIAU PRINCIPAL (Bouteille + Gravure)
-    // ====================================================
     const mat = new THREE.MeshPhongMaterial({ 
         color: 0x82b5e0,     
         specular: 0x9ec9e8,  
         shininess: 90,       
         side: THREE.DoubleSide 
     });
-    // ====================================================
 
     bottleGroup.add(new THREE.Mesh(geometry, mat));
-    
-    // (L'ancien cercle "bottom" a été supprimé car la bouteille se ferme toute seule)
 
     const edges = new THREE.EdgesGeometry(geometry, 40); 
     const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
