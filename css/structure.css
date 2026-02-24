@@ -92,13 +92,13 @@ body {
 ========================================== */
 #Page-Bouteille {
     display: flex;
-    flex-direction: row; /* La grande nouveauté : disposition de gauche à droite */
+    flex-direction: row; 
     height: 100vh;
     width: 100vw;
     overflow: hidden;
 }
 
-/* Panneau Gauche : Prend toute la hauteur */
+/* Panneau Gauche */
 #Panel-gauche {
     width: 320px;
     height: 100vh;
@@ -107,7 +107,7 @@ body {
     flex-shrink: 0;
 }
 
-/* Colonne de droite : Contient le menu haut et la zone 3D */
+/* Colonne de droite */
 #right-column {
     display: flex;
     flex-direction: column;
@@ -116,14 +116,14 @@ body {
     overflow: hidden;
 }
 
-/* Barre du haut : Alignée avec les bords de la carte flottante */
+/* Barre du haut */
 #Panel-haut {
-    min-height: 60px;
+    min-height: 50px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 15px 15px 10px 15px; /* Aligné sur le workspace */
-    padding: 0; /* Plus besoin de padding interne */
+    margin: 15px 15px 10px 15px; 
+    padding: 0; 
     flex-shrink: 0;
 }
 
@@ -137,24 +137,25 @@ body {
     display: flex;
     flex-direction: row; 
     align-items: center; 
-    gap: 15px; 
+    gap: 10px; 
 }
 
+/* Boutons plus compacts */
 #Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
-    padding: 6px 12px;
+    padding: 5px 10px;
     font-size: 0.75rem; 
 }
 
 .view-switcher {
     display: flex;
-    gap: 5px;
+    gap: 4px;
 }
 
 /* Zone de travail globale : La carte flottante */
 #workspace-content { 
     display: flex; 
     flex-grow: 1; 
-    margin: 0 15px 15px 15px; /* L'espacement égal partout autour */
+    margin: 0 15px 15px 15px; 
     overflow: hidden; 
     position: relative;
 }
@@ -194,43 +195,43 @@ main {
 
 .dropdown-content button { 
     width: 100%;
-    padding: 10px 15px !important; 
+    padding: 8px 12px !important; 
     text-align: left;
     margin: 0 !important; 
     font-size: 0.8rem !important;
 }
 
 /* ==========================================
-   ACCORDÉONS ET BLOCS
+   ACCORDÉONS ET BLOCS (Rendus plus compacts)
 ========================================== */
 .setting-card { 
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Moins d'espace entre les cartes */
     overflow: hidden; 
 }
 
 .accordion {
     width: 100%;
     text-align: left;
-    padding: 15px;
-    font-size: 0.95rem;
+    padding: 10px 12px; /* Hauteur réduite */
+    font-size: 0.9rem;
 }
 
 .panel-controls { 
-    padding: 0 15px; 
+    padding: 0 12px; 
     max-height: 0; 
     overflow: hidden; 
 }
 
 .sub-block {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding-top: 5px;
+    margin-top: 6px; /* Moins d'espace au-dessus */
+    margin-bottom: 6px; /* Moins d'espace en-dessous */
+    padding-top: 4px;
     overflow: hidden;
 }
 
 .accordion.sub-accordion {
     width: 100%;
-    padding: 10px 15px;
+    padding: 6px 12px; /* Hauteur fortement réduite */
     margin-top: 0;
     font-size: 0.8rem;
 }
@@ -241,22 +242,22 @@ main {
 }
 
 /* ==========================================
-   SLIDERS ET INPUTS
+   SLIDERS ET INPUTS (Rendus plus compacts)
 ========================================== */
 .control-group { 
-    margin: 10px 0 15px 0; 
+    margin: 6px 0 10px 0; /* Espaces réduits autour des sliders */
 }
 
 .label-row { 
     display: flex; 
     justify-content: space-between; 
-    margin-bottom: 5px; 
+    margin-bottom: 4px; 
     font-size: 0.75rem; 
 }
 
 .input-label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     font-size: 0.8rem;
 }
 
@@ -272,13 +273,13 @@ main {
 .input-wrapper { 
     display: flex; 
     align-items: center; 
-    padding: 2px 5px; 
+    padding: 2px 4px; 
 }
 
 .input-wrapper input[type="number"] { 
-    width: 45px; 
+    width: 40px; 
     text-align: right; 
-    font-size: 0.85rem; 
+    font-size: 0.8rem; 
 }
 
 .unit { 
@@ -292,9 +293,9 @@ input[type="range"] {
 
 input[type="text"], .input-select, .input-select-disabled { 
     width: 100%; 
-    padding: 8px; 
-    margin-top: 5px; 
-    font-size: 0.85rem; 
+    padding: 6px; /* Hauteur réduite */
+    margin-top: 4px; 
+    font-size: 0.8rem; 
 }
 
 .checkbox-row {
@@ -302,7 +303,7 @@ input[type="text"], .input-select, .input-select-disabled {
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .checkbox-row input[type="checkbox"], .checkbox-row label {
@@ -313,13 +314,13 @@ input[type="text"], .input-select, .input-select-disabled {
    DIVERS
 ========================================== */
 .engraving-btn-container {
-    padding: 10px 0;
+    padding: 6px 0;
 }
 
 .btn-add-gravure {
     width: 100%;
-    padding: 10px;
-    margin-top: 10px;
+    padding: 6px;
+    margin-top: 6px;
     font-size: 0.8rem;
 }
 
