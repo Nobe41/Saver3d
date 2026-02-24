@@ -48,7 +48,7 @@ body {
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); /* Ombre très douce */
     transition: 0.3s;
 }
 
@@ -83,56 +83,54 @@ body {
    INTERFACE LOGICIEL & STYLE GMAIL 
 ========================================== */
 #Page-Bouteille {
-    background-color: #55688a; /* Le nouveau fond global industriel */
+    background-color: #55688a; 
 }
 
-/* Le Panneau gauche se fond dans l'arrière-plan */
 #Panel-gauche {
     background-color: transparent;
     border-right: none; 
 }
 
-/* Barre de défilement discrète */
 #Panel-gauche::-webkit-scrollbar { width: 6px; }
 #Panel-gauche::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 3px; }
 #Panel-gauche::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.3); border-radius: 3px; }
 #Panel-gauche::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.5); }
 
-/* Le Panel Haut se fond dans le décor */
 #Panel-haut {
     background-color: transparent;
     border-bottom: none;
 }
 
-/* LES BOUTONS DU HAUT */
+/* ==========================================
+   LES BOUTONS DU HAUT (Panel Haut)
+========================================== */
 #Panel-haut button, .view-switcher button, #btn-back-menu {
-    background: #ffffff;
-    color: #333333;
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Légère bordure */
+    background: #70809d; /* Remplacement du blanc */
+    color: #ffffff;      /* Texte blanc pour contraster */
+    border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Ombre à peine visible */
 }
 
 #Panel-haut button:hover, .view-switcher button:hover, #btn-back-menu:hover {
-    background-color: #f0f0f0;
+    background-color: #8393b0; /* Légèrement plus clair au survol */
 }
 
 .btn-export {
-    background-color: #e8f5e9 !important;
-    color: #2e7d32 !important;
-    border-color: transparent !important;
+    background-color: #70809d !important; /* Remplacement du blanc */
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .btn-export:hover {
-    background-color: #c8e6c9 !important;
-    color: #1b5e20 !important;
+    background-color: #8393b0 !important;
 }
 
 .view-switcher {
-    background-color: rgba(255, 255, 255, 0.2); /* Fond de la pilule semi-transparent */
+    background-color: rgba(0, 0, 0, 0.1); 
     border: none;
     border-radius: 6px;
     padding: 3px;
@@ -142,17 +140,17 @@ body {
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    color: #ffffff; /* Texte blanc sur fond sombre */
+    color: #e0e0e0; 
 }
 
 .view-switcher button.active {
     background-color: #ffffff !important;
-    color: #0078d4;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    color: #70809d !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
 }
 
 .view-switcher button:hover:not(.active) {
-    color: #f0f0f0;
+    color: #ffffff;
 }
 
 /* ==========================================
@@ -160,58 +158,57 @@ body {
 ========================================== */
 #workspace-content {
     background-color: #ffffff;
-    border-radius: 12px; /* Les arrondis */
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); /* L'ombre de flottaison */
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); /* Ombre de flottaison très douce */
 }
 
-/* On force le contenu interne (3D) à respecter l'arrondi */
 main { 
     background: #ffffff; 
     border-radius: inherit;
 }
 #viewport-3d { background-color: #ffffff; }
 #viewport-2d { background-color: #eef2f5; }
-#canvas-2d { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); cursor: move; }
+#canvas-2d { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.02); cursor: move; }
 #viewport-outillage { background-color: #f5f5f5; }
 
 /* ==========================================
    MENUS DÉROULANTS
 ========================================== */
 .dropdown-content {
-    background-color: #ffffff;
-    border: 1px solid #eee;
+    background-color: #70809d; /* Remplacement du blanc */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    box-shadow: 0px 8px 24px 0px rgba(0,0,0,0.15);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.05); /* Ombre douce */
 }
 
 .dropdown-content button {
     background-color: transparent !important;
-    color: #555 !important;
+    color: #ffffff !important; /* Texte blanc */
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
 }
 
 .dropdown-content button:hover {
-    background-color: #f0f8ff !important;
-    color: #0078d4 !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
 }
 
 /* ==========================================
-   ACCORDÉONS ET BLOCS PARAMÈTRES
+   ACCORDÉONS ET BLOCS PARAMÈTRES (Panel Gauche)
 ========================================== */
 .setting-card {
-    background-color: #ffffff;
+    background-color: #70809d; /* Remplacement du blanc */
     border: none;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Ombre douce */
 }
 
 .accordion {
-    background-color: #ffffff;
-    color: #333;
+    background-color: #70809d; /* Remplacement du blanc */
+    color: #ffffff;            /* Texte blanc */
     border: none;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-weight: bold;
     cursor: pointer;
     outline: none;
@@ -219,98 +216,96 @@ main {
 }
 
 .accordion:hover {
-    color: #0078d4;
+    color: #aed6f1; /* Bleu très clair au survol */
 }
 
 .panel-controls {
-    background-color: #ffffff;
+    background-color: #70809d; /* Remplacement du blanc */
     transition: max-height 0.2s ease-out;
 }
 
 .sub-block {
-    background-color: #fafafa;
-    border: 1px solid #f0f0f0;
+    background-color: rgba(0, 0, 0, 0.1); /* Légèrement plus foncé pour séparer */
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 6px;
 }
 
 .accordion.sub-accordion {
     background-color: transparent;
-    color: #555;
-    border-bottom: 1px solid #f0f0f0;
+    color: #e0e0e0; /* Texte gris clair */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .accordion.sub-accordion:hover {
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
 }
 
 .accordion.sub-accordion.active {
-    background-color: #f0f8ff;
-    color: #0078d4;
+    background-color: rgba(0, 0, 0, 0.15);
+    color: #ffffff; /* Texte blanc quand ouvert */
 }
 
 .accordion.sub-accordion:after {
-    content: '\002B';
-    color: #999;
-    font-weight: bold;
-}
-
-.accordion.sub-accordion.active:after {
-    content: "\2212";
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .sub-panel {
-    background-color: #ffffff;
+    background-color: transparent;
 }
 
 /* ==========================================
    INPUTS ET TEXTES DE FORMULAIRES
 ========================================== */
 .label-row {
-    color: #555;
+    color: #cccccc;
     font-weight: bold;
     text-transform: uppercase;
 }
 
-.label-row label { color: #666; }
-.input-label { color: #bbb; }
-.label-simple { color: #666; }
-.badge-fictif { color: #ff3333; font-weight: bold; }
+.label-row label { color: #ffffff; }
+.input-label { color: #cccccc; }
+.label-simple { color: #ffffff; }
+.badge-fictif { color: #ff9999; font-weight: bold; } /* Rouge clair pour fond sombre */
 
 .input-wrapper {
-    background-color: #f5f5f5;
-    border: 1px solid #eee;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
 .input-wrapper input[type="number"] {
     background: transparent;
-    color: #0078d4;
+    color: #aed6f1; /* Bleu clair lisible sur fond sombre */
     font-weight: bold;
     border: none;
     outline: none;
 }
 
-.unit { color: #999; }
+.unit { color: #aaaaaa; }
 
 input[type="range"] { cursor: pointer; }
 
 input[type="text"], .input-select, .input-select-disabled {
-    background-color: #f5f5f5;
-    color: #333;
-    border: 1px solid #eee;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     outline: none;
 }
 
 .input-select {
-    background-color: #fafafa;
-    color: #0078d4;
+    color: #aed6f1;
+}
+
+.input-select option {
+    background-color: #70809d; /* Le fond des options déroulantes */
+    color: #ffffff;
 }
 
 .input-select-disabled {
-    background-color: #fafafa;
-    color: #555;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: #aaaaaa;
     cursor: not-allowed;
 }
 
@@ -323,8 +318,8 @@ input[type="text"], .input-select, .input-select-disabled {
 ========================================== */
 .btn-add-gravure {
     background-color: transparent;
-    color: #888;
-    border: 1px dashed #ccc;
+    color: #cccccc; /* Gris clair */
+    border: 1px dashed rgba(255, 255, 255, 0.3);
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
@@ -332,9 +327,9 @@ input[type="text"], .input-select, .input-select-disabled {
 }
 
 .btn-add-gravure:hover {
-    background-color: #f0f8ff;
-    border-color: #0078d4;
-    color: #0078d4;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+    color: #ffffff;
 }
 
 .placeholder-outillage h1 {
