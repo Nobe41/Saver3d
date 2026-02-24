@@ -88,21 +88,42 @@ body {
 }
 
 /* ==========================================
-   INTERFACE LOGICIEL (BOUTEILLE)
+   INTERFACE LOGICIEL (NOUVELLE STRUCTURE)
 ========================================== */
 #Page-Bouteille {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* La grande nouveauté : disposition de gauche à droite */
     height: 100vh;
+    width: 100vw;
+    overflow: hidden;
 }
 
-/* Barre du haut */
+/* Panneau Gauche : Prend toute la hauteur */
+#Panel-gauche {
+    width: 320px;
+    height: 100vh;
+    padding: 15px;
+    overflow-y: auto; 
+    flex-shrink: 0;
+}
+
+/* Colonne de droite : Contient le menu haut et la zone 3D */
+#right-column {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Barre du haut : Alignée avec les bords de la carte flottante */
 #Panel-haut {
     min-height: 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    margin: 15px 15px 10px 15px; /* Aligné sur le workspace */
+    padding: 0; /* Plus besoin de padding interne */
     flex-shrink: 0;
 }
 
@@ -120,7 +141,7 @@ body {
 }
 
 #Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
-    padding: 4px 10px;
+    padding: 6px 12px;
     font-size: 0.75rem; 
 }
 
@@ -129,26 +150,21 @@ body {
     gap: 5px;
 }
 
-/* Zone de travail globale */
+/* Zone de travail globale : La carte flottante */
 #workspace-content { 
     display: flex; 
     flex-grow: 1; 
+    margin: 0 15px 15px 15px; /* L'espacement égal partout autour */
     overflow: hidden; 
-}
-
-/* Panneau Gauche */
-#Panel-gauche {
-    width: 300px;
-    height: 100%;
-    padding: 15px;
-    overflow-y: auto; 
-    flex-shrink: 0;
+    position: relative;
 }
 
 main { 
     flex-grow: 1; 
     position: relative; 
     overflow: hidden; 
+    width: 100%;
+    height: 100%;
 }
 
 /* ==========================================
