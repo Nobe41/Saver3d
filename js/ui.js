@@ -3,7 +3,6 @@ const pageMenu = document.getElementById('Page-menu');
 const pageBouteille = document.getElementById('Page-Bouteille');
 const passwordInput = document.getElementById('password-input');
 const btnNewProject = document.getElementById('btn-new-project');
-const btnBackMenu = document.getElementById('btn-back-menu');
 
 viewport3D = document.getElementById('viewport-3d');
 
@@ -36,41 +35,35 @@ btnNewProject.addEventListener('click', () => {
     }, 50);
 });
 
-btnBackMenu.addEventListener('click', () => {
-    pageBouteille.classList.add('hidden');
-    pageMenu.classList.remove('hidden');
-});
+// Retour Menu depuis le menu "Fichier"
+const btnBackMenu = document.getElementById('btn-back-menu');
+if (btnBackMenu) {
+    btnBackMenu.addEventListener('click', () => {
+        pageBouteille.classList.add('hidden');
+        pageMenu.classList.remove('hidden');
+        document.getElementById('fichier-dropdown').classList.add('hidden');
+    });
+}
 
 // ==========================================
-// GESTION DES MENUS DÉROULANTS (SAUVEGARDE ET EXPORT)
+// GESTION DU MENU DÉROULANT "FICHIER"
 // ==========================================
 
-const btnSaveMenu = document.getElementById('btn-save-menu');
-const saveDropdown = document.getElementById('save-dropdown');
-const btnExportMenu = document.getElementById('btn-export-menu');
-const exportDropdown = document.getElementById('export-dropdown');
+const btnFichierMenu = document.getElementById('btn-fichier-menu');
+const fichierDropdown = document.getElementById('fichier-dropdown');
 
-btnSaveMenu.addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    saveDropdown.classList.toggle('hidden');
-    exportDropdown.classList.add('hidden'); 
-});
+if (btnFichierMenu && fichierDropdown) {
+    btnFichierMenu.addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        fichierDropdown.classList.toggle('hidden');
+    });
 
-btnExportMenu.addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    exportDropdown.classList.toggle('hidden');
-    saveDropdown.classList.add('hidden'); 
-});
-
-// Fermer les menus quand on clique ailleurs
-document.addEventListener('click', (e) => {
-    if (!saveDropdown.contains(e.target) && e.target !== btnSaveMenu) {
-        saveDropdown.classList.add('hidden');
-    }
-    if (!exportDropdown.contains(e.target) && e.target !== btnExportMenu) {
-        exportDropdown.classList.add('hidden');
-    }
-});
+    document.addEventListener('click', (e) => {
+        if (!fichierDropdown.contains(e.target) && e.target !== btnFichierMenu) {
+            fichierDropdown.classList.add('hidden');
+        }
+    });
+}
 
 // ==========================================
 // NAVIGATION ONGLETS (3D / 2D / OUTILLAGE)
@@ -114,13 +107,11 @@ function setupListeners() {
     const inputs = document.querySelectorAll('input[type=range], input[type=number], select, input[type=checkbox]');
     
     inputs.forEach(input => {
-        // On ignore les inputs de gravure car gravure.js s'en occupe
         if (input.classList.contains('gravure-y') || input.classList.contains('gravure-angle') || input.classList.contains('gravure-largeur') || input.classList.contains('gravure-profondeur')) return;
 
         input.addEventListener('input', () => {
             const controlGroup = input.closest('.control-group');
             if (controlGroup) {
-                // Synchronisation slider <-> number
                 if (input.type === 'range') {
                     const num = controlGroup.querySelector('input[type=number]');
                     if (num && num !== input) num.value = input.value;
@@ -130,7 +121,6 @@ function setupListeners() {
                 }
             }
             
-            // Mise à jour de la bouteille avec un léger délai pour éviter les lags (Debounce)
             clearTimeout(updateTimer);
             updateTimer = setTimeout(() => {
                 if (typeof updateBouteille === 'function') updateBouteille();
@@ -139,7 +129,6 @@ function setupListeners() {
         });
     });
     
-    // Logique d'ouverture/fermeture des accordéons
     const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
         acc[i].onclick = function() {
