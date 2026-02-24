@@ -105,9 +105,9 @@ body {
    LES BOUTONS DU HAUT (Fichier & Vues)
 ========================================== */
 .btn-fichier {
-    background-color: #dde1e8 !important; /* Même couleur que le viewport */
+    background-color: #dde1e8 !important; 
     color: #333333 !important;      
-    border: none !important; /* Aucun contour */
+    border: none !important; 
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
@@ -166,7 +166,7 @@ main {
    MENU DÉROULANT FICHIER
 ========================================== */
 #fichier-dropdown {
-    background-color: #dde1e8; /* Assorti au bouton */
+    background-color: #dde1e8; 
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 6px;
     box-shadow: 0px 4px 12px rgba(0,0,0,0.05); 
@@ -207,7 +207,8 @@ main {
 }
 
 .accordion:hover {
-    color: #aed6f1; 
+    background-color: #70809d;
+    color: #ffffff; /* Reste blanc au survol */
 }
 
 .panel-controls {
@@ -216,29 +217,29 @@ main {
 }
 
 .sub-block {
-    background-color: #dde1e8; /* Remplacement de la couleur sombre par le clair */
+    background-color: #dde1e8; 
     border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 6px;
 }
 
 .accordion.sub-accordion {
     background-color: transparent;
-    color: #333333; /* Texte gris foncé pour être lisible sur fond clair */
+    color: #ffffff; /* Blanc tout le temps */
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .accordion.sub-accordion:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-    color: #000000;
+    background-color: #70809d; /* Devient #70809d au survol */
+    color: #ffffff; /* Reste blanc */
 }
 
 .accordion.sub-accordion.active {
-    background-color: rgba(255, 255, 255, 0.3);
-    color: #0078d4; 
+    background-color: #70809d; /* Reste #70809d quand c'est ouvert */
+    color: #ffffff; /* Reste blanc */
 }
 
 .accordion.sub-accordion:after {
-    color: rgba(0, 0, 0, 0.3);
+    color: #ffffff; /* Icône +/- en blanc */
 }
 
 .sub-panel {
@@ -248,19 +249,16 @@ main {
 /* ==========================================
    INPUTS ET TEXTES DE FORMULAIRES
 ========================================== */
-/* À l'extérieur des sous-blocs (fond #70809d) */
 .input-label { color: #cccccc; }
 .badge-fictif { color: #ff9999; font-weight: bold; } 
 
-/* À l'intérieur des sous-blocs (fond #dde1e8) */
 .sub-block .label-row { color: #555555; }
 .sub-block .label-row label { color: #333333; }
 .sub-block .label-simple { color: #333333; }
 .sub-block .unit { color: #666666; }
 
-/* Champ de saisie (Commun à tout le panel) */
 .input-wrapper, input[type="text"], .input-select {
-    background-color: #ffffff; /* Fond blanc très net */
+    background-color: #ffffff; 
     color: #333333;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 4px;
