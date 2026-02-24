@@ -161,14 +161,13 @@ function drawLeaderLine(ctx, x, y, text, drawingScale) {
     ctx.restore();
 }
 
-// ====================================================
-// DESSIN DU PLAN 2D COMPLET
-// ====================================================
 function draw2D() {
     if (!ctx2d || canvas2d.width === 0) return;
 
     ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
-    ctx2d.fillStyle = '#eef2f5';
+    
+    // NOUVEAU FOND ICI :
+    ctx2d.fillStyle = '#dde1e8'; 
     ctx2d.fillRect(0, 0, canvas2d.width, canvas2d.height);
 
     ctx2d.save();
@@ -239,7 +238,6 @@ function draw2D() {
 
     let mainViewOffsetX = 0;
     if (showBottomView) {
-        // Retour au décalage moins important : 1/6 de la feuille
         mainViewOffsetX = -paperW / 6; 
     }
 
@@ -333,7 +331,6 @@ function draw2D() {
             ctx2d.font = '4px Arial'; 
             ctx2d.textAlign = 'center';
             ctx2d.textBaseline = 'bottom';
-            // Remonté plus haut (de 10 à 20) pour bien aérer
             const titleY = - (bottleHeight * drawingScale) / 2 - 20;
             ctx2d.fillText("VUE DE FACE", mainViewOffsetX, titleY);
         }
