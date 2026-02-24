@@ -26,7 +26,7 @@
                     <h1 class="menu-title">Saver3D</h1>
                     <button id="btn-new-project" class="menu-big-btn"><span>+</span> NOUVEAU</button>
                     <button id="btn-open-project" class="menu-big-btn secondary"><span>📂</span> OUVRIR</button>
-                    <input type="file" id="file-loader" class="hidden-file">
+                    <input type="file" id="file-loader" style="display: none;">
                 </div>
             </div>
             <div class="menu-col-right"></div>
@@ -35,7 +35,7 @@
 
     <section id="Page-Bouteille" class="hidden">
         <div id="Panel-haut">
-            <div class="header-left-group">
+            <div style="display: flex; gap: 10px; align-items: center;">
                 <button id="btn-back-menu">MENU</button>
                 <div class="dropdown">
                     <button id="btn-save-menu">ENREGISTRER ▼</button>
@@ -50,7 +50,7 @@
                 
                 <div class="dropdown">
                     <button id="btn-export-menu" class="btn-export">EXPORTER ▼</button>
-                    <div id="export-dropdown" class="dropdown-content dropdown-right hidden">
+                    <div id="export-dropdown" class="dropdown-content hidden" style="right: 0; left: auto;">
                         <button id="btn-export-3d">Exporter 3D</button>
                         <button id="btn-export-2d">Exporter 2D</button>
                     </div>
@@ -71,7 +71,7 @@
                     <button class="accordion main-accordion">Type de bouteille</button>
                     <div class="panel-controls">
                         <div class="control-group">
-                            <label class="input-label">Forme <span class="badge-fictif">(FICTIF)</span></label>
+                            <label style="color:#bbb; font-size:0.8rem; margin-bottom:5px;">Forme <span style="color:#ff3333; font-weight:bold; font-size:0.7rem;">(FICTIF)</span></label>
                             <select class="input-select-disabled">
                                 <option>Bouteille Cylindrique</option>
                                 <option>Bouteille Carré</option>
@@ -129,7 +129,7 @@
                     <button class="accordion main-accordion">Gravures</button>
                     <div class="panel-controls">
                         <div id="engravings-container"></div>
-                        <div class="engraving-btn-container">
+                        <div style="padding: 10px 0;">
                             <button id="btn-add-engraving" class="btn-add-gravure"><span>+</span> IMPORTER UNE GRAVURE</button>
                         </div>
                     </div>
@@ -142,7 +142,7 @@
                             <button class="accordion sub-accordion">FORMAT</button>
                             <div class="panel-controls sub-panel">
                                 <div class="control-group">
-                                    <label class="input-label">Format Papier</label>
+                                    <label style="color:#bbb; font-size:0.8rem; margin-bottom:5px;">Format Papier</label>
                                     <select id="paper-format-select" class="input-select">
                                         <option value="A4_P">A4 Portrait</option>
                                         <option value="A4_L">A4 Paysage</option>
@@ -151,7 +151,7 @@
                                     </select>
                                 </div>
                                 <div class="control-group">
-                                    <label class="input-label">Échelle</label>
+                                    <label style="color:#bbb; font-size:0.8rem; margin-bottom:5px;">Échelle</label>
                                     <select id="drawing-scale-select" class="input-select">
                                         <option value="1:1">1:1 (Taille réelle)</option>
                                         <option value="1:2" selected>1:2 (Demi)</option>
@@ -196,7 +196,7 @@
     <script src="js/state.js"></script>
     <script src="js/math.js"></script>
     <script src="js/ui.js"></script>
-    <script src="js/gravure.js"></script>
+    <script src="js/export.js"></script> <script src="js/gravure.js"></script>
     <script src="js/viewer.js"></script>
     <script src="js/viewer2d.js"></script> 
     <script src="js/main.js"></script>
