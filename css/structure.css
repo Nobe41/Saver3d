@@ -88,7 +88,7 @@ body {
 }
 
 /* ==========================================
-   INTERFACE LOGICIEL (NOUVELLE STRUCTURE)
+   INTERFACE LOGICIEL (STRUCTURE GMAIL)
 ========================================== */
 #Page-Bouteille {
     display: flex;
@@ -116,15 +116,20 @@ body {
     overflow: hidden;
 }
 
-/* Barre du haut (Moins haute) */
+/* Barre du haut */
 #Panel-haut {
-    min-height: 40px; /* <-- HAUTEUR RÉDUITE ICI */
+    min-height: 40px; 
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 10px 15px 8px 15px; /* <-- MARGES RÉDUITES ICI */
+    margin: 10px 15px 8px 15px; 
     padding: 0; 
     flex-shrink: 0;
+}
+
+/* SOLUTION CSS POUR L'ALIGNEMENT : On cache la div vide qui bloquait le placement */
+#Panel-haut > div:empty {
+    display: none !important;
 }
 
 .header-left-group {
@@ -137,9 +142,18 @@ body {
     display: flex;
     flex-direction: row; 
     align-items: center; 
+    width: 100%; /* Force le bloc à prendre toute la largeur */
+    justify-content: space-between; /* Place Fichier à gauche, et le Switcher à droite */
     gap: 10px; 
 }
 
+/* Si Fichier n'est pas dans right-controls, on redonne à right-controls sa taille normale */
+.header-left-group:not(:empty) ~ .right-controls {
+    width: auto;
+    justify-content: flex-end;
+}
+
+/* Boutons plus compacts */
 #Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
     padding: 5px 10px;
     font-size: 0.75rem; 
@@ -178,7 +192,7 @@ main {
 .dropdown-content { 
     position: absolute;
     top: 100%;
-    left: 0;
+    left: 0; /* Menu Fichier aligné proprement sur la gauche */
     min-width: 170px;
     margin-top: 5px;
     display: flex;
@@ -187,9 +201,10 @@ main {
     z-index: 1000;
 }
 
+/* Sécurité pour forcer l'ouverture vers la droite maintenant que Fichier est à gauche */
 .dropdown-right {
-    right: 0;
-    left: auto;
+    left: 0 !important;
+    right: auto !important;
 }
 
 .dropdown-content button { 
