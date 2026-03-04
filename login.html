@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saver3D - Connexion</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+        .centre {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+        .form-login {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 320px;
+        }
+        .form-login label {
+            font-size: 0.9rem;
+            color: #333;
+        }
+        .form-login input {
+            padding: 0.6rem 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .form-login input:focus {
+            outline: none;
+            border-color: #555;
+        }
+        .form-login button {
+            margin-top: 0.5rem;
+            padding: 0.65rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background: #1a1a1a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+        }
+        .form-login button:hover { background: #333; }
+        .error-msg {
+            color: #c00;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            min-height: 1.4em;
+        }
+    </style>
+</head>
+<body>
+    <main class="centre">
+        <form class="form-login" action="app.html" method="get">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="votre@email.com" required>
+            <label for="licence">Mot de passe (Licence)</label>
+            <input type="password" id="licence" name="licence" placeholder="••••••••" required>
+            <div id="error-msg" class="error-msg" aria-live="polite"></div>
+            <button type="submit">Connexion</button>
+        </form>
+    </main>
+    <script>
+        document.querySelector('.form-login').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var email = document.getElementById('email').value.trim();
+            var licence = document.getElementById('licence').value;
+            var errEl = document.getElementById('error-msg');
+            if (email === 'axel@gmail.com' && licence === 'axel') {
+                window.location.href = 'app.html';
+            } else {
+                errEl.textContent = 'Email ou mot de passe incorrect.';
+            }
+        });
+    </script>
+</body>
+</html>

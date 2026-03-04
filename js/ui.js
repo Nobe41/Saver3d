@@ -1,26 +1,12 @@
-const pageLogin = document.getElementById('Page-login');
 const pageMenu = document.getElementById('Page-menu');
 const pageBouteille = document.getElementById('Page-Bouteille');
-const passwordInput = document.getElementById('password-input');
 const btnNewProject = document.getElementById('btn-new-project');
 
 viewport3D = document.getElementById('viewport-3d');
 
 // ==========================================
-// NAVIGATION GLOBALE (LOGIN & MENU)
+// NAVIGATION GLOBALE (MENU)
 // ==========================================
-
-passwordInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        if (passwordInput.value.trim().toLowerCase() === 'axel') {
-            pageLogin.classList.add('hidden');
-            pageMenu.classList.remove('hidden');
-        } else {
-            passwordInput.style.borderColor = "#ff3333";
-            setTimeout(() => { passwordInput.style.borderColor = "#333"; }, 500);
-        }
-    }
-});
 
 btnNewProject.addEventListener('click', () => {
     currentFileHandle = null; 
