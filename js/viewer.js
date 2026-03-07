@@ -1,12 +1,12 @@
 // ==========================================
-// VUE 3D — DÉFINITION CAO (mathématique, exacte)
+// VUE 3D — Moteur d'affichage uniquement
 // Repère : origine (0,0,0) à la base, axe Y = hauteur, X et Z = plan horizontal. 1 unité = 1 mm.
-// Chaque section = ellipse dans un plan horizontal : x = a·cos(θ), z = b·sin(θ), y = H (a = L/2, b = P/2).
-// Section 1 → "1 — Pied", 2 → "2 — Corps", 3 → "3 — Épaule", 4 → "4 — Col", 5 → "5 — Bas col" (s5-h, s5-L, s5-P).
+// Les géométries sont calculées par BottleMaths + GeomKernel (segments et arcs uniquement).
 // ==========================================
 
 var sectionRingGroup;
 var N_SEGMENTS = 64;
+var MERIDIAN_RESOLUTION = 32;
 
 function getPanelValue(id, def) {
     var el = document.getElementById(id);
@@ -28,156 +28,190 @@ function getSectionCarreNiveau(k) {
     var v = getPanelValue('s' + k + '-carre-niveau', 0);
     return Math.max(0, Math.min(100, v));
 }
+function getPiqureSectionFromPanel() {
+    var H = getPanelValue('s1-h', 0);
+    var a = Math.max(0, getPanelValue('sp-L', 58) / 2);
+    var b = Math.max(0, getPanelValue('sp-P', 58) / 2);
+    var shape = getPanelSelectValue('sp-forme', 'rond');
+    var carreNiveau = Math.max(0, Math.min(100, getPanelValue('sp-carre-niveau', 0)));
+    return { H: H, a: a, b: b, shape: shape, carreNiveau: carreNiveau };
+}
+function getHautPiqureSectionFromPanel() {
+    var H = getPanelValue('sp2-h', 4);
+    var a = Math.max(0, getPanelValue('sp2-L', 48) / 2);
+    var b = Math.max(0, getPanelValue('sp2-P', 48) / 2);
+    var shape = getPanelSelectValue('sp2-forme', 'rond');
+    var carreNiveau = Math.max(0, Math.min(100, getPanelValue('sp2-carre-niveau', 0)));
+    return { H: H, a: a, b: b, shape: shape, carreNiveau: carreNiveau };
+}
+function getHautPiqure3SectionFromPanel() {
+    var H = getPanelValue('sp3-h', 20);
+    var a = Math.max(0, getPanelValue('sp3-L', 35) / 2);
+    var b = Math.max(0, getPanelValue('sp3-P', 35) / 2);
+    var shape = getPanelSelectValue('sp3-forme', 'rond');
+    var carreNiveau = Math.max(0, Math.min(100, getPanelValue('sp3-carre-niveau', 0)));
+    return { H: H, a: a, b: b, shape: shape, carreNiveau: carreNiveau };
+}
+function getBague1SectionFromPanel() {
+    var H = getPanelValue('sb1-h', 282);
+    var a = Math.max(0, getPanelValue('sb1-L', 35) / 2);
+    var b = Math.max(0, getPanelValue('sb1-P', 35) / 2);
+    return { H: H, a: a, b: b, shape: 'rond', carreNiveau: 0 };
+}
+function getBague2SectionFromPanel() {
+    var H = getPanelValue('sb2-h', 297);
+    var a = Math.max(0, getPanelValue('sb2-L', 35) / 2);
+    var b = Math.max(0, getPanelValue('sb2-P', 35) / 2);
+    return { H: H, a: a, b: b, shape: 'rond', carreNiveau: 0 };
+}
+function getBague3SectionFromPanel() {
+    var H = getPanelValue('sb3-h', 299);
+    var a = Math.max(0, getPanelValue('sb3-L', 33) / 2);
+    var b = Math.max(0, getPanelValue('sb3-P', 33) / 2);
+    return { H: H, a: a, b: b, shape: 'rond', carreNiveau: 0 };
+}
+function getBague4SectionFromPanel() {
+    var H = getPanelValue('sb3-h', 299);
+    var a = Math.max(0, getPanelValue('sb4-L', 31) / 2);
+    var b = Math.max(0, getPanelValue('sb4-P', 31) / 2);
+    return { H: H, a: a, b: b, shape: 'rond', carreNiveau: 0 };
+}
+function getBague5SectionFromPanel() {
+    var H = getPanelValue('sb5-h', 297);
+    var a = Math.max(0, getPanelValue('sb5-L', 29) / 2);
+    var b = Math.max(0, getPanelValue('sb5-P', 29) / 2);
+    return { H: H, a: a, b: b, shape: 'rond', carreNiveau: 0 };
+}
 
-// Points d'une ellipse (n+1 points), premier point (a, 0), sens trigo. Retourne [[x,z], ...].
-function getEllipsePoints(a, b, n) {
-    var pts = [];
-    for (var i = 0; i <= n; i++) {
-        var theta = (i / n) * 2 * Math.PI;
-        pts.push([a * Math.cos(theta), b * Math.sin(theta)]);
+function getSectionsDataFromPanel() {
+    var H1 = getPanelValue('s1-h', 0);
+    var s2hVal = getPanelValue('s2-h', 10);
+    var s3hVal = getPanelValue('s3-h', 120);
+    var s4hVal = getPanelValue('s4-h', 200);
+    var s5hVal = getPanelValue('s5-h', 280);
+
+    s3hVal = Math.max(s3hVal, s2hVal);
+    s4hVal = Math.max(s4hVal, s3hVal);
+    s5hVal = Math.max(s5hVal, s4hVal);
+    s4hVal = Math.min(s4hVal, s5hVal);
+    s3hVal = Math.min(s3hVal, s4hVal);
+    s2hVal = Math.max(Math.min(s2hVal, s3hVal), H1);
+
+    var H2 = s2hVal, H3 = s3hVal, H4 = s4hVal, H5 = s5hVal;
+
+    var sections = [
+        { H: H1, a: Math.max(0, getPanelValue('s1-L', 71) / 2), b: Math.max(0, getPanelValue('s1-P', 71) / 2), shape: getSectionForme(1), carreNiveau: getSectionCarreNiveau(1) },
+        { H: H2, a: Math.max(0, getPanelValue('s2-L', 85) / 2), b: Math.max(0, getPanelValue('s2-P', 85) / 2), shape: getSectionForme(2), carreNiveau: getSectionCarreNiveau(2) },
+        { H: H3, a: Math.max(0, getPanelValue('s3-L', 85) / 2), b: Math.max(0, getPanelValue('s3-P', 85) / 2), shape: getSectionForme(3), carreNiveau: getSectionCarreNiveau(3) },
+        { H: H4, a: Math.max(0, getPanelValue('s4-L', 32) / 2), b: Math.max(0, getPanelValue('s4-P', 32) / 2), shape: getSectionForme(4), carreNiveau: getSectionCarreNiveau(4) },
+        { H: H5, a: Math.max(0, getPanelValue('s5-L', 32) / 2), b: Math.max(0, getPanelValue('s5-P', 32) / 2), shape: getSectionForme(5), carreNiveau: getSectionCarreNiveau(5) }
+    ];
+
+    var edgeTypes = [
+        getPanelSelectValue('r12-type', 'ligne'),
+        getPanelSelectValue('r23-type', 'ligne'),
+        getPanelSelectValue('r34-type', 'ligne'),
+        getPanelSelectValue('r45-type', 'ligne')
+    ];
+    var rhos = [
+        getPanelValue('r12-rho', 5),
+        getPanelValue('r23-rho', 40),
+        getPanelValue('r34-rho', 20),
+        getPanelValue('r45-rho', 15)
+    ];
+
+    return { sections: sections, edgeTypes: edgeTypes, rhos: rhos };
+}
+
+function clampSectionHeightsFromPanel() {
+    var H1 = getPanelValue('s1-h', 0);
+    var s2hInput = document.getElementById('s2-h');
+    var s2hSlider = document.getElementById('s2-h-slider');
+    var s2hVal = getPanelValue('s2-h', 10);
+    if (s2hInput) s2hInput.min = H1;
+    if (s2hSlider) s2hSlider.min = H1;
+
+    var s3hInput = document.getElementById('s3-h');
+    var s3hSlider = document.getElementById('s3-h-slider');
+    var s3hVal = getPanelValue('s3-h', 120);
+    if (s3hVal < s2hVal) {
+        if (s3hInput) s3hInput.value = s2hVal;
+        if (s3hSlider) s3hSlider.value = s2hVal;
     }
-    return pts;
-}
+    s3hVal = Math.max(s2hVal, getPanelValue('s3-h', 120));
+    var H3 = s3hVal;
 
-// Distance du centre au bord du rectangle arrondi (demi-largeur a, demi-profondeur b, rayon coins r) dans la direction theta.
-// Même paramétrage par angle que l'ellipse → pas de torsion sur la feuille entre section ronde et carrée.
-function getRoundedRectRadius(a, b, r, theta) {
-    r = Math.max(0, Math.min(r, Math.min(a, b)));
-    var c = Math.cos(theta), s = Math.sin(theta);
-    var x = Math.abs(c), z = Math.abs(s);
-    if (x < 1e-10) return b;
-    if (z < 1e-10) return a;
-    var tRight = a / x;
-    var tTop = b / z;
-    var hitRight = (a * z / x <= b - r);
-    var hitTop = (b * x / z <= a - r);
-    if (r < 1e-10) {
-        return hitRight && (!hitTop || tRight <= tTop) ? tRight : tTop;
+    var s4hInput = document.getElementById('s4-h');
+    var s4hSlider = document.getElementById('s4-h-slider');
+    var s4hVal = getPanelValue('s4-h', 200);
+    if (s4hVal < H3) {
+        if (s4hInput) s4hInput.value = H3;
+        if (s4hSlider) s4hSlider.value = H3;
     }
-    var Cx = a - r, Cz = b - r;
-    var CdotD = Cx * x + Cz * z;
-    var C2 = Cx * Cx + Cz * Cz;
-    var disc = CdotD * CdotD - (C2 - r * r);
-    var tArc = Infinity;
-    if (disc >= 0) {
-        tArc = CdotD + Math.sqrt(disc);
-        var px = tArc * x, pz = tArc * z;
-        if (px >= Cx - 1e-6 && pz >= Cz - 1e-6) { /* sur l'arc */ } else tArc = Infinity;
+    s4hVal = Math.max(H3, s4hVal);
+    var H4 = s4hVal;
+
+    var s5hInput = document.getElementById('s5-h');
+    var s5hSlider = document.getElementById('s5-h-slider');
+    var s5hVal = getPanelValue('s5-h', 280);
+    if (s5hVal < H4) {
+        if (s5hInput) s5hInput.value = H4;
+        if (s5hSlider) s5hSlider.value = H4;
     }
-    var out = Infinity;
-    if (hitRight && tRight < out) out = tRight;
-    if (hitTop && tTop < out) out = tTop;
-    if (tArc !== Infinity && tArc < out) out = tArc;
-    return out === Infinity ? Math.min(tRight, tTop) : out;
+    var H5 = Math.max(H4, s5hVal);
+
+    if (s4hInput) s4hInput.max = H5;
+    if (s4hSlider) s4hSlider.max = H5;
+    if (s3hInput) s3hInput.max = H4;
+    if (s3hSlider) s3hSlider.max = H4;
+    if (s2hInput) s2hInput.max = H3;
+    if (s2hSlider) s2hSlider.max = H3;
+    if (s3hInput) s3hInput.min = s2hVal;
+    if (s3hSlider) s3hSlider.min = s2hVal;
+    if (s4hInput) s4hInput.min = H3;
+    if (s4hSlider) s4hSlider.min = H3;
+    if (s5hInput) s5hInput.min = H4;
+    if (s5hSlider) s5hSlider.min = H4;
 }
 
-// Rectangle arrondi : n+1 points aux mêmes angles que l'ellipse (theta = 2*pi*i/n) pour éviter la torsion.
-function getRoundedRectPoints(a, b, r, n) {
-    var pts = [];
-    for (var i = 0; i <= n; i++) {
-        var theta = (i / n) * 2 * Math.PI;
-        var R = getRoundedRectRadius(a, b, r, theta);
-        pts.push([R * Math.cos(theta), R * Math.sin(theta)]);
+// Construit le maillage 3D par révolution du profil méridien (BottleMaths + GeomKernel).
+function buildRevolvedMesh(sectionsData) {
+    if (typeof GeomKernel === 'undefined' || typeof BottleMaths === 'undefined') return null;
+
+    var nTheta = N_SEGMENTS;
+    var meridians = [];
+    for (var t = 0; t < nTheta; t++) {
+        var theta = (t / nTheta) * 2 * Math.PI;
+        var entities = BottleMaths.buildExteriorProfile(theta, sectionsData);
+        var points = GeomKernel.tessellateProfile(entities, MERIDIAN_RESOLUTION);
+        meridians.push(points);
     }
-    return pts;
-}
-
-// Interpolation Hermite cubique : p(0)=p0, p(1)=p1, p'(0)=m0, p'(1)=m1
-function hermite1(p0, p1, m0, m1, t) {
-    var t2 = t * t, t3 = t2 * t;
-    var h00 = 2 * t3 - 3 * t2 + 1, h10 = t3 - 2 * t2 + t;
-    var h01 = -2 * t3 + 3 * t2, h11 = t3 - t2;
-    return h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1;
-}
-
-// Terme S à dérivées nulles en 0 et 1 : (t-0.5)*t²*(1-t)² — préserve la tangence
-function sShapeTerm(t) {
-    if (t <= 0 || t >= 1) return 0;
-    return (t - 0.5) * t * t * (1 - t) * (1 - t);
-}
-
-// Feuille 3D (surface) reliant deux sections. shape1/shape2 = 'rond'|'carre', carreNiveau 0-100.
-function makeSheetBetweenSections(H1, a1, b1, H2, a2, b2, type, tangentStart, tangentEnd, shape1, carreNiveau1, shape2, carreNiveau2) {
-    type = type || 'ligne';
-    shape1 = shape1 || 'rond';
-    shape2 = shape2 || 'rond';
-    carreNiveau1 = carreNiveau1 || 0;
-    carreNiveau2 = carreNiveau2 || 0;
-    var n = N_SEGMENTS;
+    var nMeridian = meridians[0].length;
+    for (var ti = 1; ti < nTheta; ti++) {
+        if (meridians[ti].length < nMeridian) nMeridian = meridians[ti].length;
+    }
     var vertices = [];
     var indices = [];
 
-    var numLayers = (type === 'ligne') ? 2 : 17;
-    var useHermite = (type === 'courbe' || type === 'courbeS') && tangentStart && tangentEnd;
-    // 0 % = rond (r max), 100 % = carré vif (r = 0)
-    var r1 = (1 - carreNiveau1 / 100) * Math.min(a1, b1);
-    var r2 = (1 - carreNiveau2 / 100) * Math.min(a2, b2);
-
-    for (var layer = 0; layer < numLayers; layer++) {
-        var t = numLayers === 2 ? layer : layer / (numLayers - 1);
-        var H, a, b;
-        if (type === 'ligne') {
-            H = H1 + t * (H2 - H1);
-            a = a1 + t * (a2 - a1);
-            b = b1 + t * (b2 - b1);
-        } else if (useHermite) {
-            var dH0 = tangentStart[0], da0 = tangentStart[1], db0 = tangentStart[2];
-            var dH1 = tangentEnd[0], da1 = tangentEnd[1], db1 = tangentEnd[2];
-            H = hermite1(H1, H2, dH0, dH1, t);
-            a = hermite1(a1, a2, da0, da1, t);
-            b = hermite1(b1, b2, db0, db1, t);
-            if (type === 'courbeS') {
-                var sAmp = 0.2 * Math.max(a1, a2, b1, b2);
-                var sTerm = sShapeTerm(t);
-                a = Math.max(0.1, a + sAmp * sTerm);
-                b = Math.max(0.1, b + sAmp * sTerm);
-            } else {
-                a = Math.max(0.1, a);
-                b = Math.max(0.1, b);
-            }
-        } else {
-            H = H1 + t * (H2 - H1);
-            a = Math.max(0.1, a1 + t * (a2 - a1));
-            b = Math.max(0.1, b1 + t * (b2 - b1));
-        }
-        var contour;
-        if (shape1 === 'rond' && shape2 === 'rond') {
-            contour = getEllipsePoints(a, b, n);
-        } else if (shape1 === 'carre' && shape2 === 'carre') {
-            var r_t = (1 - t) * r1 + t * r2;
-            contour = getRoundedRectPoints(a, b, r_t, n);
-        } else {
-            var cRond = getEllipsePoints(a, b, n);
-            var r_t = (1 - t) * r1 + t * r2;
-            var cCarre = getRoundedRectPoints(a, b, r_t, n);
-            contour = [];
-            var tr = (shape1 === 'carre') ? (1 - t) : t;
-            for (var i = 0; i <= n; i++) {
-                contour.push([
-                    (1 - tr) * cRond[i][0] + tr * cCarre[i][0],
-                    (1 - tr) * cRond[i][1] + tr * cCarre[i][1]
-                ]);
-            }
-        }
-        for (var i = 0; i <= n; i++) {
-            vertices.push(contour[i][0], H, contour[i][1]);
+    for (t = 0; t < nTheta; t++) {
+        for (var m = 0; m < nMeridian; m++) {
+            var p = meridians[t][m];
+            var x = p.x * Math.cos((t / nTheta) * 2 * Math.PI);
+            var z = p.x * Math.sin((t / nTheta) * 2 * Math.PI);
+            vertices.push(x, p.y, z);
         }
     }
 
-    var vertsPerRing = n + 1;
-    for (var layer = 0; layer < numLayers - 1; layer++) {
-        var base = layer * vertsPerRing;
-        var baseNext = (layer + 1) * vertsPerRing;
-        for (var i = 0; i < n; i++) {
-            var cur = base + i;
-            var next = base + i + 1;
-            var curT = baseNext + i;
-            var nextT = baseNext + i + 1;
-            indices.push(cur, next, curT);
-            indices.push(next, nextT, curT);
+    for (t = 0; t < nTheta; t++) {
+        var tNext = (t + 1) % nTheta;
+        for (m = 0; m < nMeridian - 1; m++) {
+            var i0 = t * nMeridian + m;
+            var i1 = t * nMeridian + m + 1;
+            var i2 = tNext * nMeridian + m;
+            var i3 = tNext * nMeridian + m + 1;
+            indices.push(i0, i1, i2);
+            indices.push(i1, i3, i2);
         }
-        indices.push(base + n, base, baseNext + n);
-        indices.push(base, baseNext, baseNext + n);
     }
 
     var geom = new THREE.BufferGeometry();
@@ -192,150 +226,211 @@ function makeSheetBetweenSections(H1, a1, b1, H2, a2, b2, type, tangentStart, ta
     return new THREE.Mesh(geom, mat);
 }
 
-// Trait de section (ellipse ou rectangle arrondi). shape = 'rond' | 'carre', carreNiveau 0-100 (0 = rond, 100 = carré vif).
-function makeSectionRing(H, a, b, shape, carreNiveau, isHighlight) {
-    var pts = (shape === 'carre')
-        ? getRoundedRectPoints(a, b, (1 - carreNiveau / 100) * Math.min(a, b), N_SEGMENTS)
-        : getEllipsePoints(a, b, N_SEGMENTS);
-    var points = pts.map(function (p) { return new THREE.Vector3(p[0], H, p[1]); });
-    var geom = new THREE.BufferGeometry().setFromPoints(points);
+function buildSectionRingLine(H, points, isHighlight) {
+    var pts = points.map(function (p) { return new THREE.Vector3(p[0], H, p[1]); });
+    var geom = new THREE.BufferGeometry().setFromPoints(pts);
     var color = isHighlight ? 0x0066cc : 0x000000;
     return new THREE.LineLoop(geom, new THREE.LineBasicMaterial({ color: color }));
 }
 
-// Sections 1, 2, 3, 4, 5 = blocs Pied, Corps, Épaule, Col, Bas col (mêmes fonctions : hauteur, largeur, profondeur)
+function buildPiqurePiedFeuille(s1, piqure, H) {
+    var n = N_SEGMENTS;
+    var piedPts = BottleMaths.getSectionRingPoints(s1.a, s1.b, s1.shape, s1.carreNiveau, n);
+    var piqurePts = BottleMaths.getSectionRingPoints(piqure.a, piqure.b, piqure.shape, piqure.carreNiveau, n);
+    var vertices = [];
+    var indices = [];
+    for (var i = 0; i <= n; i++) {
+        var ii = i % (n + 1);
+        vertices.push(piqurePts[ii][0], H, piqurePts[ii][1]);
+        vertices.push(piedPts[ii][0], H, piedPts[ii][1]);
+    }
+    for (var j = 0; j < n; j++) {
+        var a = j * 2;
+        var b = j * 2 + 1;
+        var c = (j + 1) * 2 + 1;
+        var d = (j + 1) * 2;
+        indices.push(a, b, c);
+        indices.push(a, c, d);
+    }
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    var mat = new THREE.MeshPhongMaterial({
+        color: 0x99bbdd,
+        side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geom, mat);
+}
+
+function buildPiqureBasHautFeuille(piqure, hautPiqure) {
+    var n = N_SEGMENTS;
+    var bottomPts = BottleMaths.getSectionRingPoints(piqure.a, piqure.b, piqure.shape, piqure.carreNiveau, n);
+    var topPts = BottleMaths.getSectionRingPoints(hautPiqure.a, hautPiqure.b, hautPiqure.shape, hautPiqure.carreNiveau, n);
+    var vertices = [];
+    var indices = [];
+    for (var i = 0; i <= n; i++) {
+        vertices.push(bottomPts[i][0], piqure.H, bottomPts[i][1]);
+    }
+    for (var i = 0; i <= n; i++) {
+        vertices.push(topPts[i][0], hautPiqure.H, topPts[i][1]);
+    }
+    var np = n + 1;
+    for (var j = 0; j < n; j++) {
+        var b0 = j;
+        var b1 = j + 1;
+        var t0 = np + j;
+        var t1 = np + j + 1;
+        indices.push(b0, b1, t1);
+        indices.push(b0, t1, t0);
+    }
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    var mat = new THREE.MeshPhongMaterial({
+        color: 0x99bbdd,
+        side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geom, mat);
+}
+
+function buildPiqureFeuilleVersAxe(section, topH) {
+    var n = N_SEGMENTS;
+    var bottomPts = BottleMaths.getSectionRingPoints(section.a, section.b, section.shape, section.carreNiveau, n);
+    var vertices = [];
+    var indices = [];
+    for (var i = 0; i <= n; i++) {
+        vertices.push(bottomPts[i][0], section.H, bottomPts[i][1]);
+    }
+    vertices.push(0, topH, 0);
+    var centerIdx = n + 1;
+    for (var j = 0; j < n; j++) {
+        indices.push(j, j + 1, centerIdx);
+    }
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    var mat = new THREE.MeshPhongMaterial({
+        color: 0x99bbdd,
+        side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geom, mat);
+}
+
 function updateSectionRings() {
     if (!scene) return;
+    if (typeof BottleMaths === 'undefined') return;
+
+    clampSectionHeightsFromPanel();
+    var sectionsData = getSectionsDataFromPanel();
+    var sections = sectionsData.sections;
+    var activeSection = typeof window.activeSectionIndex !== 'undefined' ? window.activeSectionIndex : 0;
+
     if (sectionRingGroup) scene.remove(sectionRingGroup);
     sectionRingGroup = new THREE.Group();
 
-    var activeSection = typeof window.activeSectionIndex !== 'undefined' ? window.activeSectionIndex : 0;
-    var H1 = getPanelValue('s1-h', 0);
-    var a1 = Math.max(0, getPanelValue('s1-L', 71) / 2);
-    var b1 = Math.max(0, getPanelValue('s1-P', 71) / 2);
-    var forme1 = getSectionForme(1);
-    var carre1 = getSectionCarreNiveau(1);
-    sectionRingGroup.add(makeSectionRing(H1, a1, b1, forme1, carre1, activeSection === 1));
+    var mesh = buildRevolvedMesh(sectionsData);
+    if (mesh) { mesh.userData.isPiqure = false; sectionRingGroup.add(mesh); }
 
-    // Section 2 : hauteur min = H1 (section en dessous), max = H3 (section au dessus) — ne peut pas dépasser la section 3
-    var s2hInput = document.getElementById('s2-h');
-    var s2hSlider = document.getElementById('s2-h-slider');
-    var s2hVal = getPanelValue('s2-h', 10);
-    if (s2hInput) s2hInput.min = H1;
-    if (s2hSlider) s2hSlider.min = H1;
-
-    // Section 3 (Épaule) : hauteur min = section d'en dessous (H2) — on calcule H3 d'abord pour borner s2
-    var s3hInput = document.getElementById('s3-h');
-    var s3hSlider = document.getElementById('s3-h-slider');
-    var s3hVal = getPanelValue('s3-h', 120);
-    if (s3hVal < s2hVal) {
-        s3hVal = s2hVal;
-        if (s3hInput) s3hInput.value = s2hVal;
-        if (s3hSlider) s3hSlider.value = s2hVal;
+    for (var i = 0; i < sections.length; i++) {
+        var s = sections[i];
+        var ringPoints = BottleMaths.getSectionRingPoints(s.a, s.b, s.shape, s.carreNiveau, N_SEGMENTS);
+        var ring = buildSectionRingLine(s.H, ringPoints, activeSection === i + 1);
+        ring.userData.isPiqure = false;
+        sectionRingGroup.add(ring);
     }
-    var H3 = s3hVal;
-
-    // Section 4 (Col) : hauteur min = H3 ; on calcule H4 pour borner s3
-    var s4hInput = document.getElementById('s4-h');
-    var s4hSlider = document.getElementById('s4-h-slider');
-    var s4hVal = getPanelValue('s4-h', 200);
-    if (s4hVal < H3) {
-        s4hVal = H3;
-        if (s4hInput) s4hInput.value = H3;
-        if (s4hSlider) s4hSlider.value = H3;
+    var piqure = getPiqureSectionFromPanel();
+    var s1 = sections[0];
+    var piqureRingPoints = BottleMaths.getSectionRingPoints(piqure.a, piqure.b, piqure.shape, piqure.carreNiveau, N_SEGMENTS);
+    var piqureRing = buildSectionRingLine(piqure.H, piqureRingPoints, false);
+    piqureRing.userData.isPiqure = true;
+    sectionRingGroup.add(piqureRing);
+    var hautPiqure = getHautPiqureSectionFromPanel();
+    var hautPiqureRingPoints = BottleMaths.getSectionRingPoints(hautPiqure.a, hautPiqure.b, hautPiqure.shape, hautPiqure.carreNiveau, N_SEGMENTS);
+    var hautPiqureRing = buildSectionRingLine(hautPiqure.H, hautPiqureRingPoints, false);
+    hautPiqureRing.userData.isPiqure = true;
+    sectionRingGroup.add(hautPiqureRing);
+    var hautPiqure3 = getHautPiqure3SectionFromPanel();
+    var hautPiqure3RingPoints = BottleMaths.getSectionRingPoints(hautPiqure3.a, hautPiqure3.b, hautPiqure3.shape, hautPiqure3.carreNiveau, N_SEGMENTS);
+    var hautPiqure3Ring = buildSectionRingLine(hautPiqure3.H, hautPiqure3RingPoints, false);
+    hautPiqure3Ring.userData.isPiqure = true;
+    sectionRingGroup.add(hautPiqure3Ring);
+    var feuille = buildPiqurePiedFeuille(s1, piqure, piqure.H);
+    feuille.userData.isPiqure = true;
+    sectionRingGroup.add(feuille);
+    var feuilleBasHaut = buildPiqureBasHautFeuille(piqure, hautPiqure);
+    feuilleBasHaut.userData.isPiqure = true;
+    sectionRingGroup.add(feuilleBasHaut);
+    var feuille2Vers3 = buildPiqureBasHautFeuille(hautPiqure, hautPiqure3);
+    feuille2Vers3.userData.isPiqure = true;
+    sectionRingGroup.add(feuille2Vers3);
+    var rp3H = getPanelValue('rp3-h', 30);
+    if (rp3H > hautPiqure3.H) {
+        var feuille3VersAxe = buildPiqureFeuilleVersAxe(hautPiqure3, rp3H);
+        feuille3VersAxe.userData.isPiqure = true;
+        sectionRingGroup.add(feuille3VersAxe);
     }
-    var H4 = s4hVal;
+    var bague1 = getBague1SectionFromPanel();
+    var s5 = sections[4];
+    var bague1RingPoints = BottleMaths.getSectionRingPoints(bague1.a, bague1.b, bague1.shape, bague1.carreNiveau, N_SEGMENTS);
+    var bague1Ring = buildSectionRingLine(bague1.H, bague1RingPoints, false);
+    bague1Ring.userData.isPiqure = false;
+    sectionRingGroup.add(bague1Ring);
+    var feuilleColBague = buildPiqureBasHautFeuille(s5, bague1);
+    feuilleColBague.userData.isPiqure = false;
+    sectionRingGroup.add(feuilleColBague);
+    var bague2 = getBague2SectionFromPanel();
+    var bague2RingPoints = BottleMaths.getSectionRingPoints(bague2.a, bague2.b, bague2.shape, bague2.carreNiveau, N_SEGMENTS);
+    var bague2Ring = buildSectionRingLine(bague2.H, bague2RingPoints, false);
+    bague2Ring.userData.isPiqure = false;
+    sectionRingGroup.add(bague2Ring);
+    var feuilleBague1Vers2 = buildPiqureBasHautFeuille(bague1, bague2);
+    feuilleBague1Vers2.userData.isPiqure = false;
+    sectionRingGroup.add(feuilleBague1Vers2);
+    var bague3 = getBague3SectionFromPanel();
+    var bague3RingPoints = BottleMaths.getSectionRingPoints(bague3.a, bague3.b, bague3.shape, bague3.carreNiveau, N_SEGMENTS);
+    var bague3Ring = buildSectionRingLine(bague3.H, bague3RingPoints, false);
+    bague3Ring.userData.isPiqure = false;
+    sectionRingGroup.add(bague3Ring);
+    var feuilleBague2Vers3 = buildPiqureBasHautFeuille(bague2, bague3);
+    feuilleBague2Vers3.userData.isPiqure = false;
+    sectionRingGroup.add(feuilleBague2Vers3);
+    var bague4 = getBague4SectionFromPanel();
+    var feuilleBague3Vers4 = buildPiqureBasHautFeuille(bague3, bague4);
+    feuilleBague3Vers4.userData.isPiqure = false;
+    sectionRingGroup.add(feuilleBague3Vers4);
+    var bague4RingPoints = BottleMaths.getSectionRingPoints(bague4.a, bague4.b, bague4.shape, bague4.carreNiveau, N_SEGMENTS);
+    var bague4Ring = buildSectionRingLine(bague4.H, bague4RingPoints, false);
+    bague4Ring.userData.isPiqure = false;
+    sectionRingGroup.add(bague4Ring);
+    var bague5 = getBague5SectionFromPanel();
+    var feuilleBague4Vers5 = buildPiqureBasHautFeuille(bague5, bague4);
+    feuilleBague4Vers5.userData.isPiqure = false;
+    sectionRingGroup.add(feuilleBague4Vers5);
+    var bague5RingPoints = BottleMaths.getSectionRingPoints(bague5.a, bague5.b, bague5.shape, bague5.carreNiveau, N_SEGMENTS);
+    var bague5Ring = buildSectionRingLine(bague5.H, bague5RingPoints, false);
+    bague5Ring.userData.isPiqure = false;
+    sectionRingGroup.add(bague5Ring);
 
-    // Section 5 (Bas col) : hauteur min = H4 ; on calcule H5 pour borner s4
-    var s5hInput = document.getElementById('s5-h');
-    var s5hSlider = document.getElementById('s5-h-slider');
-    var s5hVal = getPanelValue('s5-h', 280);
-    if (s5hVal < H4) {
-        s5hVal = H4;
-        if (s5hInput) s5hInput.value = H4;
-        if (s5hSlider) s5hSlider.value = H4;
+    var piqurePanel = document.getElementById('panel-content-piqure');
+    var isPiqureView = piqurePanel && !piqurePanel.classList.contains('hidden');
+    var children = sectionRingGroup.children;
+    for (var c = 0; c < children.length; c++) {
+        var obj = children[c];
+        if (obj.material) {
+            obj.material.transparent = true;
+            if (isPiqureView) {
+                var isPiqure = obj.userData.isPiqure === true;
+                obj.material.opacity = isPiqure ? 1 : 0.15;
+                obj.material.depthWrite = isPiqure;
+            } else {
+                obj.material.opacity = 1;
+                obj.material.depthWrite = true;
+            }
+        }
     }
-    var H5 = s5hVal;
-
-    if (s4hInput) s4hInput.max = H5;
-    if (s4hSlider) s4hSlider.max = H5;
-    if (s4hVal > H5) {
-        s4hVal = H5;
-        if (s4hInput) s4hInput.value = H5;
-        if (s4hSlider) s4hSlider.value = H5;
-    }
-    H4 = s4hVal;
-
-    if (s3hInput) s3hInput.max = H4;
-    if (s3hSlider) s3hSlider.max = H4;
-    if (s3hVal > H4) {
-        s3hVal = H4;
-        if (s3hInput) s3hInput.value = H4;
-        if (s3hSlider) s3hSlider.value = H4;
-    }
-    H3 = s3hVal;
-
-    if (s2hInput) s2hInput.max = H3;
-    if (s2hSlider) s2hSlider.max = H3;
-    if (s2hVal > H3) {
-        s2hVal = H3;
-        if (s2hInput) s2hInput.value = H3;
-        if (s2hSlider) s2hSlider.value = H3;
-    }
-    if (s2hVal < H1) {
-        s2hVal = H1;
-        if (s2hInput) s2hInput.value = H1;
-        if (s2hSlider) s2hSlider.value = H1;
-    }
-    var H2 = s2hVal;
-    if (s3hInput) s3hInput.min = H2;
-    if (s3hSlider) s3hSlider.min = H2;
-    if (s4hInput) s4hInput.min = H3;
-    if (s4hSlider) s4hSlider.min = H3;
-    if (s5hInput) s5hInput.min = H4;
-    if (s5hSlider) s5hSlider.min = H4;
-
-    var a2 = Math.max(0, getPanelValue('s2-L', 85) / 2);
-    var b2 = Math.max(0, getPanelValue('s2-P', 85) / 2);
-
-    var a3 = Math.max(0, getPanelValue('s3-L', 85) / 2);
-    var b3 = Math.max(0, getPanelValue('s3-P', 85) / 2);
-    var a4 = Math.max(0, getPanelValue('s4-L', 32) / 2);
-    var b4 = Math.max(0, getPanelValue('s4-P', 32) / 2);
-    var a5 = Math.max(0, getPanelValue('s5-L', 32) / 2);
-    var b5 = Math.max(0, getPanelValue('s5-P', 32) / 2);
-
-    // Tangentes aux sections pour que courbe / courbe S soient tangentes aux feuilles d'avant et d'après
-    var T1 = [H2 - H1, a2 - a1, b2 - b1];
-    var T2 = [0.5 * (H2 - H1 + H3 - H2), 0.5 * (a2 - a1 + a3 - a2), 0.5 * (b2 - b1 + b3 - b2)];
-    var T3 = [0.5 * (H3 - H2 + H4 - H3), 0.5 * (a3 - a2 + a4 - a3), 0.5 * (b3 - b2 + b4 - b3)];
-    var T4 = [0.5 * (H4 - H3 + H5 - H4), 0.5 * (a4 - a3 + a5 - a4), 0.5 * (b4 - b3 + b5 - b4)];
-    var T5 = [H5 - H4, a5 - a4, b5 - b4];
-
-    var forme2 = getSectionForme(2);
-    var carre2 = getSectionCarreNiveau(2);
-    var forme3 = getSectionForme(3);
-    var carre3 = getSectionCarreNiveau(3);
-    var forme4 = getSectionForme(4);
-    var carre4 = getSectionCarreNiveau(4);
-    var forme5 = getSectionForme(5);
-    var carre5 = getSectionCarreNiveau(5);
-
-    var type12 = getPanelSelectValue('r12-type', 'ligne');
-    sectionRingGroup.add(makeSheetBetweenSections(H1, a1, b1, H2, a2, b2, type12, T1, T2, forme1, carre1, forme2, carre2));
-    sectionRingGroup.add(makeSectionRing(H2, a2, b2, forme2, carre2, activeSection === 2));
-
-    var type23 = getPanelSelectValue('r23-type', 'ligne');
-    sectionRingGroup.add(makeSheetBetweenSections(H2, a2, b2, H3, a3, b3, type23, T2, T3, forme2, carre2, forme3, carre3));
-    sectionRingGroup.add(makeSectionRing(H3, a3, b3, forme3, carre3, activeSection === 3));
-
-    var type34 = getPanelSelectValue('r34-type', 'ligne');
-    sectionRingGroup.add(makeSheetBetweenSections(H3, a3, b3, H4, a4, b4, type34, T3, T4, forme3, carre3, forme4, carre4));
-    sectionRingGroup.add(makeSectionRing(H4, a4, b4, forme4, carre4, activeSection === 4));
-
-    var type45 = getPanelSelectValue('r45-type', 'ligne');
-    sectionRingGroup.add(makeSheetBetweenSections(H4, a4, b4, H5, a5, b5, type45, T4, T5, forme4, carre4, forme5, carre5));
-    sectionRingGroup.add(makeSectionRing(H5, a5, b5, forme5, carre5, activeSection === 5));
 
     scene.add(sectionRingGroup);
 }
@@ -387,7 +482,6 @@ function initLogiciel() {
     animate();
 }
 
-// Appelé à chaque changement dans le panneau (blocs 1-Pied, 2-Corps, etc.)
 function updateBouteille() {
     updateSectionRings();
 }

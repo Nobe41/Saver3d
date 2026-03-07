@@ -181,10 +181,63 @@ body {
     max-width: 260px;
 }
 
+.panel-right {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: 10px; /* même décalage que margin-top de #Panel-haut : aligner la barre d’icônes avec Fichier/Affichage */
+}
+
+.panel-sections-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-icons-bar {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    padding: 0 12px;
+    margin: 0 12px 8px 12px; /* 8px en bas = margin-bottom de #Panel-haut, pour aligner le contenu avec la fenêtre blanche */
+    background-color: #EAEDF2;
+    border-radius: 9999px;
+    box-sizing: border-box;
+}
+
+.panel-bar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    border-radius: 6px;
+    user-select: none;
+}
+
+.panel-bar-icon:hover {
+    opacity: 0.85;
+}
+
+.panel-bar-icon.active {
+    opacity: 1;
+}
+
 .panel-content {
     flex: 1;
     min-width: 0;
-    padding: 15px 21px 15px 15px; /* droite 15+6 pour la scrollbar = même espace visuel à gauche et à droite */
+    padding: 18px 21px 15px 15px; /* padding-top : premier bloc section plus bas */
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
