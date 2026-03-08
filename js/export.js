@@ -167,8 +167,32 @@ if (btnExport3D) {
         }
         
         try {
+            // Doubler les faces pour l'export : chaque mesh est exporté avec ses triangles inversés
+            // afin que l'intérieur soit visible dans tout logiciel (pas de back-face culling).
+            const tempGroup = new THREE.Group();
+            targetScene.traverse((obj) => {
+                if (obj.isMesh && obj.geometry && obj.geometry.index) {
+                    const geo = obj.geometry;
+                    const idx = geo.index.array;
+                    const len = idx.length;
+                    const newIdx = new idx.constructor(len);
+                    for (let i = 0; i < len; i += 3) {
+                        newIdx[i] = idx[i];
+                        newIdx[i + 1] = idx[i + 2];
+                        newIdx[i + 2] = idx[i + 1];
+                    }
+                    const geoFlipped = geo.clone();
+                    geoFlipped.setIndex(new THREE.BufferAttribute(newIdx, 1));
+                    geoFlipped.computeVertexNormals();
+                    const meshFlipped = new THREE.Mesh(geoFlipped, obj.material.clone());
+                    meshFlipped.applyMatrix4(obj.matrixWorld);
+                    tempGroup.add(meshFlipped);
+                }
+            });
+            targetScene.add(tempGroup);
             const exporter = new THREE.STLExporter();
             const stlData = exporter.parse(targetScene, { binary: true });
+            targetScene.remove(tempGroup);
             const blob = new Blob([stlData], { type: 'application/octet-stream' });
             
             const titleInput = document.getElementById('cartouche-title');

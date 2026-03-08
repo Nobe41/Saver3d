@@ -55,6 +55,20 @@ var BottleMaths = (function () {
         return getEllipseRadiusAtAngle(a, b, theta);
     }
 
+    /**
+     * Point (x, z) sur le contour de la section au paramètre u in [0, 2*PI].
+     * Ellipse : (a*cos(u), b*sin(u)). Carré arrondi : (R(u)*cos(u), R(u)*sin(u)).
+     */
+    function getSectionPointXZ(a, b, shape, carreNiveau, u) {
+        var c = Math.cos(u), s = Math.sin(u);
+        if (shape === 'carre') {
+            var r = (1 - (carreNiveau || 0) / 100) * Math.min(a, b);
+            var R = getRoundedRectRadius(a, b, r, u);
+            return { x: R * c, z: R * s };
+        }
+        return { x: a * c, z: b * s };
+    }
+
     // -------------------------------------------------------------------------
     // POINTS DU CONTOUR D'UNE SECTION (anneau horizontal) : [[x, z], ...]
     // Pour l'affichage des cercles/ellipses de section.
@@ -129,12 +143,63 @@ var BottleMaths = (function () {
         return [];
     }
 
+    // -------------------------------------------------------------------------
+    // SURFACES PARAMÉTRIQUES EXACTES (feuilles CAO)
+    // section = { H, a, b, shape, carreNiveau }
+    // u = angle [0, 2*PI], v = paramètre [0, 1]
+    // -------------------------------------------------------------------------
+
+    /**
+     * Surface réglée entre deux sections (équation exacte).
+     * S(u,v) = (1-v)*C1(u) + v*C2(u), Ci(u) = (xi(u), Hi, zi(u)) avec (xi,zi) sur le contour.
+     * Retourne { x, y, z } en mm.
+     */
+    function getRuledSurfacePoint(section1, section2, u, v) {
+        var p1 = getSectionPointXZ(section1.a, section1.b, section1.shape || 'rond', section1.carreNiveau || 0, u);
+        var p2 = getSectionPointXZ(section2.a, section2.b, section2.shape || 'rond', section2.carreNiveau || 0, u);
+        return {
+            x: (1 - v) * p1.x + v * p2.x,
+            y: (1 - v) * section1.H + v * section2.H,
+            z: (1 - v) * p1.z + v * p2.z
+        };
+    }
+
+    /**
+     * Bande radiale horizontale entre deux contours à la même hauteur H (équation exacte).
+     * S(u,v) = ((1-v)*p1(u) + v*p2(u), H) en (x,z).
+     */
+    function getRadialBandPoint(section1, section2, H, u, v) {
+        var p1 = getSectionPointXZ(section1.a, section1.b, section1.shape || 'rond', section1.carreNiveau || 0, u);
+        var p2 = getSectionPointXZ(section2.a, section2.b, section2.shape || 'rond', section2.carreNiveau || 0, u);
+        return {
+            x: (1 - v) * p1.x + v * p2.x,
+            y: H,
+            z: (1 - v) * p1.z + v * p2.z
+        };
+    }
+
+    /**
+     * Cône (surface réglée) de la section vers l'apex (0, topH, 0) (équation exacte).
+     * S(u,v) = (1-v)*C(u) + v*Apex.
+     */
+    function getConeToApexPoint(section, topH, u, v) {
+        var p = getSectionPointXZ(section.a, section.b, section.shape || 'rond', section.carreNiveau || 0, u);
+        return {
+            x: (1 - v) * p.x,
+            y: (1 - v) * section.H + v * topH,
+            z: (1 - v) * p.z
+        };
+    }
+
     return {
         getSectionRadiusAtAngle: getSectionRadiusAtAngle,
         getSectionRingPoints: getSectionRingPoints,
         getMeridianSectionPoints: getMeridianSectionPoints,
         buildExteriorProfile: buildExteriorProfile,
         buildPuntProfile: buildPuntProfile,
-        buildInteriorProfile: buildInteriorProfile
+        buildInteriorProfile: buildInteriorProfile,
+        getRuledSurfacePoint: getRuledSurfacePoint,
+        getRadialBandPoint: getRadialBandPoint,
+        getConeToApexPoint: getConeToApexPoint
     };
 })();

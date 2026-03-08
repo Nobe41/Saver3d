@@ -5,8 +5,10 @@
 // ==========================================
 
 var sectionRingGroup;
-var N_SEGMENTS = 64;
-var MERIDIAN_RESOLUTION = 32;
+/* Tessellation fine : courbes et surfaces lisses en viewport et à l’export (STL = maillage uniquement). */
+var N_SEGMENTS = 128;
+var N_FEUILLE_V = 32;
+var MERIDIAN_RESOLUTION = 64;
 
 function getPanelValue(id, def) {
     var el = document.getElementById(id);
@@ -233,89 +235,166 @@ function buildSectionRingLine(H, points, isHighlight) {
     return new THREE.LineLoop(geom, new THREE.LineBasicMaterial({ color: color }));
 }
 
+/* Fermeture en u sans couture : nu sommets en u (i=0..nu-1), indices avec (i+1)%nu. */
+function addRuledSurfaceIndicesClosedU(indices, nu, nv, rowStride) {
+    for (var i = 0; i < nu; i++) {
+        var iNext = (i + 1) % nu;
+        for (var j = 0; j < nv; j++) {
+            var a = i * rowStride + j;
+            var b = iNext * rowStride + j;
+            var c = iNext * rowStride + j + 1;
+            var d = i * rowStride + j + 1;
+            indices.push(a, d, c);
+            indices.push(a, c, b);
+        }
+    }
+}
+
+/**
+ * Tessellation d'une surface paramétrique exacte (bande radiale horizontale).
+ * Surface fermée en u (sans couture).
+ */
 function buildPiqurePiedFeuille(s1, piqure, H) {
-    var n = N_SEGMENTS;
-    var piedPts = BottleMaths.getSectionRingPoints(s1.a, s1.b, s1.shape, s1.carreNiveau, n);
-    var piqurePts = BottleMaths.getSectionRingPoints(piqure.a, piqure.b, piqure.shape, piqure.carreNiveau, n);
+    var nu = N_SEGMENTS;
+    var nv = N_FEUILLE_V;
     var vertices = [];
     var indices = [];
-    for (var i = 0; i <= n; i++) {
-        var ii = i % (n + 1);
-        vertices.push(piqurePts[ii][0], H, piqurePts[ii][1]);
-        vertices.push(piedPts[ii][0], H, piedPts[ii][1]);
+    for (var i = 0; i < nu; i++) {
+        var u = (i / nu) * 2 * Math.PI;
+        for (var j = 0; j <= nv; j++) {
+            var v = j / nv;
+            var p = BottleMaths.getRadialBandPoint(s1, piqure, H, u, v);
+            vertices.push(p.x, p.y, p.z);
+        }
     }
-    for (var j = 0; j < n; j++) {
-        var a = j * 2;
-        var b = j * 2 + 1;
-        var c = (j + 1) * 2 + 1;
-        var d = (j + 1) * 2;
-        indices.push(a, b, c);
-        indices.push(a, c, d);
-    }
+    addRuledSurfaceIndicesClosedU(indices, nu, nv, nv + 1);
     var geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geom.setIndex(indices);
     geom.computeVertexNormals();
-    var mat = new THREE.MeshPhongMaterial({
-        color: 0x99bbdd,
-        side: THREE.DoubleSide
-    });
+    var mat = new THREE.MeshPhongMaterial({ color: 0x99bbdd, side: THREE.DoubleSide });
     return new THREE.Mesh(geom, mat);
 }
 
+/**
+ * Tessellation de la surface réglée exacte entre deux sections.
+ * Surface fermée en u (sans couture).
+ */
 function buildPiqureBasHautFeuille(piqure, hautPiqure) {
-    var n = N_SEGMENTS;
-    var bottomPts = BottleMaths.getSectionRingPoints(piqure.a, piqure.b, piqure.shape, piqure.carreNiveau, n);
-    var topPts = BottleMaths.getSectionRingPoints(hautPiqure.a, hautPiqure.b, hautPiqure.shape, hautPiqure.carreNiveau, n);
+    var nu = N_SEGMENTS;
+    var nv = N_FEUILLE_V;
     var vertices = [];
     var indices = [];
-    for (var i = 0; i <= n; i++) {
-        vertices.push(bottomPts[i][0], piqure.H, bottomPts[i][1]);
+    for (var i = 0; i < nu; i++) {
+        var u = (i / nu) * 2 * Math.PI;
+        for (var j = 0; j <= nv; j++) {
+            var v = j / nv;
+            var p = BottleMaths.getRuledSurfacePoint(piqure, hautPiqure, u, v);
+            vertices.push(p.x, p.y, p.z);
+        }
     }
-    for (var i = 0; i <= n; i++) {
-        vertices.push(topPts[i][0], hautPiqure.H, topPts[i][1]);
-    }
-    var np = n + 1;
-    for (var j = 0; j < n; j++) {
-        var b0 = j;
-        var b1 = j + 1;
-        var t0 = np + j;
-        var t1 = np + j + 1;
-        indices.push(b0, b1, t1);
-        indices.push(b0, t1, t0);
-    }
+    addRuledSurfaceIndicesClosedU(indices, nu, nv, nv + 1);
     var geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geom.setIndex(indices);
     geom.computeVertexNormals();
-    var mat = new THREE.MeshPhongMaterial({
-        color: 0x99bbdd,
-        side: THREE.DoubleSide
-    });
+    var mat = new THREE.MeshPhongMaterial({ color: 0x99bbdd, side: THREE.DoubleSide });
     return new THREE.Mesh(geom, mat);
 }
 
+/**
+ * Tessellation du cône exact section → apex (0, topH, 0).
+ * Surface fermée en u (sans couture).
+ */
 function buildPiqureFeuilleVersAxe(section, topH) {
-    var n = N_SEGMENTS;
-    var bottomPts = BottleMaths.getSectionRingPoints(section.a, section.b, section.shape, section.carreNiveau, n);
+    var nu = N_SEGMENTS;
+    var nv = N_FEUILLE_V;
     var vertices = [];
     var indices = [];
-    for (var i = 0; i <= n; i++) {
-        vertices.push(bottomPts[i][0], section.H, bottomPts[i][1]);
+    for (var i = 0; i < nu; i++) {
+        var u = (i / nu) * 2 * Math.PI;
+        for (var j = 0; j <= nv; j++) {
+            var v = j / nv;
+            var p = BottleMaths.getConeToApexPoint(section, topH, u, v);
+            vertices.push(p.x, p.y, p.z);
+        }
     }
-    vertices.push(0, topH, 0);
-    var centerIdx = n + 1;
-    for (var j = 0; j < n; j++) {
-        indices.push(j, j + 1, centerIdx);
+    addRuledSurfaceIndicesClosedU(indices, nu, nv, nv + 1);
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    var mat = new THREE.MeshPhongMaterial({ color: 0x99bbdd, side: THREE.DoubleSide });
+    return new THREE.Mesh(geom, mat);
+}
+
+/**
+ * Une seule surface réglée multi-bandes : sections[0]..sections[K-1], bords partagés.
+ * Supprime les traits aux jonctions (normales lissées).
+ */
+function buildRuledSurfaceStrip(sections, color) {
+    if (!sections || sections.length < 2) return null;
+    var nu = N_SEGMENTS;
+    var nv = N_FEUILLE_V;
+    var K = sections.length;
+    var totalRows = (K - 1) * nv + 1;
+    var vertices = [];
+    var indices = [];
+    for (var i = 0; i < nu; i++) {
+        var u = (i / nu) * 2 * Math.PI;
+        for (var r = 0; r < totalRows; r++) {
+            var k = Math.floor(r / nv);
+            var v = (r === (K - 1) * nv) ? 1 : (r - k * nv) / nv;
+            if (k >= K - 1) k = K - 2;
+            var p = BottleMaths.getRuledSurfacePoint(sections[k], sections[k + 1], u, v);
+            vertices.push(p.x, p.y, p.z);
+        }
+    }
+    for (var k = 0; k < K - 1; k++) {
+        for (var i = 0; i < nu; i++) {
+            var iNext = (i + 1) % nu;
+            for (var j = 0; j < nv; j++) {
+                var r0 = k * nv + j;
+                var r1 = k * nv + j + 1;
+                var a = i * totalRows + r0;
+                var b = iNext * totalRows + r0;
+                var c = iNext * totalRows + r1;
+                var d = i * totalRows + r1;
+                indices.push(a, d, c);
+                indices.push(a, c, b);
+            }
+        }
     }
     var geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geom.setIndex(indices);
     geom.computeVertexNormals();
-    var mat = new THREE.MeshPhongMaterial({
-        color: 0x99bbdd,
-        side: THREE.DoubleSide
-    });
+    var mat = new THREE.MeshPhongMaterial({ color: color !== undefined ? color : 0x99bbdd, side: THREE.DoubleSide });
+    return new THREE.Mesh(geom, mat);
+}
+
+/**
+ * Face de dessus (disque) pour une section : ferme le haut avec le contour exact.
+ * section = { H, a, b, shape, carreNiveau }. Utilisé pour que l'export soit un objet 3D propre (pas de "voir à travers").
+ */
+function buildSectionTopDisc(section, color) {
+    var nu = N_SEGMENTS;
+    var pts = BottleMaths.getSectionRingPoints(section.a, section.b, section.shape || 'rond', section.carreNiveau || 0, nu);
+    var H = section.H;
+    var vertices = [0, H, 0];
+    var i;
+    for (i = 0; i < nu; i++) {
+        vertices.push(pts[i][0], H, pts[i][1]);
+    }
+    var indices = [];
+    for (i = 0; i < nu; i++) {
+        indices.push(0, 1 + i, 1 + (i + 1) % nu);
+    }
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    var mat = new THREE.MeshPhongMaterial({ color: color !== undefined ? color : 0x99bbdd, side: THREE.DoubleSide });
     return new THREE.Mesh(geom, mat);
 }
 
@@ -360,12 +439,8 @@ function updateSectionRings() {
     var feuille = buildPiqurePiedFeuille(s1, piqure, piqure.H);
     feuille.userData.isPiqure = true;
     sectionRingGroup.add(feuille);
-    var feuilleBasHaut = buildPiqureBasHautFeuille(piqure, hautPiqure);
-    feuilleBasHaut.userData.isPiqure = true;
-    sectionRingGroup.add(feuilleBasHaut);
-    var feuille2Vers3 = buildPiqureBasHautFeuille(hautPiqure, hautPiqure3);
-    feuille2Vers3.userData.isPiqure = true;
-    sectionRingGroup.add(feuille2Vers3);
+    var feuillePiqureStrip = buildRuledSurfaceStrip([piqure, hautPiqure, hautPiqure3], 0x99bbdd);
+    if (feuillePiqureStrip) { feuillePiqureStrip.userData.isPiqure = true; sectionRingGroup.add(feuillePiqureStrip); }
     var rp3H = getPanelValue('rp3-h', 30);
     if (rp3H > hautPiqure3.H) {
         var feuille3VersAxe = buildPiqureFeuilleVersAxe(hautPiqure3, rp3H);
@@ -382,33 +457,23 @@ function updateSectionRings() {
     feuilleColBague.userData.isPiqure = false;
     sectionRingGroup.add(feuilleColBague);
     var bague2 = getBague2SectionFromPanel();
+    var bague3 = getBague3SectionFromPanel();
+    var bague4 = getBague4SectionFromPanel();
+    var bague5 = getBague5SectionFromPanel();
+    var feuilleBagueStrip = buildRuledSurfaceStrip([bague1, bague2, bague3, bague4, bague5], 0x99bbdd);
+    if (feuilleBagueStrip) { feuilleBagueStrip.userData.isPiqure = false; sectionRingGroup.add(feuilleBagueStrip); }
     var bague2RingPoints = BottleMaths.getSectionRingPoints(bague2.a, bague2.b, bague2.shape, bague2.carreNiveau, N_SEGMENTS);
     var bague2Ring = buildSectionRingLine(bague2.H, bague2RingPoints, false);
     bague2Ring.userData.isPiqure = false;
     sectionRingGroup.add(bague2Ring);
-    var feuilleBague1Vers2 = buildPiqureBasHautFeuille(bague1, bague2);
-    feuilleBague1Vers2.userData.isPiqure = false;
-    sectionRingGroup.add(feuilleBague1Vers2);
-    var bague3 = getBague3SectionFromPanel();
     var bague3RingPoints = BottleMaths.getSectionRingPoints(bague3.a, bague3.b, bague3.shape, bague3.carreNiveau, N_SEGMENTS);
     var bague3Ring = buildSectionRingLine(bague3.H, bague3RingPoints, false);
     bague3Ring.userData.isPiqure = false;
     sectionRingGroup.add(bague3Ring);
-    var feuilleBague2Vers3 = buildPiqureBasHautFeuille(bague2, bague3);
-    feuilleBague2Vers3.userData.isPiqure = false;
-    sectionRingGroup.add(feuilleBague2Vers3);
-    var bague4 = getBague4SectionFromPanel();
-    var feuilleBague3Vers4 = buildPiqureBasHautFeuille(bague3, bague4);
-    feuilleBague3Vers4.userData.isPiqure = false;
-    sectionRingGroup.add(feuilleBague3Vers4);
     var bague4RingPoints = BottleMaths.getSectionRingPoints(bague4.a, bague4.b, bague4.shape, bague4.carreNiveau, N_SEGMENTS);
     var bague4Ring = buildSectionRingLine(bague4.H, bague4RingPoints, false);
     bague4Ring.userData.isPiqure = false;
     sectionRingGroup.add(bague4Ring);
-    var bague5 = getBague5SectionFromPanel();
-    var feuilleBague4Vers5 = buildPiqureBasHautFeuille(bague5, bague4);
-    feuilleBague4Vers5.userData.isPiqure = false;
-    sectionRingGroup.add(feuilleBague4Vers5);
     var bague5RingPoints = BottleMaths.getSectionRingPoints(bague5.a, bague5.b, bague5.shape, bague5.carreNiveau, N_SEGMENTS);
     var bague5Ring = buildSectionRingLine(bague5.H, bague5RingPoints, false);
     bague5Ring.userData.isPiqure = false;

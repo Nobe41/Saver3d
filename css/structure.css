@@ -98,7 +98,7 @@ body {
     overflow: hidden;
 }
 
-/* Panneau Gauche : colonne logo + contenu (sections) */
+/* Panneau Gauche : Sidebar (icônes) + Inspector (contenu) */
 #Panel-gauche {
     width: 320px;
     height: 100vh;
@@ -107,6 +107,8 @@ body {
     flex-direction: row;
 }
 
+/* Sidebar : colonne d'icônes à gauche */
+#sidebar.panel-logo-col,
 .panel-logo-col {
     width: 54px;
     flex-shrink: 0;
@@ -181,13 +183,15 @@ body {
     max-width: 260px;
 }
 
+/* Inspector : zone de contenu (pages Sections / Piqûre / Bague / Gravures) */
+#inspector.panel-right,
 .panel-right {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding-top: 10px; /* même décalage que margin-top de #Panel-haut : aligner la barre d’icônes avec Fichier/Affichage */
+    padding-top: 10px; /* même décalage que margin-top de #topbar : aligner la barre d’icônes avec Fichier/Affichage */
 }
 
 .panel-sections-area {
@@ -198,6 +202,8 @@ body {
     overflow: hidden;
 }
 
+/* Brand Header : barre pour changer de page dans l'Inspector */
+#brand-header.panel-icons-bar,
 .panel-icons-bar {
     flex-shrink: 0;
     display: flex;
@@ -206,7 +212,7 @@ body {
     gap: 10px;
     height: 36px;
     padding: 0 12px;
-    margin: 0 12px 8px 12px; /* 8px en bas = margin-bottom de #Panel-haut, pour aligner le contenu avec la fenêtre blanche */
+    margin: 0 12px 8px 12px; /* 8px en bas = margin-bottom de #topbar, pour aligner le contenu avec la fenêtre blanche */
     background-color: #EAEDF2;
     border-radius: 9999px;
     box-sizing: border-box;
@@ -255,7 +261,9 @@ body {
 }
 
 /* Barre du haut */
-#Panel-haut {
+/* Topbar : Fichier, Affichage, 3D/2D/Outillage */
+#topbar,
+#topbar.panel-haut-container {
     min-height: 40px; 
     display: flex;
     align-items: center;
@@ -295,7 +303,7 @@ body {
 }
 
 /* Boutons plus compacts */
-#Panel-haut button, .view-switcher button, #btn-back-menu, .btn-export {
+#topbar button, .view-switcher button, #btn-back-menu, .btn-export {
     padding: 5px 10px;
     font-size: 0.75rem; 
 }
@@ -306,7 +314,9 @@ body {
 }
 
 /* Zone de travail globale : La carte flottante */
-#workspace-content { 
+/* Viewport : zone principale (vue 3D, 2D, Outillage) */
+#viewport,
+#viewport.workspace-content { 
     display: flex; 
     flex-grow: 1; 
     margin: 0 15px 15px 15px; 
