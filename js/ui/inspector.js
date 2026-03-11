@@ -6,7 +6,11 @@ var UIInspector = (function () {
     var CONTAINER_PIQURE = 'panel-content-piqure';
     var CONTAINER_BAGUE = 'panel-content-bague';
 
-    var SELECT_PROFIL_OPTIONS = '<option value="ligne">Ligne</option><option value="courbe">Courbe</option><option value="courbeS">Courbe S</option>';
+    var SELECT_PROFIL_OPTIONS = ''
+        + '<option value="ligne">Ligne</option>'
+        + '<option value="courbeS">Courbe S</option>'
+        + '<option value="rayon">Rayon</option>'
+        + '<option value="spline">Spline</option>';
     var SELECT_FORME_OPTIONS = '<option value="rond">Rond (actuel)</option><option value="carre">Carré</option>';
 
     // Sections corps : index, label, hauteur (val, min, max, step), L/P (val, min, max), step dimension
@@ -20,10 +24,10 @@ var UIInspector = (function () {
 
     // Rattachements entre sections : id (r12, r23, r34, r45), rho (val, min, max, step)
     var RATTACHEMENTS_MAIN = [
-        { id: 'r12', rho: 5, rhoMin: 0, rhoMax: 50, rhoStep: 0.5 },
-        { id: 'r23', rho: 40, rhoMin: 5, rhoMax: 120, rhoStep: 1 },
-        { id: 'r34', rho: 0, rhoMin: 0, rhoMax: 40, rhoStep: 0.5 },
-        { id: 'r45', rho: 20, rhoMin: 5, rhoMax: 60, rhoStep: 1 }
+        { id: 'r12', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 },
+        { id: 'r23', rho: 40, rhoMin: 5, rhoMax: 400, rhoStep: 1 },
+        { id: 'r34', rho: 0, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 },
+        { id: 'r45', rho: 20, rhoMin: 5, rhoMax: 400, rhoStep: 1 }
     ];
 
     function buildSectionCard(s) {
@@ -60,8 +64,8 @@ var UIInspector = (function () {
             '<div class="control-group">' +
             '<div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="' + r.id + '-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div>' +
             '</div>' +
-            '<div class="control-group">' +
-            '<div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="' + r.id + '-rho" value="' + r.rho + '" min="' + r.rhoMin + '" max="' + r.rhoMax + '"><span class="unit">mm</span></div></div>' +
+            '<div class="control-group js-rho-group">' +
+            '<div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="' + r.id + '-rho" value="' + r.rho + '" min="' + r.rhoMin + '" max="' + r.rhoMax + '"><span class="unit">mm</span></div></div>' +
             '<input type="range" id="' + r.id + '-rho-slider" min="' + r.rhoMin + '" max="' + r.rhoMax + '" step="' + r.rhoStep + '" value="' + r.rho + '">' +
             '</div>' +
             '</div></div>';
@@ -92,7 +96,7 @@ var UIInspector = (function () {
             '</div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement 1</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rp1-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rp1-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rp1-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rp1-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rp1-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">2 — Bas piqûre</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Hauteur (mm)</label><div class="input-wrapper"><input type="number" id="sp2-h" value="4" min="0" max="80"><span class="unit">mm</span></div></div><input type="range" id="sp2-h-slider" min="0" max="80" step="0.5" value="4"></div>',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sp2-L" value="48" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sp2-L-slider" min="10" max="120" step="0.5" value="48"></div>',
@@ -102,7 +106,7 @@ var UIInspector = (function () {
             '</div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement 2</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rp2-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rp2-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rp2-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rp2-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rp2-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">3 — Haut piqûre</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Hauteur (mm)</label><div class="input-wrapper"><input type="number" id="sp3-h" value="20" min="0" max="80"><span class="unit">mm</span></div></div><input type="range" id="sp3-h-slider" min="0" max="80" step="0.5" value="20"></div>',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sp3-L" value="35" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sp3-L-slider" min="10" max="120" step="0.5" value="35"></div>',
@@ -125,27 +129,27 @@ var UIInspector = (function () {
             '<div class="control-group"><div class="label-row"><label>Profondeur (mm)</label><div class="input-wrapper"><input type="number" id="sb1-P" value="35" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb1-P-slider" min="10" max="120" step="0.5" value="35"></div></div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rb1-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rb1-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rb1-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rb1-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rb1-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">2 — Haut bague</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Hauteur (mm)</label><div class="input-wrapper"><input type="number" id="sb2-h" value="297" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="sb2-h-slider" min="0" max="400" step="0.5" value="297"></div>',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sb2-L" value="35" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb2-L-slider" min="10" max="120" step="0.5" value="35"></div>',
             '<div class="control-group"><div class="label-row"><label>Profondeur (mm)</label><div class="input-wrapper"><input type="number" id="sb2-P" value="35" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb2-P-slider" min="10" max="120" step="0.5" value="35"></div></div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement 2</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rb2-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rb2-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rb2-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rb2-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rb2-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">3 — Haut bague</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Hauteur (mm)</label><div class="input-wrapper"><input type="number" id="sb3-h" value="299" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="sb3-h-slider" min="0" max="400" step="0.5" value="299"></div>',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sb3-L" value="33" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb3-L-slider" min="10" max="120" step="0.5" value="33"></div>',
             '<div class="control-group"><div class="label-row"><label>Profondeur (mm)</label><div class="input-wrapper"><input type="number" id="sb3-P" value="33" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb3-P-slider" min="10" max="120" step="0.5" value="33"></div></div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement 3</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rb3-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rb3-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rb3-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rb3-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rb3-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">4 — Plat bague</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sb4-L" value="31" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb4-L-slider" min="10" max="120" step="0.5" value="31"></div>',
             '<div class="control-group"><div class="label-row"><label>Profondeur (mm)</label><div class="input-wrapper"><input type="number" id="sb4-P" value="31" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb4-P-slider" min="10" max="120" step="0.5" value="31"></div></div></div>',
             '<div class="setting-card setting-card--rattachement"><button class="accordion sub-accordion">Rattachement 4</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Profil</label><div class="input-wrapper"><select id="rb4-type">' + SELECT_PROFIL_OPTIONS + '</select></div></div></div>',
-            '<div class="control-group"><div class="label-row"><label>Rayon courbure ρ (mm)</label><div class="input-wrapper"><input type="number" id="rb4-rho" value="5" min="0" max="50"><span class="unit">mm</span></div></div><input type="range" id="rb4-rho-slider" min="0" max="50" step="0.5" value="5"></div></div></div>',
+            '<div class="control-group js-rho-group"><div class="label-row"><label>Rayon</label><div class="input-wrapper"><input type="number" id="rb4-rho" value="5" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="rb4-rho-slider" min="0" max="400" step="0.5" value="5"></div></div></div>',
             '<div class="setting-card"><button class="accordion main-accordion">5 — Bas plat bague</button><div class="panel-controls">',
             '<div class="control-group"><div class="label-row"><label>Hauteur (mm)</label><div class="input-wrapper"><input type="number" id="sb5-h" value="297" min="0" max="400"><span class="unit">mm</span></div></div><input type="range" id="sb5-h-slider" min="0" max="400" step="0.5" value="297"></div>',
             '<div class="control-group"><div class="label-row"><label>Largeur (mm)</label><div class="input-wrapper"><input type="number" id="sb5-L" value="29" min="10" max="120"><span class="unit">mm</span></div></div><input type="range" id="sb5-L-slider" min="10" max="120" step="0.5" value="29"></div>',

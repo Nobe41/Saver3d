@@ -174,6 +174,9 @@ var Validator = (function () {
     function applyAllUserConstraints() {
         applyHeightConstraints();
         applyDimensionRules();
+        if (typeof SliderLimits !== 'undefined' && SliderLimits.applyRhoMinConstraints) {
+            SliderLimits.applyRhoMinConstraints();
+        }
     }
 
     return {

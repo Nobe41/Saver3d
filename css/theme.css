@@ -311,6 +311,29 @@ main {
     background-color: rgba(206, 222, 242, 0.15);
 }
 
+/* Courbe S impossible (hauteur / géométrie) : slider en rouge */
+.setting-card.courbe-s-impossible input[type="range"] {
+    accent-color: #c62828; /* navigateurs modernes : pouce + barre */
+}
+/* Fallback WebKit : pouce et barre explicitement en rouge */
+.setting-card.courbe-s-impossible input[type="range"]::-webkit-slider-thumb {
+    background-color: #c62828;
+    border-color: #c62828;
+}
+.setting-card.courbe-s-impossible input[type="range"]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, #c62828, #c62828);
+}
+.setting-card.courbe-s-impossible input[type="number"] {
+    border-color: #c62828;
+    background-color: #ffebee;
+}
+
+/* Rayon impossible (géométrie) : même code couleur que Courbe S */
+.setting-card.rayon-impossible input[type="number"] {
+    border-color: #c62828;
+    background-color: #ffebee;
+}
+
 /* Blocs gravure : même couleur que sections (pleine opacité) */
 .setting-card.gravure-item,
 .setting-card.gravure-item .accordion,

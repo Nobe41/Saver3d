@@ -33,6 +33,13 @@ var BottleView3D = (function () {
         var v = parseFloat(el.value);
         return isNaN(v) ? def : Math.max(0, v);
     }
+    /** Pour les champs qui acceptent des négatifs (ex. spline rho). */
+    function getPanelValueSigned(id, def) {
+        var el = document.getElementById(id);
+        if (!el) return def;
+        var v = parseFloat(el.value);
+        return isNaN(v) ? def : v;
+    }
 
     function getPanelSelectValue(id, def) {
         var el = document.getElementById(id);
@@ -96,10 +103,10 @@ var BottleView3D = (function () {
             getPanelSelectValue('r45-type', 'ligne')
         ];
         var rhos = [
-            getPanelValue('r12-rho', 5),
-            getPanelValue('r23-rho', 40),
-            getPanelValue('r34-rho', 20),
-            getPanelValue('r45-rho', 15)
+            getPanelValueSigned('r12-rho', 5),
+            getPanelValueSigned('r23-rho', 40),
+            getPanelValueSigned('r34-rho', 20),
+            getPanelValueSigned('r45-rho', 15)
         ];
 
         return { sections: sections, edgeTypes: edgeTypes, rhos: rhos };

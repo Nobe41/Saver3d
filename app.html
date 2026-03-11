@@ -140,16 +140,14 @@
                     <div class="view-switcher">
                         <button id="btn-view-3d" class="active">3D</button>
                         <button id="btn-view-2d">2D</button>
-                        <button id="btn-outillage">OUTILLAGE</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Viewport : zone principale 3D / 2D / Outillage -->
+            <!-- Viewport : zone principale 3D / 2D -->
             <div id="viewport" class="workspace-content">
                 <main id="viewport-3d"></main>
                 <main id="viewport-2d" class="hidden"><canvas id="canvas-2d"></canvas></main>
-                <main id="viewport-outillage" class="hidden"><div class="placeholder-outillage"><h1>PROCHAINEMENT</h1></div></main>
             </div>
 
         </div>
@@ -157,6 +155,7 @@
 
     <script src="js/state/state.js"></script>
     <script src="js/state/validator.js"></script>
+    <script src="js/state/sliderLimits.js"></script>
     <script src="js/maths/geomKernel.js"></script>
     <script src="js/maths/sections.js"></script>
     <script src="js/maths/rattachements.js"></script>
