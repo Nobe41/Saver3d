@@ -66,6 +66,9 @@ function setupPanelTabs() {
         if (barTabPiqure) barTabPiqure.classList.remove('active');
         if (barTabBague) barTabBague.classList.remove('active');
         if (typeof updateBouteille === 'function') updateBouteille();
+        if (typeof UIInspector !== 'undefined' && UIInspector.refreshAddSectionFooter) {
+            UIInspector.refreshAddSectionFooter();
+        }
     }
     function showBarPiqure() {
         contentSections.classList.add('hidden');
@@ -75,6 +78,9 @@ function setupPanelTabs() {
         if (barTabPiqure) barTabPiqure.classList.add('active');
         if (barTabBague) barTabBague.classList.remove('active');
         if (typeof updateBouteille === 'function') updateBouteille();
+        if (typeof UIInspector !== 'undefined' && UIInspector.refreshAddSectionFooter) {
+            UIInspector.refreshAddSectionFooter();
+        }
     }
     function showBarBague() {
         contentSections.classList.add('hidden');
@@ -84,6 +90,9 @@ function setupPanelTabs() {
         if (barTabPiqure) barTabPiqure.classList.remove('active');
         if (barTabBague) barTabBague.classList.add('active');
         if (typeof updateBouteille === 'function') updateBouteille();
+        if (typeof UIInspector !== 'undefined' && UIInspector.refreshAddSectionFooter) {
+            UIInspector.refreshAddSectionFooter();
+        }
     }
 
     addTabInteraction(tabSections, showLeftSections);
@@ -186,12 +195,23 @@ let updateTimer;
 // Les règles de clamp utilisateur sont centralisées dans js/state/validator.js
 
 function setupListeners() {
-    const MAIN_RATTACHEMENTS = [
-        { id: 'r12', fromSection: 1, toSection: 2 },
-        { id: 'r23', fromSection: 2, toSection: 3 },
-        { id: 'r34', fromSection: 3, toSection: 4 },
-        { id: 'r45', fromSection: 4, toSection: 5 }
-    ];
+    function getMainSectionCount() {
+        var inputs = document.querySelectorAll('input[id^="s"][id$="-h"]');
+        var maxIdx = 0;
+        for (var i = 0; i < inputs.length; i++) {
+            var m = (inputs[i].id || '').match(/^s(\d+)-h$/);
+            if (!m) continue;
+            var k = parseInt(m[1], 10);
+            if (isFinite(k) && k > maxIdx) maxIdx = k;
+        }
+        return Math.max(0, maxIdx);
+    }
+
+    var sectionCount = getMainSectionCount() || 5;
+    const MAIN_RATTACHEMENTS = [];
+    for (var si = 1; si < sectionCount; si++) {
+        MAIN_RATTACHEMENTS.push({ id: 'r' + si + (si + 1), fromSection: si, toSection: si + 1 });
+    }
 
     /** Pour la spline (Bézier quadratique, amp = R * 0.3), retourne le max R dans [0, 250] tel que la courbe reste à au moins 10 mm de l'axe (x >= 10). */
     var SPLINE_MARGIN_AXIS_MM = 5;
@@ -246,13 +266,13 @@ function setupListeners() {
                 }
             }
 
-            // Validation globale des hauteurs de sections (1 à 5) via Validator
+            // Validation globale des hauteurs de sections via Validator
             if (typeof Validator !== 'undefined') {
                 const id = input.id || '';
 
                 if (Validator.validateSectionHeights) {
-                    // IDs possibles : s1-h, s1-h-slider, ..., s5-h, s5-h-slider
-                    const match = id.match(/^s([1-5])-h(?:-slider)?$/);
+                    // IDs possibles : s1-h, s1-h-slider, ..., sN-h, sN-h-slider
+                    const match = id.match(/^s(\d+)-h(?:-slider)?$/);
                     if (match) {
                         const sectionIndex = parseInt(match[1], 10);
                         const rawValue = parseFloat(input.value);
@@ -301,12 +321,12 @@ function setupListeners() {
             }
             // Section corps (s1..s5) : hauteur ou L/P modifiés -> bornes Courbe S puis adapter les ρ.
             var id = input.id || '';
-            if (/^s[1-5]-(h|L|P)(?:-slider)?$/.test(id)) {
+            if (/^s\d+-(h|L|P)(?:-slider)?$/.test(id)) {
                 updateCourbeSSliderLimits();
                 updateCourbeSRhosFromDistance();
             }
             // Utilisateur a changé le ρ d'un rattachement en Courbe S -> enregistrer le rapport ρ/d.
-            var rhoMatch = id.match(/^(r12|r23|r34|r45)-rho(?:-slider)?$/);
+            var rhoMatch = id.match(/^(r\d+)-rho(?:-slider)?$/);
             if (rhoMatch) {
                 var rattId = rhoMatch[1];
                 var typeSelect = document.getElementById(rattId + '-type');
@@ -600,9 +620,9 @@ function setupListeners() {
             if (!inputEl) return;
 
             if (diff < tolDiag) {
-                const d = Math.sqrt(dx * dx + dy * dy);
-                const minR = d * 0.5;
-                const val = Math.round(minR * 10) / 10; // arrondi 0.1 mm
+                // En mode "rayon" (quart de cercle), le rayon géométrique est |Δx| (= |Δy|)
+                const Rgeo = (Math.abs(dx) + Math.abs(dy)) * 0.5;
+                const val = Math.round(Rgeo * 10) / 10; // arrondi 0.1 mm
                 inputEl.value = val;
                 if (sliderEl) sliderEl.value = val;
                 if (card) card.classList.remove('rayon-impossible');

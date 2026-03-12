@@ -97,6 +97,16 @@ body {
     outline: none;
 }
 
+/* Fond plein derrière la barre d'onglets du haut de l'inspector
+   pour que le contenu scrolle "derrière" proprement */
+#inspector .panel-icons-bar {
+    background-color: #F8F8F8;
+    width: 100%;
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 .panel-content::-webkit-scrollbar { width: 6px; }
 .panel-content::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.06); border-radius: 3px; }
 .panel-content::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, 0.2); border-radius: 3px; }
@@ -413,6 +423,25 @@ input[type="range"] { cursor: pointer; }
     background-color: #a8d4ed;
     border-color: rgba(0, 0, 0, 0.15);
     color: #333333;
+}
+
+/* Barre sticky ajouter section */
+.inspector-add-section-bar {
+    background-color: #F8F8F8;     /* même ton que le fond */
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(4px);
+}
+
+.btn-add-section {
+    background-color: #BBDDF2;
+    color: #333333;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: 0.2s;
+}
+.btn-add-section:hover {
+    background-color: #a8d4ed;
+    border-color: rgba(0, 0, 0, 0.15);
 }
 
 /* Blocs gravure (même style que sections / rattachements) */

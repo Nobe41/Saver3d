@@ -55,6 +55,25 @@ var BottleView3D = (function () {
         return Math.max(0, Math.min(100, v));
     }
 
+    function getMainSectionIndicesFromDOM() {
+        var inputs = document.querySelectorAll('input[id^="s"][id$="-h"]');
+        var idxs = [];
+        for (var i = 0; i < inputs.length; i++) {
+            var id = inputs[i].id || '';
+            var m = id.match(/^s(\d+)-h$/);
+            if (!m) continue;
+            var k = parseInt(m[1], 10);
+            if (isFinite(k)) idxs.push(k);
+        }
+        idxs.sort(function (a, b) { return a - b; });
+        // Dédupliquer
+        var out = [];
+        for (var j = 0; j < idxs.length; j++) {
+            if (j === 0 || idxs[j] !== idxs[j - 1]) out.push(idxs[j]);
+        }
+        return out;
+    }
+
     function getSectionFromPanel(cfg) {
         var H = getPanelValue(cfg.h, 0);
         var a = Math.max(0, getPanelValue(cfg.L, cfg.defaultL) / 2);
@@ -73,41 +92,37 @@ var BottleView3D = (function () {
     function getBague5SectionFromPanel() { return getSectionFromPanel(BAGUE_CONFIG[4]); }
 
     function getSectionsDataFromPanel() {
-        var H1 = getPanelValue('s1-h', 0);
-        var s2hVal = getPanelValue('s2-h', 10);
-        var s3hVal = getPanelValue('s3-h', 120);
-        var s4hVal = getPanelValue('s4-h', 200);
-        var s5hVal = getPanelValue('s5-h', 280);
+        var idxs = getMainSectionIndicesFromDOM();
+        if (!idxs || idxs.length < 2) {
+            // fallback historique (au cas où l’inspecteur n’est pas rendu)
+            idxs = [1, 2, 3, 4, 5];
+        }
 
-        s3hVal = Math.max(s3hVal, s2hVal);
-        s4hVal = Math.max(s4hVal, s3hVal);
-        s5hVal = Math.max(s5hVal, s4hVal);
-        s4hVal = Math.min(s4hVal, s5hVal);
-        s3hVal = Math.min(s3hVal, s4hVal);
-        s2hVal = Math.max(Math.min(s2hVal, s3hVal), H1);
+        var sections = [];
+        for (var ii = 0; ii < idxs.length; ii++) {
+            var k = idxs[ii];
+            var defaultL = (k === 1) ? 71 : (k <= 3 ? 85 : 32);
+            var defaultP = defaultL;
+            var Hraw = getPanelValue('s' + k + '-h', 0);
+            var a = Math.max(0, getPanelValue('s' + k + '-L', defaultL) / 2);
+            var b = Math.max(0, getPanelValue('s' + k + '-P', defaultP) / 2);
+            sections.push({ H: Hraw, a: a, b: b, shape: getSectionForme(k), carreNiveau: getSectionCarreNiveau(k) });
+        }
 
-        var H2 = s2hVal, H3 = s3hVal, H4 = s4hVal, H5 = s5hVal;
+        // Assurer des hauteurs monotones (Y(k+1) >= Y(k))
+        for (var j = 1; j < sections.length; j++) {
+            if (sections[j].H < sections[j - 1].H) sections[j].H = sections[j - 1].H;
+        }
 
-        var sections = [
-            { H: H1, a: Math.max(0, getPanelValue('s1-L', 71) / 2), b: Math.max(0, getPanelValue('s1-P', 71) / 2), shape: getSectionForme(1), carreNiveau: getSectionCarreNiveau(1) },
-            { H: H2, a: Math.max(0, getPanelValue('s2-L', 85) / 2), b: Math.max(0, getPanelValue('s2-P', 85) / 2), shape: getSectionForme(2), carreNiveau: getSectionCarreNiveau(2) },
-            { H: H3, a: Math.max(0, getPanelValue('s3-L', 85) / 2), b: Math.max(0, getPanelValue('s3-P', 85) / 2), shape: getSectionForme(3), carreNiveau: getSectionCarreNiveau(3) },
-            { H: H4, a: Math.max(0, getPanelValue('s4-L', 32) / 2), b: Math.max(0, getPanelValue('s4-P', 32) / 2), shape: getSectionForme(4), carreNiveau: getSectionCarreNiveau(4) },
-            { H: H5, a: Math.max(0, getPanelValue('s5-L', 32) / 2), b: Math.max(0, getPanelValue('s5-P', 32) / 2), shape: getSectionForme(5), carreNiveau: getSectionCarreNiveau(5) }
-        ];
-
-        var edgeTypes = [
-            getPanelSelectValue('r12-type', 'ligne'),
-            getPanelSelectValue('r23-type', 'ligne'),
-            getPanelSelectValue('r34-type', 'ligne'),
-            getPanelSelectValue('r45-type', 'ligne')
-        ];
-        var rhos = [
-            getPanelValueSigned('r12-rho', 5),
-            getPanelValueSigned('r23-rho', 40),
-            getPanelValueSigned('r34-rho', 20),
-            getPanelValueSigned('r45-rho', 15)
-        ];
+        var edgeTypes = [];
+        var rhos = [];
+        for (var e = 0; e < sections.length - 1; e++) {
+            var from = e + 1;
+            var to = e + 2;
+            var rid = 'r' + from + to;
+            edgeTypes.push(getPanelSelectValue(rid + '-type', 'ligne'));
+            rhos.push(getPanelValueSigned(rid + '-rho', 10));
+        }
 
         return { sections: sections, edgeTypes: edgeTypes, rhos: rhos };
     }
@@ -293,40 +308,73 @@ var BottleView3D = (function () {
             addSectionRing(sectionRingGroup, sections[i], activeSection === i + 1, false);
         }
 
+        // ---------- PIQÛRE (dynamique : sp + sp2..spN) ----------
         var piqure = getPiqureSectionFromPanel();
         var s1 = sections[0];
         addSectionRing(sectionRingGroup, piqure, false, true);
-        var hautPiqure = getHautPiqureSectionFromPanel();
-        addSectionRing(sectionRingGroup, hautPiqure, false, true);
-        var hautPiqure3 = getHautPiqure3SectionFromPanel();
-        addSectionRing(sectionRingGroup, hautPiqure3, false, true);
+        var piqSections = [piqure];
+        // sections sp2..spN
+        var spInputs = document.querySelectorAll('input[id^="sp"][id$="-h"]');
+        var spIdxs = [];
+        for (var spi = 0; spi < spInputs.length; spi++) {
+            var mm = (spInputs[spi].id || '').match(/^sp(\d+)-h$/);
+            if (!mm) continue;
+            var kk = parseInt(mm[1], 10);
+            if (isFinite(kk)) spIdxs.push(kk);
+        }
+        spIdxs.sort(function (a, b) { return a - b; });
+        // dédupe
+        var spClean = [];
+        for (var sck = 0; sck < spIdxs.length; sck++) if (sck === 0 || spIdxs[sck] !== spIdxs[sck - 1]) spClean.push(spIdxs[sck]);
+        for (var ssi = 0; ssi < spClean.length; ssi++) {
+            var ksp = spClean[ssi];
+            var sec = getSectionFromPanel({ h: 'sp' + ksp + '-h', L: 'sp' + ksp + '-L', P: 'sp' + ksp + '-P', formKey: 'sp' + ksp + '-forme', carreKey: 'sp' + ksp + '-carre-niveau', defaultL: 48, defaultP: 48 });
+            piqSections.push(sec);
+            addSectionRing(sectionRingGroup, sec, false, true);
+        }
         var feuille = buildPiqurePiedFeuille(s1, piqure, piqure.H);
         feuille.userData.isPiqure = true;
         sectionRingGroup.add(feuille);
-        var feuillePiqureStrip = buildRuledSurfaceStrip([piqure, hautPiqure, hautPiqure3], BottleMaterials.DEFAULT_GLASS_COLOR);
+        var feuillePiqureStrip = buildRuledSurfaceStrip(piqSections, BottleMaterials.DEFAULT_GLASS_COLOR);
         if (feuillePiqureStrip) { feuillePiqureStrip.userData.isPiqure = true; sectionRingGroup.add(feuillePiqureStrip); }
+        var lastP = piqSections[piqSections.length - 1];
         var rp3H = getPanelValue('rp3-h', 30);
-        if (rp3H > hautPiqure3.H) {
-            var feuille3VersAxe = buildPiqureFeuilleVersAxe(hautPiqure3, rp3H);
-            feuille3VersAxe.userData.isPiqure = true;
-            sectionRingGroup.add(feuille3VersAxe);
+        if (lastP && rp3H > lastP.H) {
+            var feuilleVersAxe = buildPiqureFeuilleVersAxe(lastP, rp3H);
+            feuilleVersAxe.userData.isPiqure = true;
+            sectionRingGroup.add(feuilleVersAxe);
         }
-        var bague1 = getBague1SectionFromPanel();
-        var s5 = sections[4];
-        addSectionRing(sectionRingGroup, bague1, false, false);
-        var feuilleColBague = buildPiqureBasHautFeuille(s5, bague1);
-        feuilleColBague.userData.isPiqure = false;
-        sectionRingGroup.add(feuilleColBague);
-        var bague2 = getBague2SectionFromPanel();
-        var bague3 = getBague3SectionFromPanel();
-        var bague4 = getBague4SectionFromPanel();
-        var bague5 = getBague5SectionFromPanel();
-        var feuilleBagueStrip = buildRuledSurfaceStrip([bague1, bague2, bague3, bague4, bague5], BottleMaterials.DEFAULT_GLASS_COLOR);
+
+        // ---------- BAGUE (dynamique : sb1..sbN) ----------
+        // Récupérer toutes les sections sbX-h existantes
+        var sbInputs = document.querySelectorAll('input[id^="sb"][id$="-h"]');
+        var sbIdxs = [];
+        for (var sbi = 0; sbi < sbInputs.length; sbi++) {
+            var mb = (sbInputs[sbi].id || '').match(/^sb(\d+)-h$/);
+            if (!mb) continue;
+            var kb = parseInt(mb[1], 10);
+            if (isFinite(kb)) sbIdxs.push(kb);
+        }
+        sbIdxs.sort(function (a, b) { return a - b; });
+        var sbClean = [];
+        for (var sbc = 0; sbc < sbIdxs.length; sbc++) if (sbc === 0 || sbIdxs[sbc] !== sbIdxs[sbc - 1]) sbClean.push(sbIdxs[sbc]);
+        var bagueSections = [];
+        for (var bsi = 0; bsi < sbClean.length; bsi++) {
+            var ksb2 = sbClean[bsi];
+            var bsec = getSectionFromPanel({ h: 'sb' + ksb2 + '-h', L: 'sb' + ksb2 + '-L', P: 'sb' + ksb2 + '-P', defaultL: 35, defaultP: 35 });
+            bagueSections.push(bsec);
+            addSectionRing(sectionRingGroup, bsec, false, false);
+        }
+        var bague1 = bagueSections.length ? bagueSections[0] : getBague1SectionFromPanel();
+        var sTop = sections && sections.length ? sections[sections.length - 1] : null;
+        // bague1 ring déjà ajouté dans la boucle si présent
+        if (sTop) {
+            var feuilleColBague = buildPiqureBasHautFeuille(sTop, bague1);
+            feuilleColBague.userData.isPiqure = false;
+            sectionRingGroup.add(feuilleColBague);
+        }
+        var feuilleBagueStrip = buildRuledSurfaceStrip(bagueSections.length ? bagueSections : [getBague1SectionFromPanel(), getBague2SectionFromPanel(), getBague3SectionFromPanel(), getBague4SectionFromPanel(), getBague5SectionFromPanel()], BottleMaterials.DEFAULT_GLASS_COLOR);
         if (feuilleBagueStrip) { feuilleBagueStrip.userData.isPiqure = false; sectionRingGroup.add(feuilleBagueStrip); }
-        addSectionRing(sectionRingGroup, bague2, false, false);
-        addSectionRing(sectionRingGroup, bague3, false, false);
-        addSectionRing(sectionRingGroup, bague4, false, false);
-        addSectionRing(sectionRingGroup, bague5, false, false);
 
         applyViewOpacity(sectionRingGroup);
         scene.add(sectionRingGroup);

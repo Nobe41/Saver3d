@@ -10,7 +10,7 @@
 body {
     height: 100vh;
     width: 100vw;
-    overflow: hidden;
+    overflow: hidden; /* seule la colonne inspector scrolle, pas toute la page */
 }
 
 .hidden { display: none !important; }
@@ -190,16 +190,27 @@ body {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    padding-top: 10px; /* même décalage que margin-top de #topbar : aligner la barre d’icônes avec Fichier/Affichage */
+    overflow: hidden;   /* le scroll se fait dans inspector-scroll uniquement */
+    padding-top: 0;     /* le fond du header occupe toute la zone haute */
+    position: relative; /* pour positionner le bloc \"Ajouter une section\" en bas */
 }
 
-.panel-sections-area {
-    flex: 1;
+.inspector-scroll {
+    flex: 1;              /* prend toute la hauteur dispo sous le header */
     min-width: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;     /* scroll uniquement ici */
+    overflow-x: hidden;
+    padding-bottom: 80px; /* laisse de la place pour le bloc fixe du bas */
+}
+
+.panel-sections-area {
+    flex: 0 0 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
 /* Brand Header : barre pour changer de page dans l'Inspector */
@@ -211,11 +222,12 @@ body {
     align-items: center;
     gap: 10px;
     height: 36px;
-    padding: 0 12px;
-    margin: 0 12px 8px 12px; /* 8px en bas = margin-bottom de #topbar, pour aligner le contenu avec la fenêtre blanche */
+    padding: 10px 12px 6px 12px;  /* 10px au-dessus, 6px en dessous pour descendre un peu le bloc */
+    margin: 0 12px 8px 12px;      /* marge standard vers le contenu */
     background-color: #EAEDF2;
     border-radius: 9999px;
     box-sizing: border-box;
+    position: relative;  /* maintenant fixe car hors de la zone de scroll */
 }
 
 .panel-bar-icon {
@@ -241,10 +253,10 @@ body {
 }
 
 .panel-content {
-    flex: 1;
+    flex: 0 0 auto;               /* hauteur naturelle du contenu */
     min-width: 0;
-    padding: 18px 21px 15px 15px; /* padding-top : premier bloc section plus bas */
-    overflow-y: auto;
+    padding: 18px 21px 160px 15px; /* réserve la place pour la barre "Ajouter une section" */
+    overflow: visible;            /* c'est l'inspector qui gère le scroll */
     display: flex;
     flex-direction: column-reverse;
     justify-content: flex-end;
@@ -501,6 +513,38 @@ input[type="text"], .input-select, .input-select-disabled {
     width: 100%;
     padding: 6px;
     font-size: 0.8rem;
+}
+
+/* ==========================================
+   AJOUT SECTION (barre fixe en bas inspector)
+========================================== */
+.inspector-add-section-bar {
+    position: absolute;        /* fixe en bas de l'inspector */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px 0 12px 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;    /* select au-dessus, bouton en dessous */
+    align-items: center;
+    gap: 6px;                  /* espace entre select et bouton */
+}
+
+/* Réduire légèrement la largeur des deux contrôles pour qu'ils ne collent pas les bords */
+.inspector-add-section-bar .control-group,
+.inspector-add-section-bar .btn-add-section {
+    width: 90%;
+    max-width: 230px;
+}
+
+.btn-add-section {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
 }
 
 .placeholder-outillage h1 {

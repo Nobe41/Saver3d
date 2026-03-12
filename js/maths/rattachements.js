@@ -5,6 +5,28 @@
 var RattachementsMaths = (function () {
     var K = (typeof GeomKernel !== 'undefined') ? GeomKernel : null;
 
+    function clamp01(t) { return t < 0 ? 0 : (t > 1 ? 1 : t); }
+
+    function norm2(x, y) { return Math.sqrt(x * x + y * y); }
+
+    function unitFromTo(A, B) {
+        var dx = B.x - A.x;
+        var dy = B.y - A.y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 1e-9) return null;
+        return { x: dx / d, y: dy / d };
+    }
+
+    // Intersection de 2 droites paramétriques : A + t * vA et B + u * vB
+    function intersectLines(A, vA, B, vB) {
+        var det = vA.x * vB.y - vA.y * vB.x;
+        if (Math.abs(det) < 1e-10) return null; // quasi parallèles
+        var dx = B.x - A.x;
+        var dy = B.y - A.y;
+        var t = (dx * vB.y - dy * vB.x) / det;
+        return { x: A.x + t * vA.x, y: A.y + t * vA.y };
+    }
+
     function createArcBetweenPoints(P0, P1, R, normalSign) {
         var dx = P1.x - P0.x;
         var dy = P1.y - P0.y;
@@ -36,6 +58,58 @@ var RattachementsMaths = (function () {
     }
 
     /**
+     * Quart de cercle "vrai congé" entre P0 et P1 quand |Δx| ≈ |Δy|.
+     * Dans ce cas, le rayon géométrique est exactement |Δx| = |Δy| (diff de largeur = diff de hauteur).
+     * On choisit le centre (P0.x,P1.y) ou (P1.x,P0.y) qui évite de dépasser le rectangle borné par P0/P1.
+     */
+    function createQuarterArcIfPossible(P0, P1, tolDiag) {
+        var dx = P1.x - P0.x;
+        var dy = P1.y - P0.y;
+        var adx = Math.abs(dx);
+        var ady = Math.abs(dy);
+        if (Math.abs(adx - ady) > (tolDiag || 0.5)) return null;
+        var R = (adx + ady) * 0.5;
+        if (R < 1e-6) return null;
+
+        var minX = Math.min(P0.x, P1.x), maxX = Math.max(P0.x, P1.x);
+        var minY = Math.min(P0.y, P1.y), maxY = Math.max(P0.y, P1.y);
+
+        function buildArcForCenter(C) {
+            // angles bruts
+            var a0 = Math.atan2(P0.y - C.y, P0.x - C.x);
+            var a1 = Math.atan2(P1.y - C.y, P1.x - C.x);
+
+            // On force un sweep court (<= PI). Pour un quart de cercle, ça donnera ~PI/2.
+            var da = a1 - a0;
+            while (da > Math.PI) da -= 2 * Math.PI;
+            while (da < -Math.PI) da += 2 * Math.PI;
+            var end = a0 + da;
+
+            // Point milieu pour vérifier qu'on ne "dépasse" pas (évite la bosse sur ta photo)
+            var amid = (a0 + end) * 0.5;
+            var pmx = C.x + Math.cos(amid) * R;
+            var pmy = C.y + Math.sin(amid) * R;
+
+            var insideRect = (pmx >= minX - 1e-6 && pmx <= maxX + 1e-6 && pmy >= minY - 1e-6 && pmy <= maxY + 1e-6);
+            var saneX = pmx >= -1e-6; // pas passer "dans l'axe" négatif
+            if (!saneX) return null;
+
+            return {
+                arc: K.ArcSegment(C.x, C.y, R, a0, end),
+                score: (insideRect ? 0 : 1) + Math.abs(Math.abs(da) - (Math.PI / 2)) * 0.01
+            };
+        }
+
+        // Deux centres possibles si on veut un quart de cercle reliant P0 et P1
+        var cand1 = buildArcForCenter({ x: P0.x, y: P1.y });
+        var cand2 = buildArcForCenter({ x: P1.x, y: P0.y });
+        if (!cand1 && !cand2) return null;
+        if (cand1 && !cand2) return cand1.arc;
+        if (!cand1 && cand2) return cand2.arc;
+        return (cand1.score <= cand2.score) ? cand1.arc : cand2.arc;
+    }
+
+    /**
      * Construit les entités B-Rep du profil.
      * - 'ligne'   : segment droit.
      * - 'rayon'   : congé tangent unique au coin (P0, P1, P2) ; s'affiche seulement si le solveur trouve une solution.
@@ -60,24 +134,21 @@ var RattachementsMaths = (function () {
             var R = rhos[i] || 0;
 
             if (type === 'rayon') {
-                // Rayon = un seul arc entre les deux sections autour du rattachement.
-                // Les extrémités de l'arc sont EXACTEMENT les deux sections (P0 et P1),
-                // donc le rayon ne dépasse jamais les sections.
-                // Il ne s'affiche que lorsque |Δlargeur| ≈ |Δhauteur|.
-                var dx = P1.x - P0.x;
-                var dy = P1.y - P0.y;
-                var diff = Math.abs(Math.abs(dx) - Math.abs(dy));
-                var tolDiag = 0.5; // tolérance en mm
+                // Rayon : arc P0->P1 tangent aux segments voisins (si possible).
+                // IMPORTANT : pour être un "vrai" congé tangent (comme sur un coin),
+                // il faut |Δlargeur| == |Δhauteur| et le rayon géométrique est cette valeur.
+                // On conserve le même critère "affiche seulement si ça colle à la géométrie".
+                var dxR = P1.x - P0.x;
+                var dyR = P1.y - P0.y;
+                var diff = Math.abs(Math.abs(dxR) - Math.abs(dyR));
+                var tolDiag = 0.5; // tolérance en mm (comportement historique)
 
                 if (diff < tolDiag) {
-                    var arcRayon = createArcBetweenPoints(P0, P1, R, 1);
-                    if (arcRayon) {
-                        entities.push(arcRayon);
-                    } else {
-                        entities.push(K.LineSegment(P0.x, P0.y, P1.x, P1.y));
-                    }
+                    // Rayon imposé par la géométrie (même valeur en X et Y).
+                    // Le slider "ρ" est ignoré ici volontairement : si l'utilisateur veut un rayon libre, utiliser "courbeS" ou "spline".
+                    var arcQuarter = createQuarterArcIfPossible(P0, P1, tolDiag);
+                    entities.push(arcQuarter || K.LineSegment(P0.x, P0.y, P1.x, P1.y));
                 } else {
-                    // Sections pas « bien positionnées » : pas de rayon, juste une ligne.
                     entities.push(K.LineSegment(P0.x, P0.y, P1.x, P1.y));
                 }
                 lastPoint = { x: P1.x, y: P1.y };

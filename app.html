@@ -40,28 +40,30 @@
             </div>
             <!-- Inspector : zone où s'affiche le contenu (pages pilotées par le Brand Header) -->
             <div id="inspector" class="panel-right">
-                <!-- Brand Header : barre pour afficher différentes pages dans l'Inspector (Sections / Piqûre / Bague) -->
-                <div class="panel-sections-area" id="panel-sections-area">
-                    <div id="brand-header" class="panel-icons-bar">
-                        <span class="panel-bar-icon" id="panel-bar-tab-sections" title="Sections actuelles">🔧</span>
-                        <span class="panel-bar-icon" id="panel-bar-tab-piqure" title="Sections piqûre">⚙️</span>
-                        <span class="panel-bar-icon" id="panel-bar-tab-bague" title="Sections bague">⭕</span>
-                    </div>
-                    <div class="panel-content" id="panel-content-sections">
-                        <!-- Rempli par UIInspector.renderSections() -->
-                    </div><!-- #panel-content-sections -->
-                    <div class="panel-content panel-piqure-content hidden" id="panel-content-piqure">
-                        <!-- Rempli par UIInspector.renderSections() -->
-                    </div><!-- #panel-content-piqure -->
-                    <div class="panel-content panel-bague-content hidden" id="panel-content-bague">
-                        <!-- Rempli par UIInspector.renderSections() -->
-                    </div><!-- #panel-content-bague -->
-                </div><!-- #panel-sections-area -->
-                <div class="panel-content panel-gravure-content hidden" id="panel-content-gravure">
+                <!-- Row fixe avec les 3 icônes (Sections / Piqûre / Bague) -->
+                <div id="brand-header" class="panel-icons-bar">
+                    <span class="panel-bar-icon" id="panel-bar-tab-sections" title="Sections actuelles">🔧</span>
+                    <span class="panel-bar-icon" id="panel-bar-tab-piqure" title="Sections piqûre">⚙️</span>
+                    <span class="panel-bar-icon" id="panel-bar-tab-bague" title="Sections bague">⭕</span>
+                </div>
+                <!-- Container scrollable pour tout le reste de l'inspector -->
+                <div id="inspector-scroll" class="inspector-scroll">
+                    <div class="panel-sections-area" id="panel-sections-area">
+                        <div class="panel-content" id="panel-content-sections">
+                            <!-- Rempli par UIInspector.renderSections() -->
+                        </div><!-- #panel-content-sections -->
+                        <div class="panel-content panel-piqure-content hidden" id="panel-content-piqure">
+                            <!-- Rempli par UIInspector.renderSections() -->
+                        </div><!-- #panel-content-piqure -->
+                        <div class="panel-content panel-bague-content hidden" id="panel-content-bague">
+                            <!-- Rempli par UIInspector.renderSections() -->
+                        </div><!-- #panel-content-bague -->
+                    </div><!-- #panel-sections-area -->
+                    <div class="panel-content panel-gravure-content hidden" id="panel-content-gravure">
                     <button type="button" class="btn-add-gravure" id="btn-add-engraving">Ajouter une gravure</button>
                     <div id="engravings-container"></div>
-                </div>
-                <div class="panel-content panel-information-content hidden" id="panel-content-information">
+                    </div>
+                    <div class="panel-content panel-information-content hidden" id="panel-content-information">
                     <div class="setting-card">
                         <button class="accordion main-accordion">Format</button>
                         <div class="panel-controls">
@@ -114,7 +116,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+                </div><!-- #inspector-scroll -->
             </div><!-- #inspector -->
         </aside>
 

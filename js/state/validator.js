@@ -40,6 +40,19 @@ var Validator = (function () {
         return getSectionHeight(1);
     }
 
+    function getLastMainSectionHeightId() {
+        var inputs = document.querySelectorAll('input[id^="s"][id$="-h"]');
+        var maxIdx = 0;
+        for (var i = 0; i < inputs.length; i++) {
+            var m = (inputs[i].id || '').match(/^s(\d+)-h$/);
+            if (!m) continue;
+            var k = parseInt(m[1], 10);
+            if (isFinite(k) && k > maxIdx) maxIdx = k;
+        }
+        if (!maxIdx) maxIdx = 5;
+        return 's' + maxIdx + '-h';
+    }
+
     // ====== VALIDATION HAUTEUR (valeur corrigée) ======
     function validateHeight(id, newHeight) {
         var h = parseFloat(newHeight);
@@ -48,8 +61,12 @@ var Validator = (function () {
         var links = HEIGHT_GRAPH[id];
         if (!links) return h;
 
-        if (links.below) {
-            var belowH = getHeightById(links.below);
+        // Bague : toujours accrochée à la dernière section principale (pas forcément s5).
+        var belowId = links.below;
+        if (id === 'sb1-h') belowId = getLastMainSectionHeightId();
+
+        if (belowId) {
+            var belowH = getHeightById(belowId);
             if (belowH != null && h < belowH) h = belowH;
         }
         if (links.above) {
@@ -60,7 +77,20 @@ var Validator = (function () {
     }
 
     function validateSectionHeights(sectionIndex, newHeight) {
-        return validateHeight('s' + sectionIndex + '-h', newHeight);
+        var id = 's' + sectionIndex + '-h';
+        // Si la section est dans le graphe (historique), appliquer exactement les mêmes règles.
+        if (HEIGHT_GRAPH[id]) return validateHeight(id, newHeight);
+
+        // Sinon (sections ajoutées dynamiquement), clamp générique : entre section précédente et suivante si elles existent.
+        var h = parseFloat(newHeight);
+        if (!isFinite(h)) h = MIN_HEIGHT;
+        var belowId = 's' + (sectionIndex - 1) + '-h';
+        var aboveId = 's' + (sectionIndex + 1) + '-h';
+        var belowH = getHeightById(belowId);
+        var aboveH = getHeightById(aboveId);
+        if (belowH != null && h < belowH) h = belowH;
+        if (aboveH != null && h > aboveH) h = aboveH;
+        return h;
     }
 
     function validatePiqureHeight(newHeight) {
@@ -74,6 +104,7 @@ var Validator = (function () {
     // ====== APPLICATION DES CONTRAINTES HAUTEUR (min/max + valeur) ======
     function applyHeightConstraints() {
         var id, links, input, slider, minH, maxH, v;
+        var lastMainId = getLastMainSectionHeightId();
 
         for (id in HEIGHT_GRAPH) {
             if (!HEIGHT_GRAPH.hasOwnProperty(id)) continue;
@@ -83,8 +114,11 @@ var Validator = (function () {
 
             slider = document.getElementById(id + '-slider');
 
+            var belowRef = links.below;
+            if (id === 'sb1-h') belowRef = lastMainId;
+
             if (links.fixedToBelow) {
-                minH = getHeightById(links.below);
+                minH = getHeightById(belowRef);
                 if (minH == null) minH = MIN_HEIGHT;
                 input.value = minH;
                 input.max = minH;
@@ -95,7 +129,7 @@ var Validator = (function () {
                 continue;
             }
 
-            var belowVal = links.below ? getHeightById(links.below) : null;
+            var belowVal = belowRef ? getHeightById(belowRef) : null;
             minH = belowVal != null ? belowVal : MIN_HEIGHT;
             maxH = links.above ? getHeightById(links.above) : null;
 
@@ -117,6 +151,141 @@ var Validator = (function () {
                 v = maxH;
                 input.value = v;
                 if (slider) slider.value = v;
+            }
+        }
+
+        // Sections principales dynamiques : assurer min/max selon les sections voisines (monotone croissant)
+        var mainInputs = document.querySelectorAll('input[id^="s"][id$="-h"]');
+        var idxs = [];
+        for (var i = 0; i < mainInputs.length; i++) {
+            var mid = (mainInputs[i].id || '').match(/^s(\d+)-h$/);
+            if (mid) {
+                var k = parseInt(mid[1], 10);
+                if (isFinite(k)) idxs.push(k);
+            }
+        }
+        idxs.sort(function (a, b) { return a - b; });
+        // Dédupe
+        var clean = [];
+        for (var j = 0; j < idxs.length; j++) if (j === 0 || idxs[j] !== idxs[j - 1]) clean.push(idxs[j]);
+
+        for (var t = 0; t < clean.length; t++) {
+            var k2 = clean[t];
+            var sid = 's' + k2 + '-h';
+            var sinput = document.getElementById(sid);
+            if (!sinput) continue;
+            var sslider = document.getElementById(sid + '-slider');
+
+            var below = (t > 0) ? getHeightById('s' + clean[t - 1] + '-h') : null;
+            var above = (t < clean.length - 1) ? getHeightById('s' + clean[t + 1] + '-h') : null;
+            var smin = below != null ? below : MIN_HEIGHT;
+            sinput.min = smin;
+            if (sslider) sslider.min = smin;
+            if (above != null) {
+                sinput.max = above;
+                if (sslider) sslider.max = above;
+            }
+            var sv = parseFloat(sinput.value);
+            if (!isFinite(sv)) sv = smin;
+            if (sv < smin) {
+                sv = smin;
+                sinput.value = sv;
+                if (sslider) sslider.value = sv;
+            } else if (above != null && sv > above) {
+                sv = above;
+                sinput.value = sv;
+                if (sslider) sslider.value = sv;
+            }
+        }
+
+        // Sections PIQÛRE dynamiques : sp2, sp3 et sections ajoutées (sp4, sp5, ...)
+        var piqInputs = document.querySelectorAll('input[id^="sp"][id$="-h"]');
+        var pIdxs = [];
+        for (var ip = 0; ip < piqInputs.length; ip++) {
+            var mp = (piqInputs[ip].id || '').match(/^sp(\d+)-h$/);
+            if (mp) {
+                var kp = parseInt(mp[1], 10);
+                if (isFinite(kp)) pIdxs.push(kp);
+            }
+        }
+        pIdxs.sort(function (a, b) { return a - b; });
+        var pClean = [];
+        for (var jp = 0; jp < pIdxs.length; jp++) if (jp === 0 || pIdxs[jp] !== pIdxs[jp - 1]) pClean.push(pIdxs[jp]);
+
+        for (var tp = 0; tp < pClean.length; tp++) {
+            var kp2 = pClean[tp];
+            var pid = 'sp' + kp2 + '-h';
+            var pinput = document.getElementById(pid);
+            if (!pinput) continue;
+            var pslider = document.getElementById(pid + '-slider');
+
+            var pBelow = (tp > 0) ? getHeightById('sp' + pClean[tp - 1] + '-h') : getHeightById('s1-h');
+            var pAbove = (tp < pClean.length - 1) ? getHeightById('sp' + pClean[tp + 1] + '-h') : getHeightById('rp3-h');
+            var pmin = pBelow != null ? pBelow : MIN_HEIGHT;
+            pinput.min = pmin;
+            if (pslider) pslider.min = pmin;
+            if (pAbove != null) {
+                pinput.max = pAbove;
+                if (pslider) pslider.max = pAbove;
+            }
+            var pv = parseFloat(pinput.value);
+            if (!isFinite(pv)) pv = pmin;
+            if (pv < pmin) {
+                pv = pmin;
+                pinput.value = pv;
+                if (pslider) pslider.value = pv;
+            } else if (pAbove != null && pv > pAbove) {
+                pv = pAbove;
+                pinput.value = pv;
+                if (pslider) pslider.value = pv;
+            }
+        }
+
+        // Sections BAGUE dynamiques : sb1..sbN (bague ajoutée)
+        var bagInputs = document.querySelectorAll('input[id^="sb"][id$="-h"]');
+        var bIdxs = [];
+        for (var ib = 0; ib < bagInputs.length; ib++) {
+            var mb = (bagInputs[ib].id || '').match(/^sb(\d+)-h$/);
+            if (mb) {
+                var kb = parseInt(mb[1], 10);
+                if (isFinite(kb)) bIdxs.push(kb);
+            }
+        }
+        bIdxs.sort(function (a, b) { return a - b; });
+        var bClean = [];
+        for (var jb = 0; jb < bIdxs.length; jb++) if (jb === 0 || bIdxs[jb] !== bIdxs[jb - 1]) bClean.push(bIdxs[jb]);
+
+        for (var tb = 0; tb < bClean.length; tb++) {
+            var kb2 = bClean[tb];
+            var bid = 'sb' + kb2 + '-h';
+            var binput = document.getElementById(bid);
+            if (!binput) continue;
+            var bslider = document.getElementById(bid + '-slider');
+
+            var bBelow;
+            if (kb2 === 1) {
+                bBelow = getHeightById(getLastMainSectionHeightId());
+            } else {
+                bBelow = getHeightById('sb' + bClean[tb - 1] + '-h');
+            }
+            var bAbove = (tb < bClean.length - 1) ? getHeightById('sb' + bClean[tb + 1] + '-h') : null;
+            var bmin = bBelow != null ? bBelow : MIN_HEIGHT;
+            binput.min = bmin;
+            if (bslider) bslider.min = bmin;
+            if (bAbove != null) {
+                binput.max = bAbove;
+                if (bslider) bslider.max = bAbove;
+            }
+            var bv = parseFloat(binput.value);
+            if (!isFinite(bv)) bv = bmin;
+            if (bv < bmin) {
+                bv = bmin;
+                binput.value = bv;
+                if (bslider) bslider.value = bv;
+            } else if (bAbove != null && bv > bAbove) {
+                bv = bAbove;
+                binput.value = bv;
+                if (bslider) bslider.value = bv;
             }
         }
     }
