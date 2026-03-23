@@ -34,9 +34,10 @@
         <aside id="Panel-gauche">
             <!-- Sidebar : icônes cliquables pour afficher le contenu dans l'Inspector -->
             <div id="sidebar" class="panel-logo-col">
-                <div class="panel-logo panel-col-tab active" id="panel-tab-sections" title="Sections" role="button" tabindex="0">🔧</div>
-                <div class="panel-logo panel-col-tab" id="panel-tab-gravure" title="Gravures" role="button" tabindex="0">✏️</div>
-                <div class="panel-logo panel-col-tab" id="panel-tab-information" title="Information" role="button" tabindex="0">ℹ️</div>
+                <div class="panel-logo panel-col-tab active" id="panel-tab-sections" title="Section" role="button" tabindex="0">S</div>
+                <div class="panel-logo panel-col-tab" id="panel-tab-gravure" title="Gravure" role="button" tabindex="0">G</div>
+                <div class="panel-logo panel-col-tab" id="panel-tab-information" title="Plan" role="button" tabindex="0">P</div>
+                <div class="panel-logo panel-col-tab" id="panel-tab-rendu" title="Rendu" role="button" tabindex="0">R</div>
             </div>
             <!-- Inspector : zone où s'affiche le contenu (pages pilotées par le Brand Header) -->
             <div id="inspector" class="panel-right">
@@ -117,6 +118,48 @@
                         </div>
                     </div>
                     </div>
+                    <div class="panel-content panel-rendu-content hidden" id="panel-content-rendu">
+                        <div class="setting-card">
+                            <button type="button" class="accordion main-accordion" id="render-mode-title" style="justify-content: space-between;">
+                                <span>Mode rendu</span>
+                                <span class="input-wrapper"><input type="checkbox" id="render-mode-toggle"></span>
+                            </button>
+                        </div>
+                        <div class="setting-card">
+                            <button class="accordion main-accordion">Matériaux</button>
+                            <div class="panel-controls">
+                                <div class="control-group">
+                                    <label>
+                                        <input type="radio" name="render-material" id="render-material-glass" value="glass" checked>
+                                        verre
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card" id="render-scene-card">
+                            <button class="accordion main-accordion">Scène</button>
+                            <div class="panel-controls">
+                                <div class="control-group">
+                                    <label>
+                                        <input type="radio" name="render-scene" id="render-scene-base" value="base" checked>
+                                        Scène de base
+                                    </label>
+                                </div>
+                                <div class="control-group">
+                                    <label>
+                                        <input type="radio" name="render-scene" id="render-scene-1" value="scene1" disabled>
+                                        Scène 1
+                                    </label>
+                                </div>
+                                <div class="control-group">
+                                    <label>
+                                        <input type="radio" name="render-scene" id="render-scene-2" value="scene2" disabled>
+                                        Scène 2
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div><!-- #inspector-scroll -->
             </div><!-- #inspector -->
         </aside>
@@ -137,7 +180,25 @@
                             <button id="btn-back-menu">Retour au site web</button>
                         </div>
                     </div>
-                    <span class="panel-haut-label">Affichage</span>
+                    <div class="dropdown">
+                        <button id="btn-affichage-menu" class="btn-fichier" type="button">Affichage</button>
+                        <div id="affichage-dropdown" class="dropdown-content dropdown-right hidden">
+                            <label style="padding:8px 12px; font-size:0.8rem;">
+                                <span>Axes (3 traits)</span>
+                                <input type="checkbox" id="display-axes-toggle" checked>
+                            </label>
+                            <label style="padding:8px 12px; font-size:0.8rem;">
+                                <span>Grille de référence</span>
+                                <input type="checkbox" id="display-grid-toggle" checked>
+                            </label>
+                            <label style="padding:8px 12px; font-size:0.8rem;">
+                                <span>Ronds des sections</span>
+                                <input type="checkbox" id="display-rings-toggle" checked>
+                            </label>
+                        </div>
+                    </div>
+                    <button id="btn-undo" class="btn-fichier" type="button" title="Annuler">&lt;</button>
+                    <button id="btn-redo" class="btn-fichier" type="button" title="Rétablir">&gt;</button>
                 </div>
                 <div class="panel-haut-bar panel-haut-vues">
                     <div class="view-switcher">

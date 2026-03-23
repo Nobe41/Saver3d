@@ -263,6 +263,12 @@ body {
     align-items: center;
 }
 
+/* Rendu : conserver l'ordre visuel naturel (haut -> bas). */
+.panel-rendu-content {
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
 /* Colonne de droite */
 #right-column {
     display: flex;

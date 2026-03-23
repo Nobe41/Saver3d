@@ -13,6 +13,17 @@ var BottleView3D = (function () {
     window.MERIDIAN_RESOLUTION = MERIDIAN_RESOLUTION;
 
     var sectionRingGroup = null;
+    var bottleInnerGlassMesh = null;
+
+    function enableMeshShadows(obj) {
+        if (!obj || typeof THREE === 'undefined') return;
+        obj.traverse(function (node) {
+            if (node && node.isMesh) {
+                node.castShadow = true;
+                node.receiveShadow = true;
+            }
+        });
+    }
 
     var PIQURE_CONFIG = [
         { h: 's1-h', L: 'sp-L', P: 'sp-P', formKey: 'sp-forme', carreKey: 'sp-carre-niveau', defaultL: 58, defaultP: 58 },
@@ -23,7 +34,7 @@ var BottleView3D = (function () {
         { h: 'sb1-h', L: 'sb1-L', P: 'sb1-P', defaultL: 35, defaultP: 35 },
         { h: 'sb2-h', L: 'sb2-L', P: 'sb2-P', defaultL: 35, defaultP: 35 },
         { h: 'sb3-h', L: 'sb3-L', P: 'sb3-P', defaultL: 33, defaultP: 33 },
-        { h: 'sb3-h', L: 'sb4-L', P: 'sb4-P', defaultL: 31, defaultP: 31 },
+        { h: 'sb4-h', L: 'sb4-L', P: 'sb4-P', defaultL: 31, defaultP: 31 },
         { h: 'sb5-h', L: 'sb5-L', P: 'sb5-P', defaultL: 29, defaultP: 29 }
     ];
 
@@ -82,6 +93,7 @@ var BottleView3D = (function () {
         var carreNiveau = cfg.carreNiveau !== undefined ? cfg.carreNiveau : Math.max(0, Math.min(100, getPanelValue(cfg.carreKey, 0)));
         return { H: H, a: a, b: b, shape: shape, carreNiveau: carreNiveau };
     }
+
     function getPiqureSectionFromPanel() { return getSectionFromPanel(PIQURE_CONFIG[0]); }
     function getHautPiqureSectionFromPanel() { return getSectionFromPanel(PIQURE_CONFIG[1]); }
     function getHautPiqure3SectionFromPanel() { return getSectionFromPanel(PIQURE_CONFIG[2]); }
@@ -135,6 +147,7 @@ var BottleView3D = (function () {
     }
 
     function addSectionRing(group, section, isHighlight, isPiqure) {
+        if (typeof window !== 'undefined' && window.displayOptions && window.displayOptions.showSectionRings === false) return;
         var pts = BottleMaths.getSectionRingPoints(section.a, section.b, section.shape, section.carreNiveau, N_SEGMENTS);
         var ring = buildSectionRingLine(section.H, pts, isHighlight);
         ring.userData.isPiqure = isPiqure;
@@ -281,6 +294,7 @@ var BottleView3D = (function () {
         return new THREE.Mesh(geom, mat);
     }
 
+
     function updateView() {
         if (!scene || typeof BottleMesh3D === 'undefined') return;
         if (typeof Validator !== 'undefined' && Validator.applyAllUserConstraints) Validator.applyAllUserConstraints();
@@ -292,16 +306,56 @@ var BottleView3D = (function () {
         sectionRingGroup = new THREE.Group();
 
         if (!bottleGroup) {
-            var baseMat = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getGlassMaterial)
-                ? BottleMaterials.getGlassMaterial()
+            var baseMat = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getBottleBodyMaterial)
+                ? BottleMaterials.getBottleBodyMaterial()
                 : null;
             bottleGroup = BottleMesh3D.createBottleMesh(sectionsData, baseMat);
+            if (bottleGroup) {
+                bottleGroup.userData = bottleGroup.userData || {};
+                bottleGroup.userData.materialMode = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getRenderMaterialMode)
+                    ? BottleMaterials.getRenderMaterialMode()
+                    : 'base';
+            }
         } else {
+            if (typeof BottleMaterials !== 'undefined' && BottleMaterials.getRenderMaterialMode && BottleMaterials.getBottleBodyMaterial) {
+                var targetMode = BottleMaterials.getRenderMaterialMode();
+                if (!bottleGroup.userData || bottleGroup.userData.materialMode !== targetMode) {
+                    if (bottleGroup.material && bottleGroup.material.dispose) bottleGroup.material.dispose();
+                    bottleGroup.material = BottleMaterials.getBottleBodyMaterial();
+                    bottleGroup.userData = bottleGroup.userData || {};
+                    bottleGroup.userData.materialMode = targetMode;
+                }
+            }
             BottleMesh3D.updateBottleMesh(bottleGroup, sectionsData);
         }
         if (bottleGroup) {
             bottleGroup.userData.isPiqure = false;
+            enableMeshShadows(bottleGroup);
             sectionRingGroup.add(bottleGroup);
+        }
+
+        // Verre réaliste : ajouter une peau intérieure pour donner une épaisseur lisible.
+        if (bottleInnerGlassMesh) {
+            if (bottleInnerGlassMesh.geometry) bottleInnerGlassMesh.geometry.dispose();
+            if (bottleInnerGlassMesh.material && bottleInnerGlassMesh.material.dispose) bottleInnerGlassMesh.material.dispose();
+            bottleInnerGlassMesh = null;
+        }
+        var renderMode = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getRenderMaterialMode)
+            ? BottleMaterials.getRenderMaterialMode()
+            : 'base';
+        if (renderMode === 'glass' && bottleGroup && bottleGroup.geometry && typeof THREE !== 'undefined') {
+            var innerGeom = bottleGroup.geometry.clone();
+            var innerMat = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getInnerGlassMaterial)
+                ? BottleMaterials.getInnerGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR)
+                : BottleMaterials.getGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR);
+            bottleInnerGlassMesh = new THREE.Mesh(innerGeom, innerMat);
+            bottleInnerGlassMesh.scale.set(0.955, 0.995, 0.955);
+            bottleInnerGlassMesh.position.copy(bottleGroup.position);
+            bottleInnerGlassMesh.rotation.copy(bottleGroup.rotation);
+            bottleInnerGlassMesh.userData.isPiqure = false;
+            bottleInnerGlassMesh.castShadow = false;
+            bottleInnerGlassMesh.receiveShadow = true;
+            sectionRingGroup.add(bottleInnerGlassMesh);
         }
 
         for (var i = 0; i < sections.length; i++) {
@@ -334,14 +388,16 @@ var BottleView3D = (function () {
         }
         var feuille = buildPiqurePiedFeuille(s1, piqure, piqure.H);
         feuille.userData.isPiqure = true;
+        enableMeshShadows(feuille);
         sectionRingGroup.add(feuille);
         var feuillePiqureStrip = buildRuledSurfaceStrip(piqSections, BottleMaterials.DEFAULT_GLASS_COLOR);
-        if (feuillePiqureStrip) { feuillePiqureStrip.userData.isPiqure = true; sectionRingGroup.add(feuillePiqureStrip); }
+        if (feuillePiqureStrip) { feuillePiqureStrip.userData.isPiqure = true; enableMeshShadows(feuillePiqureStrip); sectionRingGroup.add(feuillePiqureStrip); }
         var lastP = piqSections[piqSections.length - 1];
         var rp3H = getPanelValue('rp3-h', 30);
         if (lastP && rp3H > lastP.H) {
             var feuilleVersAxe = buildPiqureFeuilleVersAxe(lastP, rp3H);
             feuilleVersAxe.userData.isPiqure = true;
+            enableMeshShadows(feuilleVersAxe);
             sectionRingGroup.add(feuilleVersAxe);
         }
 
@@ -371,13 +427,18 @@ var BottleView3D = (function () {
         if (sTop) {
             var feuilleColBague = buildPiqureBasHautFeuille(sTop, bague1);
             feuilleColBague.userData.isPiqure = false;
+            enableMeshShadows(feuilleColBague);
             sectionRingGroup.add(feuilleColBague);
         }
         var feuilleBagueStrip = buildRuledSurfaceStrip(bagueSections.length ? bagueSections : [getBague1SectionFromPanel(), getBague2SectionFromPanel(), getBague3SectionFromPanel(), getBague4SectionFromPanel(), getBague5SectionFromPanel()], BottleMaterials.DEFAULT_GLASS_COLOR);
-        if (feuilleBagueStrip) { feuilleBagueStrip.userData.isPiqure = false; sectionRingGroup.add(feuilleBagueStrip); }
+        if (feuilleBagueStrip) { feuilleBagueStrip.userData.isPiqure = false; enableMeshShadows(feuilleBagueStrip); sectionRingGroup.add(feuilleBagueStrip); }
 
         applyViewOpacity(sectionRingGroup);
         scene.add(sectionRingGroup);
+
+        if (typeof Gravure3D !== 'undefined' && Gravure3D && Gravure3D.updateScene) {
+            Gravure3D.updateScene(scene, sectionsData);
+        }
     }
 
     /**

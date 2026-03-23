@@ -79,6 +79,123 @@ canvas2d.addEventListener('wheel', (e) => {
 
 const fText = (v) => Number.isInteger(v) ? v : v.toFixed(1);
 
+function getNumericValue(id, fallback) {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseFloat(el.value);
+    return Number.isFinite(v) ? v : fallback;
+}
+
+function getIndexedHeights(prefix) {
+    const inputs = document.querySelectorAll(`input[id^="${prefix}"][id$="-h"]`);
+    const out = [];
+    inputs.forEach((el) => {
+        const m = (el.id || '').match(new RegExp(`^${prefix}(\\d+)-h$`));
+        if (!m) return;
+        const idx = parseInt(m[1], 10);
+        if (Number.isFinite(idx)) out.push(idx);
+    });
+    out.sort((a, b) => a - b);
+    return out.filter((v, i) => i === 0 || v !== out[i - 1]);
+}
+
+function getPiqureProfile2D() {
+    const points = [];
+    const s1h = getNumericValue('s1-h', 0);
+    const spL = getNumericValue('sp-L', 58);
+    points.push({ x: Math.max(0, spL / 2), y: s1h });
+
+    const spIdxs = getIndexedHeights('sp');
+    spIdxs.forEach((k) => {
+        const h = getNumericValue(`sp${k}-h`, null);
+        const L = getNumericValue(`sp${k}-L`, 40);
+        if (h == null) return;
+        points.push({ x: Math.max(0, L / 2), y: h });
+    });
+
+    const rp3h = getNumericValue('rp3-h', null);
+    if (rp3h != null) points.push({ x: 0, y: rp3h });
+
+    points.sort((a, b) => a.y - b.y);
+    return points;
+}
+
+function getBagueProfile2D() {
+    const points = [];
+    const sbIdxs = getIndexedHeights('sb');
+    sbIdxs.forEach((k) => {
+        const h = getNumericValue(`sb${k}-h`, null);
+        const L = getNumericValue(`sb${k}-L`, null);
+        if (h == null || L == null) return;
+        points.push({ x: Math.max(0, L / 2), y: h });
+    });
+    points.sort((a, b) => a.y - b.y);
+    return points;
+}
+
+function drawSymmetricProfile(ctx, profilePoints, drawingScale, options) {
+    if (!profilePoints || profilePoints.length < 2) return;
+    ctx.save();
+    ctx.strokeStyle = options && options.strokeStyle ? options.strokeStyle : '#000000';
+    ctx.lineWidth = (options && options.lineWidth ? options.lineWidth : 0.5) / drawingScale;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    if (options && options.dashed) ctx.setLineDash([3 / drawingScale, 2 / drawingScale]);
+    else ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(profilePoints[0].x, profilePoints[0].y);
+    for (let i = 1; i < profilePoints.length; i++) ctx.lineTo(profilePoints[i].x, profilePoints[i].y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-profilePoints[0].x, profilePoints[0].y);
+    for (let i = 1; i < profilePoints.length; i++) ctx.lineTo(-profilePoints[i].x, profilePoints[i].y);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawSectionLevelLines(ctx, profilePoints, drawingScale, options) {
+    if (!profilePoints || profilePoints.length === 0) return;
+    ctx.save();
+    ctx.strokeStyle = options && options.strokeStyle ? options.strokeStyle : '#000000';
+    ctx.lineWidth = (options && options.lineWidth ? options.lineWidth : 0.35) / drawingScale;
+    if (options && options.dashed) ctx.setLineDash([2.5 / drawingScale, 1.8 / drawingScale]);
+    else ctx.setLineDash([]);
+
+    profilePoints.forEach((p) => {
+        ctx.beginPath();
+        ctx.moveTo(-p.x, p.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+    });
+    ctx.restore();
+}
+
+function drawBagueNeckLinks(ctx, mainProfilePoints, bagueProfilePoints, drawingScale) {
+    if (!mainProfilePoints || mainProfilePoints.length === 0) return;
+    if (!bagueProfilePoints || bagueProfilePoints.length === 0) return;
+
+    const neck = mainProfilePoints[mainProfilePoints.length - 1]; // haut du col
+    const bagueBase = bagueProfilePoints[0]; // bas de bague
+    if (!neck || !bagueBase) return;
+
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 0.45 / drawingScale;
+    ctx.setLineDash([]);
+
+    // Liaison sous la bague vers le col (droite + gauche)
+    ctx.beginPath();
+    ctx.moveTo(neck.x, neck.y);
+    ctx.lineTo(bagueBase.x, bagueBase.y);
+    ctx.moveTo(-neck.x, neck.y);
+    ctx.lineTo(-bagueBase.x, bagueBase.y);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 function drawCotation(ctx, x1, y1, x2, y2, dimPos, text, isVertical, drawingScale) {
     ctx.save();
     ctx.strokeStyle = '#000000'; 
@@ -158,6 +275,48 @@ function drawLeaderLine(ctx, x, y, text, drawingScale) {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText("R" + text, 0, -0.5/drawingScale);
+    ctx.restore();
+    ctx.restore();
+}
+
+function drawDiameterCotationRight(ctx, xLeft, xRight, y, text, drawingScale) {
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = '#000000';
+    ctx.lineWidth = 0.15 / drawingScale;
+
+    const offsetX = 10 / drawingScale;
+    const tick = 3 / drawingScale;
+    const labelX = xRight + offsetX;
+    const labelY = y;
+
+    ctx.beginPath();
+    // Trait de cote exactement au niveau du diamètre mesuré
+    ctx.moveTo(xLeft, y);
+    ctx.lineTo(xRight, y);
+    // Prolongement vers le texte à droite
+    ctx.moveTo(xRight, y);
+    ctx.lineTo(labelX - tick, y);
+    // Marques de prise de cote aux deux extrémités du diamètre
+    ctx.moveTo(xLeft, y - tick);
+    ctx.lineTo(xLeft, y + tick);
+    ctx.moveTo(xRight, y - tick);
+    ctx.lineTo(xRight, y + tick);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(labelX, labelY);
+    ctx.scale(1, -1);
+    ctx.font = (3 / drawingScale) + 'px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const txt = String(text);
+    const textWidth = ctx.measureText(txt).width;
+    const textHeight = 4 / drawingScale;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-0.5 / drawingScale, -textHeight / 2, textWidth + 1 / drawingScale, textHeight);
+    ctx.fillStyle = '#000000';
+    ctx.fillText(txt, 0, 0);
     ctx.restore();
     ctx.restore();
 }
@@ -309,12 +468,23 @@ function draw2D() {
         ctx2d.lineTo(-points[0].x, points[0].y);
         ctx2d.stroke();
 
+        // 2bis. Piqûre (pointillés) + bague (trait plein)
+        const piqureProfile = getPiqureProfile2D();
+        const bagueProfile = getBagueProfile2D();
+        drawSymmetricProfile(ctx2d, piqureProfile, drawingScale, { dashed: true, strokeStyle: '#000000', lineWidth: 0.45 });
+        drawSymmetricProfile(ctx2d, bagueProfile, drawingScale, { dashed: false, strokeStyle: '#000000', lineWidth: 0.45 });
+        drawBagueNeckLinks(ctx2d, points, bagueProfile, drawingScale);
+        // Montrer explicitement toutes les sections de bague (traits horizontaux)
+        drawSectionLevelLines(ctx2d, bagueProfile, drawingScale, { dashed: false, strokeStyle: '#000000', lineWidth: 0.3 });
         // 3. Cotations (dérivées du profil)
-        drawCotation(ctx2d, D_bas/2, 0, D_epaule/2, bodyY, max_R + 15, fText(bodyY), true, drawingScale);
-        drawCotation(ctx2d, D_bas/2, 0, D_finish/2, bottleHeight, max_R + 30, fText(bottleHeight), true, drawingScale);
-        drawCotation(ctx2d, -D_bas/2, 0, D_bas/2, 0, -15, "Ø " + fText(D_bas), false, drawingScale);
-        drawCotation(ctx2d, -D_epaule/2, bodyY, D_epaule/2, bodyY, bodyY, "Ø " + fText(D_epaule), false, drawingScale);
-        drawCotation(ctx2d, -D_finish/2, bottleHeight, D_finish/2, bottleHeight, bottleHeight + 15, "Ø " + fText(D_finish), false, drawingScale);
+        // Cotations verticales à gauche de la bouteille
+        drawCotation(ctx2d, -D_bas/2, 0, -D_epaule/2, bodyY, -max_R - 15, fText(bodyY), true, drawingScale);
+        drawCotation(ctx2d, -D_bas/2, 0, -D_finish/2, bottleHeight, -max_R - 30, fText(bottleHeight), true, drawingScale);
+
+        // Cotations de diamètre à droite de la bouteille
+        drawDiameterCotationRight(ctx2d, -D_bas / 2, D_bas / 2, 0, "Ø " + fText(D_bas), drawingScale);
+        drawDiameterCotationRight(ctx2d, -D_epaule / 2, D_epaule / 2, bodyY, "Ø " + fText(D_epaule), drawingScale);
+        drawDiameterCotationRight(ctx2d, -D_finish / 2, D_finish / 2, bottleHeight, "Ø " + fText(D_finish), drawingScale);
 
         ctx2d.restore(); 
 

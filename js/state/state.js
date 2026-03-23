@@ -6,3 +6,10 @@ var isLogicielInit = false; // Mémorise si le moteur 3D est lancé
 
 // Mémoire pour stocker les images (PNG) des gravures
 window.engravingImages = {};
+
+// Options d'affichage 3D (topbar > Affichage)
+window.displayOptions = {
+    showAxes: true,
+    showGrid: true,
+    showSectionRings: true
+};

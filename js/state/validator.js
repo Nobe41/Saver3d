@@ -97,7 +97,8 @@ var Validator = (function () {
         var h = parseFloat(newHeight);
         if (!isFinite(h)) h = MIN_HEIGHT;
         var piedH = getPiedHeight();
-        if (piedH != null && h > piedH) h = piedH;
+        // La piqûre doit rester au-dessus (ou au niveau) du pied.
+        if (piedH != null && h < piedH) h = piedH;
         return h;
     }
 

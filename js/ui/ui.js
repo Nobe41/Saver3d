@@ -11,16 +11,19 @@ function setupPanelTabs() {
     const tabSections = document.getElementById('panel-tab-sections');
     const tabGravure = document.getElementById('panel-tab-gravure');
     const tabInformation = document.getElementById('panel-tab-information');
+    const tabRendu = document.getElementById('panel-tab-rendu');
+    const brandHeader = document.getElementById('brand-header');
     const sectionsArea = document.getElementById('panel-sections-area');
     const contentGravure = document.getElementById('panel-content-gravure');
     const contentInformation = document.getElementById('panel-content-information');
+    const contentRendu = document.getElementById('panel-content-rendu');
     const contentSections = document.getElementById('panel-content-sections');
     const contentPiqure = document.getElementById('panel-content-piqure');
     const contentBague = document.getElementById('panel-content-bague');
     const barTabSections = document.getElementById('panel-bar-tab-sections');
     const barTabPiqure = document.getElementById('panel-bar-tab-piqure');
     const barTabBague = document.getElementById('panel-bar-tab-bague');
-    if (!sectionsArea || !contentGravure || !contentInformation || !contentSections || !contentPiqure || !contentBague) return;
+    if (!sectionsArea || !contentGravure || !contentInformation || !contentRendu || !contentSections || !contentPiqure || !contentBague) return;
 
     function addTabInteraction(el, handler) {
         if (!el || !handler) return;
@@ -33,30 +36,61 @@ function setupPanelTabs() {
         });
     }
 
+    function setAddSectionBarVisibility(show) {
+        var bar = document.getElementById('inspector-add-section-bar');
+        if (!bar) return;
+        if (show) bar.classList.remove('hidden');
+        else bar.classList.add('hidden');
+    }
+
     /* Seules les icônes de la colonne logo (🥃 / ✏️) contrôlent l’affichage Sections / Gravure. */
     function showLeftSections() {
         sectionsArea.classList.remove('hidden');
         contentGravure.classList.add('hidden');
         contentInformation.classList.add('hidden');
+        contentRendu.classList.add('hidden');
+        if (brandHeader) brandHeader.classList.remove('hidden');
         if (tabSections) tabSections.classList.add('active');
         if (tabGravure) tabGravure.classList.remove('active');
         if (tabInformation) tabInformation.classList.remove('active');
+        if (tabRendu) tabRendu.classList.remove('active');
+        setAddSectionBarVisibility(true);
     }
     function showLeftGravure() {
         sectionsArea.classList.add('hidden');
         contentGravure.classList.remove('hidden');
         contentInformation.classList.add('hidden');
+        contentRendu.classList.add('hidden');
+        if (brandHeader) brandHeader.classList.add('hidden');
         if (tabSections) tabSections.classList.remove('active');
         if (tabGravure) tabGravure.classList.add('active');
         if (tabInformation) tabInformation.classList.remove('active');
+        if (tabRendu) tabRendu.classList.remove('active');
+        setAddSectionBarVisibility(false);
     }
     function showLeftInformation() {
         sectionsArea.classList.add('hidden');
         contentGravure.classList.add('hidden');
         contentInformation.classList.remove('hidden');
+        contentRendu.classList.add('hidden');
+        if (brandHeader) brandHeader.classList.add('hidden');
         if (tabSections) tabSections.classList.remove('active');
         if (tabGravure) tabGravure.classList.remove('active');
         if (tabInformation) tabInformation.classList.add('active');
+        if (tabRendu) tabRendu.classList.remove('active');
+        setAddSectionBarVisibility(false);
+    }
+    function showLeftRendu() {
+        sectionsArea.classList.add('hidden');
+        contentGravure.classList.add('hidden');
+        contentInformation.classList.add('hidden');
+        contentRendu.classList.remove('hidden');
+        if (brandHeader) brandHeader.classList.add('hidden');
+        if (tabSections) tabSections.classList.remove('active');
+        if (tabGravure) tabGravure.classList.remove('active');
+        if (tabInformation) tabInformation.classList.remove('active');
+        if (tabRendu) tabRendu.classList.add('active');
+        setAddSectionBarVisibility(false);
     }
     function showBarSections() {
         contentSections.classList.remove('hidden');
@@ -98,6 +132,7 @@ function setupPanelTabs() {
     addTabInteraction(tabSections, showLeftSections);
     addTabInteraction(tabGravure, showLeftGravure);
     addTabInteraction(tabInformation, showLeftInformation);
+    addTabInteraction(tabRendu, showLeftRendu);
     addTabInteraction(barTabSections, showBarSections);
     addTabInteraction(barTabPiqure, showBarPiqure);
     addTabInteraction(barTabBague, showBarBague);
@@ -106,6 +141,100 @@ function setupPanelTabs() {
     showBarSections();
 
     /* Les deux icônes au-dessus des blocs n’ont aucun lien avec le menu à gauche : pas de listener, pas d’action sur le contenu. */
+}
+
+function setupRenduMaterialControls() {
+    var modeToggle = document.getElementById('render-mode-toggle');
+    var radioGlass = document.getElementById('render-material-glass');
+    var materialCard = radioGlass ? radioGlass.closest('.setting-card') : null;
+    var sceneCard = document.getElementById('render-scene-card');
+    var sceneBase = document.getElementById('render-scene-base');
+    var scene1 = document.getElementById('render-scene-1');
+    var scene2 = document.getElementById('render-scene-2');
+    if (!modeToggle || !radioGlass) return;
+
+    radioGlass.checked = true;
+    modeToggle.checked = false;
+
+    function applyMode(mode) {
+        if (typeof BottleMaterials !== 'undefined' && BottleMaterials.setRenderMaterialMode) {
+            BottleMaterials.setRenderMaterialMode(mode);
+        }
+        if (typeof updateBouteille === 'function') updateBouteille();
+    }
+
+    function syncSceneAvailability() {
+        var enabled = !!modeToggle.checked;
+        if (scene1) scene1.disabled = !enabled;
+        if (scene2) scene2.disabled = !enabled;
+        if (materialCard) materialCard.classList.toggle('is-disabled', !enabled);
+        if (sceneCard) sceneCard.classList.toggle('is-disabled', !enabled);
+        if (!enabled && sceneBase) sceneBase.checked = true;
+        if (typeof SceneSetup3D !== 'undefined' && SceneSetup3D.setBackgroundScene) {
+            if (!enabled) SceneSetup3D.setBackgroundScene('none');
+        }
+        if (typeof updateBouteille === 'function') updateBouteille();
+    }
+
+    if (!modeToggle.dataset.bound) {
+        modeToggle.dataset.bound = '1';
+        modeToggle.addEventListener('change', function () {
+            if (modeToggle.checked) applyMode('glass');
+            else applyMode('base');
+            syncSceneAvailability();
+        });
+    }
+    if (!radioGlass.dataset.bound) {
+        radioGlass.dataset.bound = '1';
+        radioGlass.addEventListener('change', function () {
+            if (radioGlass.checked && modeToggle.checked) applyMode('glass');
+        });
+    }
+
+    // Etat initial : mode rendu désactivé => matériau de base.
+    applyMode('base');
+    syncSceneAvailability();
+}
+
+function setupRenduSceneControls() {
+    var sceneBase = document.getElementById('render-scene-base');
+    var scene1 = document.getElementById('render-scene-1');
+    var scene2 = document.getElementById('render-scene-2');
+    var modeToggle = document.getElementById('render-mode-toggle');
+    if (!sceneBase || !scene1 || !scene2) return;
+
+    function applySceneFromChecks() {
+        if (typeof SceneSetup3D === 'undefined' || !SceneSetup3D.setBackgroundScene) return;
+        if (!modeToggle || !modeToggle.checked) {
+            SceneSetup3D.setBackgroundScene('none');
+            return;
+        }
+        if (scene1.checked) SceneSetup3D.setBackgroundScene('scene1');
+        else if (scene2.checked) SceneSetup3D.setBackgroundScene('scene2');
+        else SceneSetup3D.setBackgroundScene('none');
+    }
+
+    if (!sceneBase.dataset.bound) {
+        sceneBase.dataset.bound = '1';
+        sceneBase.addEventListener('change', function () {
+            if (sceneBase.checked) applySceneFromChecks();
+        });
+    }
+    if (!scene1.dataset.bound) {
+        scene1.dataset.bound = '1';
+        scene1.addEventListener('change', function () {
+            applySceneFromChecks();
+        });
+    }
+    if (!scene2.dataset.bound) {
+        scene2.dataset.bound = '1';
+        scene2.addEventListener('change', function () {
+            applySceneFromChecks();
+        });
+    }
+
+    sceneBase.checked = true;
+    applySceneFromChecks();
 }
 
 // ==========================================
@@ -142,10 +271,109 @@ if (btnBackMenu) {
 
 const btnFichierMenu = document.getElementById('btn-fichier-menu');
 const fichierDropdown = document.getElementById('fichier-dropdown');
+const btnAffichageMenu = document.getElementById('btn-affichage-menu');
+const affichageDropdown = document.getElementById('affichage-dropdown');
+const btnUndo = document.getElementById('btn-undo');
+const btnRedo = document.getElementById('btn-redo');
+var menuHoverCloseTimer = null;
+var undoStack = [];
+var redoStack = [];
+var isApplyingHistoryState = false;
+var historyPushTimer = null;
+
+function captureUIState() {
+    var controls = document.querySelectorAll('input[id], select[id], textarea[id]');
+    var state = {};
+    controls.forEach(function (el) {
+        if (!el.id) return;
+        if (el.type === 'file') return;
+        state[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? !!el.checked : el.value;
+    });
+    return state;
+}
+
+function applyUIState(state) {
+    if (!state) return;
+    isApplyingHistoryState = true;
+    for (var id in state) {
+        if (!Object.prototype.hasOwnProperty.call(state, id)) continue;
+        var el = document.getElementById(id);
+        if (!el) continue;
+        if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!state[id];
+        else el.value = state[id];
+    }
+    isApplyingHistoryState = false;
+
+    // Re-synchroniser la scène/rendu et redessiner.
+    if (typeof SceneSetup3D !== 'undefined' && SceneSetup3D.applyDisplayOptions) {
+        SceneSetup3D.applyDisplayOptions();
+    }
+    if (typeof updateBouteille === 'function') updateBouteille();
+    if (typeof draw2D === 'function') draw2D();
+}
+
+function statesEqual(a, b) {
+    return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function updateUndoRedoButtons() {
+    if (btnUndo) btnUndo.disabled = undoStack.length <= 1;
+    if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+}
+
+function pushHistorySnapshot() {
+    if (isApplyingHistoryState) return;
+    var snap = captureUIState();
+    var last = undoStack.length ? undoStack[undoStack.length - 1] : null;
+    if (!last || !statesEqual(last, snap)) {
+        undoStack.push(snap);
+        if (undoStack.length > 120) undoStack.shift();
+        redoStack = [];
+        updateUndoRedoButtons();
+    }
+}
+
+function scheduleHistorySnapshot() {
+    if (isApplyingHistoryState) return;
+    if (historyPushTimer) clearTimeout(historyPushTimer);
+    historyPushTimer = setTimeout(pushHistorySnapshot, 120);
+}
+
+function setupUndoRedoControls() {
+    if (!btnUndo || !btnRedo) return;
+    if (!btnUndo.dataset.bound) {
+        btnUndo.dataset.bound = '1';
+        btnUndo.addEventListener('click', function () {
+            if (undoStack.length <= 1) return;
+            var current = undoStack.pop();
+            redoStack.push(current);
+            var previous = undoStack[undoStack.length - 1];
+            applyUIState(previous);
+            updateUndoRedoButtons();
+        });
+    }
+    if (!btnRedo.dataset.bound) {
+        btnRedo.dataset.bound = '1';
+        btnRedo.addEventListener('click', function () {
+            if (!redoStack.length) return;
+            var next = redoStack.pop();
+            undoStack.push(next);
+            applyUIState(next);
+            updateUndoRedoButtons();
+        });
+    }
+
+    document.addEventListener('input', function () { scheduleHistorySnapshot(); });
+    document.addEventListener('change', function () { scheduleHistorySnapshot(); });
+
+    if (!undoStack.length) undoStack.push(captureUIState());
+    updateUndoRedoButtons();
+}
 
 if (btnFichierMenu && fichierDropdown) {
     btnFichierMenu.addEventListener('click', (e) => {
         e.stopPropagation(); 
+        if (affichageDropdown) affichageDropdown.classList.add('hidden');
         fichierDropdown.classList.toggle('hidden');
     });
 
@@ -153,7 +381,103 @@ if (btnFichierMenu && fichierDropdown) {
         if (!fichierDropdown.contains(e.target) && e.target !== btnFichierMenu) {
             fichierDropdown.classList.add('hidden');
         }
+        if (affichageDropdown && btnAffichageMenu && !affichageDropdown.contains(e.target) && e.target !== btnAffichageMenu) {
+            affichageDropdown.classList.add('hidden');
+        }
     });
+}
+
+if (btnAffichageMenu && affichageDropdown) {
+    btnAffichageMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (fichierDropdown) fichierDropdown.classList.add('hidden');
+        affichageDropdown.classList.toggle('hidden');
+    });
+}
+
+function openTopbarMenu(kind) {
+    if (menuHoverCloseTimer) {
+        clearTimeout(menuHoverCloseTimer);
+        menuHoverCloseTimer = null;
+    }
+    if (kind === 'fichier') {
+        if (affichageDropdown) affichageDropdown.classList.add('hidden');
+        if (fichierDropdown) fichierDropdown.classList.remove('hidden');
+    } else if (kind === 'affichage') {
+        if (fichierDropdown) fichierDropdown.classList.add('hidden');
+        if (affichageDropdown) affichageDropdown.classList.remove('hidden');
+    }
+}
+
+function scheduleCloseTopbarMenus() {
+    if (menuHoverCloseTimer) clearTimeout(menuHoverCloseTimer);
+    menuHoverCloseTimer = setTimeout(function () {
+        if (fichierDropdown) fichierDropdown.classList.add('hidden');
+        if (affichageDropdown) affichageDropdown.classList.add('hidden');
+    }, 120);
+}
+
+if (btnFichierMenu && fichierDropdown) {
+    btnFichierMenu.addEventListener('mouseenter', function () { openTopbarMenu('fichier'); });
+    fichierDropdown.addEventListener('mouseenter', function () {
+        if (menuHoverCloseTimer) {
+            clearTimeout(menuHoverCloseTimer);
+            menuHoverCloseTimer = null;
+        }
+    });
+    btnFichierMenu.addEventListener('mouseleave', scheduleCloseTopbarMenus);
+    fichierDropdown.addEventListener('mouseleave', scheduleCloseTopbarMenus);
+}
+
+if (btnAffichageMenu && affichageDropdown) {
+    btnAffichageMenu.addEventListener('mouseenter', function () { openTopbarMenu('affichage'); });
+    affichageDropdown.addEventListener('mouseenter', function () {
+        if (menuHoverCloseTimer) {
+            clearTimeout(menuHoverCloseTimer);
+            menuHoverCloseTimer = null;
+        }
+    });
+    btnAffichageMenu.addEventListener('mouseleave', scheduleCloseTopbarMenus);
+    affichageDropdown.addEventListener('mouseleave', scheduleCloseTopbarMenus);
+}
+
+function setupDisplayControls() {
+    var axesToggle = document.getElementById('display-axes-toggle');
+    var gridToggle = document.getElementById('display-grid-toggle');
+    var ringsToggle = document.getElementById('display-rings-toggle');
+    if (!axesToggle || !gridToggle || !ringsToggle) return;
+
+    var opts = (typeof window !== 'undefined' && window.displayOptions) ? window.displayOptions : null;
+    if (opts) {
+        axesToggle.checked = opts.showAxes !== false;
+        gridToggle.checked = opts.showGrid !== false;
+        ringsToggle.checked = opts.showSectionRings !== false;
+    }
+
+    function applyDisplayOptions() {
+        if (opts) {
+            opts.showAxes = !!axesToggle.checked;
+            opts.showGrid = !!gridToggle.checked;
+            opts.showSectionRings = !!ringsToggle.checked;
+        }
+        if (typeof SceneSetup3D !== 'undefined' && SceneSetup3D.applyDisplayOptions) {
+            SceneSetup3D.applyDisplayOptions();
+        }
+        if (typeof updateBouteille === 'function') updateBouteille();
+    }
+
+    if (!axesToggle.dataset.bound) {
+        axesToggle.dataset.bound = '1';
+        axesToggle.addEventListener('change', applyDisplayOptions);
+    }
+    if (!gridToggle.dataset.bound) {
+        gridToggle.dataset.bound = '1';
+        gridToggle.addEventListener('change', applyDisplayOptions);
+    }
+    if (!ringsToggle.dataset.bound) {
+        ringsToggle.dataset.bound = '1';
+        ringsToggle.addEventListener('change', applyDisplayOptions);
+    }
 }
 
 // ==========================================
@@ -207,6 +531,32 @@ function setupListeners() {
         return Math.max(0, maxIdx);
     }
 
+    function getMainTopHeight() {
+        var n = getMainSectionCount();
+        if (!n) return 0;
+        var input = document.getElementById('s' + n + '-h');
+        var v = input ? parseFloat(input.value) : NaN;
+        return isFinite(v) ? v : 0;
+    }
+
+    function shiftBagueHeights(delta) {
+        if (!isFinite(delta) || Math.abs(delta) < 1e-9) return;
+        var bagueInputs = document.querySelectorAll('input[id^="sb"][id$="-h"]');
+        for (var i = 0; i < bagueInputs.length; i++) {
+            var input = bagueInputs[i];
+            var v = parseFloat(input.value);
+            if (!isFinite(v)) continue;
+            // Appliquer le décalage brut à toutes les sections pour conserver la forme,
+            // puis laisser Validator recaler les bornes une fois l'ensemble déplacé.
+            var next = v + delta;
+            input.value = next;
+            var slider = document.getElementById(input.id + '-slider');
+            if (slider) slider.value = next;
+        }
+    }
+
+    var lastMainTopHeight = getMainTopHeight();
+
     var sectionCount = getMainSectionCount() || 5;
     const MAIN_RATTACHEMENTS = [];
     for (var si = 1; si < sectionCount; si++) {
@@ -254,6 +604,7 @@ function setupListeners() {
 
         const onUpdate = () => {
             const controlGroup = input.closest('.control-group');
+            var id = input.id || '';
             if (controlGroup) {
                 if (input.type === 'range') {
                     const num = controlGroup.querySelector('input[type=number]');
@@ -316,11 +667,28 @@ function setupListeners() {
                     }
                 }
             }
+            // Si la dernière section principale (ex: s5-h) bouge, translater toute la bague
+            // avant validation pour préserver les écarts internes (bague "rigide").
+            var isTopMainHeightEdit = false;
+            var topMatch = id.match(/^s(\d+)-h(?:-slider)?$/);
+            if (topMatch) {
+                var editedSectionIndex = parseInt(topMatch[1], 10);
+                var mainCountNow = getMainSectionCount();
+                isTopMainHeightEdit = isFinite(editedSectionIndex) && editedSectionIndex === mainCountNow;
+                if (isTopMainHeightEdit) {
+                    var currentTop = getMainTopHeight();
+                    var deltaTop = currentTop - lastMainTopHeight;
+                    shiftBagueHeights(deltaTop);
+                }
+            }
+
             if (typeof Validator !== 'undefined' && Validator.applyAllUserConstraints) {
                 Validator.applyAllUserConstraints();
             }
+            if (isTopMainHeightEdit) {
+                lastMainTopHeight = getMainTopHeight();
+            }
             // Section corps (s1..s5) : hauteur ou L/P modifiés -> bornes Courbe S puis adapter les ρ.
-            var id = input.id || '';
             if (/^s\d+-(h|L|P)(?:-slider)?$/.test(id)) {
                 updateCourbeSSliderLimits();
                 updateCourbeSRhosFromDistance();
@@ -731,6 +1099,7 @@ function setupListeners() {
 
     for (let i = 0; i < allAccordions.length; i++) {
         allAccordions[i].onclick = function () {
+            if (this.id === 'render-mode-title') return;
             const panel = this.nextElementSibling;
             const isOpen = panel && panel.style.maxHeight && panel.style.maxHeight !== "0px";
             const isMain = this.classList.contains("main-accordion");
@@ -769,4 +1138,8 @@ if (typeof UIInspector !== 'undefined' && UIInspector.renderSections) {
     UIInspector.renderSections();
 }
 setupPanelTabs();
+setupRenduMaterialControls();
+setupRenduSceneControls();
+setupDisplayControls();
+setupUndoRedoControls();
 if (typeof UIEvents !== 'undefined' && UIEvents.init) UIEvents.init();
