@@ -261,7 +261,7 @@ const btnBackMenu = document.getElementById('btn-back-menu');
 if (btnBackMenu) {
     btnBackMenu.addEventListener('click', () => {
         document.getElementById('fichier-dropdown').classList.add('hidden');
-        window.location.href = 'index.html';
+        window.location.href = '../website/index.html';
     });
 }
 

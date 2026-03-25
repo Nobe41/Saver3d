@@ -133,6 +133,93 @@ function getBagueProfile2D() {
     return points;
 }
 
+function getMainSections2D() {
+    const sections = [];
+    const sIdxs = getIndexedHeights('s');
+    sIdxs.forEach((k) => {
+        const h = getNumericValue(`s${k}-h`, null);
+        const L = getNumericValue(`s${k}-L`, null);
+        if (h == null || L == null) return;
+        sections.push({ y: h, x: Math.max(0, L / 2) });
+    });
+    sections.sort((a, b) => a.y - b.y);
+    return sections;
+}
+
+function getProfileHalfWidthAtY(profilePoints, yTarget) {
+    if (!profilePoints || profilePoints.length === 0 || !Number.isFinite(yTarget)) return 0;
+    let maxRadius = 0;
+    const eps = 1e-6;
+
+    for (let i = 0; i < profilePoints.length; i++) {
+        const p = profilePoints[i];
+        if (Math.abs(p.y - yTarget) < eps) {
+            maxRadius = Math.max(maxRadius, Math.abs(p.x));
+        }
+    }
+
+    for (let i = 1; i < profilePoints.length; i++) {
+        const p0 = profilePoints[i - 1];
+        const p1 = profilePoints[i];
+        const minY = Math.min(p0.y, p1.y);
+        const maxY = Math.max(p0.y, p1.y);
+        if (yTarget < minY - eps || yTarget > maxY + eps) continue;
+        const dy = p1.y - p0.y;
+        if (Math.abs(dy) < eps) continue;
+        const t = (yTarget - p0.y) / dy;
+        const xAtY = p0.x + (p1.x - p0.x) * t;
+        maxRadius = Math.max(maxRadius, Math.abs(xAtY));
+    }
+
+    return maxRadius;
+}
+
+function getRattachementLabel(rattId) {
+    const typeEl = document.getElementById(rattId + '-type');
+    const rhoEl = document.getElementById(rattId + '-rho');
+    const type = typeEl ? String(typeEl.value || '').trim() : '';
+    const rho = rhoEl ? parseFloat(rhoEl.value) : NaN;
+    const hasRho = Number.isFinite(rho) && rho > 0;
+
+    if (type === 'ligne') return null;
+    if (type === 'rayon') return hasRho ? ('R ' + fText(rho)) : null;
+    if (type === 'courbeS') return hasRho ? ('Courbe S R ' + fText(rho)) : 'Courbe S';
+    if (type === 'spline') return hasRho ? ('Spline R ' + fText(Math.abs(rho))) : 'Spline';
+    return hasRho ? ('R ' + fText(rho)) : 'Raccord';
+}
+
+function drawRattachementCalloutRight(ctx, xAnchor, yAnchor, text, drawingScale, offsetX) {
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = '#000000';
+    ctx.lineWidth = 0.15 / drawingScale;
+
+    const elbowX = xAnchor + 7 / drawingScale;
+    const labelX = xAnchor + offsetX / drawingScale;
+
+    ctx.beginPath();
+    ctx.moveTo(xAnchor, yAnchor);
+    ctx.lineTo(elbowX, yAnchor);
+    ctx.lineTo(labelX - 1.5 / drawingScale, yAnchor);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(labelX, yAnchor);
+    ctx.scale(1, -1);
+    ctx.font = (3 / drawingScale) + 'px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const txt = String(text);
+    const w = ctx.measureText(txt).width;
+    const h = 4 / drawingScale;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-0.5 / drawingScale, -h / 2, w + 1 / drawingScale, h);
+    ctx.fillStyle = '#000000';
+    ctx.fillText(txt, 0, 0);
+    ctx.restore();
+    ctx.restore();
+}
+
 function drawSymmetricProfile(ctx, profilePoints, drawingScale, options) {
     if (!profilePoints || profilePoints.length < 2) return;
     ctx.save();
@@ -209,8 +296,9 @@ function drawCotation(ctx, x1, y1, x2, y2, dimPos, text, isVertical, drawingScal
         sign = dimPos > Math.max(x1, x2) ? 1 : -1;
         dimX1 = dimPos; dimY1 = y1;
         dimX2 = dimPos; dimY2 = y2;
-        ctx.moveTo(x1 + sign*1/drawingScale, y1); ctx.lineTo(dimPos + sign*2/drawingScale, y1);
-        ctx.moveTo(x2 + sign*1/drawingScale, y2); ctx.lineTo(dimPos + sign*2/drawingScale, y2);
+        // Les traits de rappel partent du trait de la bouteille.
+        ctx.moveTo(x1, y1); ctx.lineTo(dimPos + sign*2/drawingScale, y1);
+        ctx.moveTo(x2, y2); ctx.lineTo(dimPos + sign*2/drawingScale, y2);
     } else {
         sign = dimPos > Math.max(y1, y2) ? 1 : -1;
         dimX1 = x1; dimY1 = dimPos;
@@ -220,11 +308,17 @@ function drawCotation(ctx, x1, y1, x2, y2, dimPos, text, isVertical, drawingScal
             ctx.moveTo(x2, y2 + sign*1/drawingScale); ctx.lineTo(x2, dimPos + sign*2/drawingScale);
         }
     }
-    ctx.moveTo(dimX1, dimY1);
-    ctx.lineTo(dimX2, dimY2);
+    const aSize = 2.0 / drawingScale;
+    const dxDim = dimX2 - dimX1;
+    const dyDim = dimY2 - dimY1;
+    const lenDim = Math.sqrt(dxDim * dxDim + dyDim * dyDim);
+    const uxDim = lenDim > 1e-9 ? (dxDim / lenDim) : 0;
+    const uyDim = lenDim > 1e-9 ? (dyDim / lenDim) : 0;
+    // Le trait de cote s'arrete au niveau des fleches (ne traverse plus les pointes).
+    ctx.moveTo(dimX1 + uxDim * aSize, dimY1 + uyDim * aSize);
+    ctx.lineTo(dimX2 - uxDim * aSize, dimY2 - uyDim * aSize);
     ctx.stroke();
 
-    const aSize = 2.0 / drawingScale;
     const drawArrow = (ax, ay, angle) => {
         ctx.beginPath();
         ctx.moveTo(ax, ay);
@@ -290,18 +384,12 @@ function drawDiameterCotationRight(ctx, xLeft, xRight, y, text, drawingScale) {
     const labelX = xRight + offsetX;
     const labelY = y;
 
+    const startX = xRight;
+
     ctx.beginPath();
-    // Trait de cote exactement au niveau du diamètre mesuré
-    ctx.moveTo(xLeft, y);
-    ctx.lineTo(xRight, y);
-    // Prolongement vers le texte à droite
-    ctx.moveTo(xRight, y);
+    // Trait de cote uniquement a l'exterieur de la bouteille (cote droite).
+    ctx.moveTo(startX, y);
     ctx.lineTo(labelX - tick, y);
-    // Marques de prise de cote aux deux extrémités du diamètre
-    ctx.moveTo(xLeft, y - tick);
-    ctx.lineTo(xLeft, y + tick);
-    ctx.moveTo(xRight, y - tick);
-    ctx.lineTo(xRight, y + tick);
     ctx.stroke();
 
     ctx.save();
@@ -343,10 +431,11 @@ function draw2D() {
     const startX = -paperW / 2;
     const startY = -paperH / 2;
 
+    // Ombre centree autour de la feuille (pas de decalage droite/bas).
     ctx2d.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    ctx2d.shadowBlur = 10;
-    ctx2d.shadowOffsetX = 5;
-    ctx2d.shadowOffsetY = 5;
+    ctx2d.shadowBlur = 12;
+    ctx2d.shadowOffsetX = 0;
+    ctx2d.shadowOffsetY = 0;
     ctx2d.fillStyle = '#ffffff';
     ctx2d.fillRect(startX, startY, paperW, paperH);
     ctx2d.shadowColor = 'transparent';
@@ -476,15 +565,46 @@ function draw2D() {
         drawBagueNeckLinks(ctx2d, points, bagueProfile, drawingScale);
         // Montrer explicitement toutes les sections de bague (traits horizontaux)
         drawSectionLevelLines(ctx2d, bagueProfile, drawingScale, { dashed: false, strokeStyle: '#000000', lineWidth: 0.3 });
-        // 3. Cotations (dérivées du profil)
-        // Cotations verticales à gauche de la bouteille
-        drawCotation(ctx2d, -D_bas/2, 0, -D_epaule/2, bodyY, -max_R - 15, fText(bodyY), true, drawingScale);
-        drawCotation(ctx2d, -D_bas/2, 0, -D_finish/2, bottleHeight, -max_R - 30, fText(bottleHeight), true, drawingScale);
+        // 3. Cotations verticales par section (corps principal uniquement).
+        // Chaque cote represente la hauteur entre 2 sections consecutives.
+        const mainSections = getMainSections2D();
+        const sectionDimBaseX = -max_R - 18;
+        const sectionDimStep = 9;
+        const bottleBase = mainSections.length ? mainSections[0] : null;
+        if (bottleBase) {
+            for (let i = 1; i < mainSections.length; i++) {
+                const y1 = bottleBase.y;
+                const y2 = mainSections[i].y;
+                const sectionHeight = y2 - y1;
+                if (!Number.isFinite(sectionHeight) || sectionHeight <= 0) continue;
+                const dimPos = sectionDimBaseX - (i - 1) * sectionDimStep;
+                const xRefBase = -getProfileHalfWidthAtY(points, y1);
+                const xRefTop = -getProfileHalfWidthAtY(points, y2);
+                drawCotation(ctx2d, xRefBase, y1, xRefTop, y2, dimPos, fText(sectionHeight), true, drawingScale);
+            }
+        }
 
-        // Cotations de diamètre à droite de la bouteille
-        drawDiameterCotationRight(ctx2d, -D_bas / 2, D_bas / 2, 0, "Ø " + fText(D_bas), drawingScale);
-        drawDiameterCotationRight(ctx2d, -D_epaule / 2, D_epaule / 2, bodyY, "Ø " + fText(D_epaule), drawingScale);
-        drawDiameterCotationRight(ctx2d, -D_finish / 2, D_finish / 2, bottleHeight, "Ø " + fText(D_finish), drawingScale);
+        // 4. Cotations de diametre a droite pour chaque section principale.
+        for (let i = 0; i < mainSections.length; i++) {
+            const y = mainSections[i].y;
+            const radius = getProfileHalfWidthAtY(points, y);
+            if (!Number.isFinite(radius) || radius <= 0) continue;
+            const diameter = radius * 2;
+            drawDiameterCotationRight(ctx2d, -radius, radius, y, "Ø " + fText(diameter), drawingScale);
+        }
+
+        // 5. Cotations de raccordements (rayon/courbe/spline/autre) a droite.
+        for (let i = 0; i < mainSections.length - 1; i++) {
+            const from = i + 1;
+            const to = i + 2;
+            const rattId = 'r' + from + to;
+            const label = getRattachementLabel(rattId);
+            if (!label) continue;
+            const yMid = (mainSections[i].y + mainSections[i + 1].y) * 0.5;
+            const radius = getProfileHalfWidthAtY(points, yMid);
+            if (!Number.isFinite(radius) || radius <= 0) continue;
+            drawRattachementCalloutRight(ctx2d, radius, yMid, label, drawingScale, 34);
+        }
 
         ctx2d.restore(); 
 
@@ -541,41 +661,6 @@ function draw2D() {
             ctx2d.textAlign = 'center';
             ctx2d.textBaseline = 'bottom';
             ctx2d.fillText("VUE DU DESSOUS", 0, -crossLen - 8);
-
-            // COTATION MANUELLE DU DIAMÈTRE
-            const scaledRad = R_base * drawingScale;
-            const dimY = scaledRad + 10; 
-            
-            ctx2d.beginPath();
-            ctx2d.strokeStyle = '#000000';
-            ctx2d.lineWidth = 0.15;
-            
-            ctx2d.moveTo(-scaledRad, 1); ctx2d.lineTo(-scaledRad, dimY + 2);
-            ctx2d.moveTo(scaledRad, 1); ctx2d.lineTo(scaledRad, dimY + 2);
-            
-            ctx2d.moveTo(-scaledRad, dimY); ctx2d.lineTo(scaledRad, dimY);
-            ctx2d.stroke();
-
-            const aSize = 2.0;
-            const drawArrow = (ax, ay, angle) => {
-                ctx2d.beginPath();
-                ctx2d.moveTo(ax, ay);
-                ctx2d.lineTo(ax - aSize * Math.cos(angle - Math.PI/10), ay - aSize * Math.sin(angle - Math.PI/10));
-                ctx2d.lineTo(ax - aSize * Math.cos(angle + Math.PI/10), ay - aSize * Math.sin(angle + Math.PI/10));
-                ctx2d.fill();
-            };
-            drawArrow(scaledRad, dimY, 0); 
-            drawArrow(-scaledRad, dimY, Math.PI); 
-
-            ctx2d.fillStyle = '#000000';
-            ctx2d.font = '3px Arial';
-            ctx2d.textAlign = 'center';
-            ctx2d.textBaseline = 'middle';
-            let txtW = ctx2d.measureText("Ø " + fText(D_bas)).width;
-            ctx2d.fillStyle = '#ffffff';
-            ctx2d.fillRect(-txtW/2 - 0.5, dimY - 2, txtW + 1, 4);
-            ctx2d.fillStyle = '#000000';
-            ctx2d.fillText("Ø " + fText(D_bas), 0, dimY);
 
             ctx2d.restore();
         }
