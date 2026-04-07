@@ -591,6 +591,8 @@ function setupListeners() {
     for (let i = 0; i < allAccordions.length; i++) {
         allAccordions[i].onclick = function () {
             if (this.id === 'render-mode-title') return;
+            var card = this.closest ? this.closest('.setting-card') : null;
+            if (card && card.classList.contains('is-disabled')) return;
             const panel = this.nextElementSibling;
             const isOpen = panel && panel.style.maxHeight && panel.style.maxHeight !== "0px";
             const isMain = this.classList.contains("main-accordion");

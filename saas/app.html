@@ -142,7 +142,7 @@
                                 <div class="control-group">
                                     <label>
                                         <input type="radio" name="render-scene" id="render-scene-base" value="base" checked>
-                                        Scène de base
+                                        Scène 0
                                     </label>
                                 </div>
                                 <div class="control-group">
@@ -156,6 +156,57 @@
                                         <input type="radio" name="render-scene" id="render-scene-2" value="scene2" disabled>
                                         Scène 2
                                     </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card" id="render-label-card">
+                            <button class="accordion main-accordion">Etiquettes</button>
+                            <div class="panel-controls">
+                                <div class="control-group">
+                                    <div class="label-row"><label for="render-label-image">Image PNG</label></div>
+                                    <input type="file" id="render-label-image" accept="image/png">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row"><label>Etiquettes</label></div>
+                                    <div id="render-label-list"></div>
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row">
+                                        <label for="render-label-height">Hauteur</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" id="render-label-height-number" min="-120" max="220" step="1" value="40">
+                                            <span class="unit">mm</span>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="render-label-height" min="-120" max="220" step="1" value="40">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row">
+                                        <label for="render-label-size">Taille</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" id="render-label-size-number" min="20" max="300" step="1" value="100">
+                                            <span class="unit">%</span>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="render-label-size" min="20" max="300" step="1" value="100">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row">
+                                        <label for="render-label-rotation">Rotation</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" id="render-label-rotation-number" min="-180" max="180" step="1" value="0">
+                                            <span class="unit">°</span>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="render-label-rotation" min="-180" max="180" step="1" value="0">
+                                </div>
+                                <div class="control-group">
+                                    <div class="label-row">
+                                        <label><input type="checkbox" id="render-label-flip-x"> Inverser horizontalement</label>
+                                    </div>
+                                    <div class="label-row">
+                                        <label><input type="checkbox" id="render-label-flip-y"> Inverser verticalement</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

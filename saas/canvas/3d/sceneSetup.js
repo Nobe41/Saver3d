@@ -19,7 +19,11 @@ var SceneSetup3D = (function () {
     var backgroundTextures = { scene1: null, scene2: null };
     var axesHelper = null;
     var gridHelper = null;
-    var sceneDecor = { table: null, tableLegs: [], contactShadow: null, sunLight: null };
+    var sceneDecor = {
+        table: null, tableLegs: [], contactShadow: null, sunLight: null,
+        frontLightLeft: null, frontLightRight: null, fillLight: null, baseKeyLight: null, baseRimLight: null,
+        defaultLightLeft: null, defaultLightRight: null, defaultAmbient: null
+    };
 
     function makeBackgroundTexture(kind) {
         if (typeof THREE === 'undefined') return null;
@@ -174,7 +178,7 @@ var SceneSetup3D = (function () {
 
     function ensureSceneDecor() {
         if (!scene || typeof THREE === 'undefined') return;
-        if (sceneDecor.table) return;
+        if (sceneDecor.table && sceneDecor.baseKeyLight) return;
 
         var woodSet = makeWoodTextureSet();
         var tableMat = new THREE.MeshPhysicalMaterial({
@@ -231,15 +235,65 @@ var SceneSetup3D = (function () {
         sceneDecor.sunLight.shadow.bias = -0.00015;
         scene.add(sceneDecor.sunLight);
         scene.add(sceneDecor.sunLight.target);
+
+        // Eclairage studio activé uniquement en Scène 1.
+        sceneDecor.frontLightLeft = new THREE.DirectionalLight(0xffffff, 0.92);
+        sceneDecor.frontLightLeft.position.set(-260, 300, 420);
+        sceneDecor.frontLightLeft.target.position.set(0, 140, 0);
+        scene.add(sceneDecor.frontLightLeft);
+        scene.add(sceneDecor.frontLightLeft.target);
+
+        sceneDecor.frontLightRight = new THREE.DirectionalLight(0xffffff, 0.92);
+        sceneDecor.frontLightRight.position.set(260, 300, 420);
+        sceneDecor.frontLightRight.target.position.set(0, 140, 0);
+        scene.add(sceneDecor.frontLightRight);
+        scene.add(sceneDecor.frontLightRight.target);
+
+        sceneDecor.fillLight = new THREE.HemisphereLight(0xffffff, 0xeaf2ff, 0.55);
+        scene.add(sceneDecor.fillLight);
+
+        // Scène 0: projecteur doux — reflet visible sur le verre sans écraser les ombres.
+        sceneDecor.baseKeyLight = new THREE.SpotLight(0xfff8f4, 1.35, 2200, Math.PI / 5, 0.55, 2);
+        sceneDecor.baseKeyLight.position.set(240, 300, 480);
+        sceneDecor.baseKeyLight.target.position.set(0, 125, 0);
+        sceneDecor.baseKeyLight.castShadow = true;
+        sceneDecor.baseKeyLight.shadow.mapSize.width = 2048;
+        sceneDecor.baseKeyLight.shadow.mapSize.height = 2048;
+        sceneDecor.baseKeyLight.shadow.camera.near = 10;
+        sceneDecor.baseKeyLight.shadow.camera.far = 1200;
+        sceneDecor.baseKeyLight.shadow.camera.left = -300;
+        sceneDecor.baseKeyLight.shadow.camera.right = 300;
+        sceneDecor.baseKeyLight.shadow.camera.top = 300;
+        sceneDecor.baseKeyLight.shadow.camera.bottom = -300;
+        sceneDecor.baseKeyLight.shadow.bias = -0.0001;
+        scene.add(sceneDecor.baseKeyLight);
+        scene.add(sceneDecor.baseKeyLight.target);
+
+        // Très léger contre-jour pour garder du relief sans gommer les ombres de la clé.
+        sceneDecor.baseRimLight = new THREE.DirectionalLight(0xe8eef8, 0.12);
+        sceneDecor.baseRimLight.position.set(-180, 220, -260);
+        sceneDecor.baseRimLight.target.position.set(0, 120, 0);
+        scene.add(sceneDecor.baseRimLight);
+        scene.add(sceneDecor.baseRimLight.target);
     }
 
     function applySceneDecor() {
         if (!scene) return;
         ensureSceneDecor();
         var isScene1 = ACTIVE_BG_SCENE === 'scene1';
+        var isScene0 = ACTIVE_BG_SCENE === 'scene0';
+        var isBaseDefault = ACTIVE_BG_SCENE === 'none';
         if (sceneDecor.table) sceneDecor.table.visible = isScene1;
         if (sceneDecor.contactShadow) sceneDecor.contactShadow.visible = isScene1;
         if (sceneDecor.sunLight) sceneDecor.sunLight.visible = isScene1;
+        if (sceneDecor.frontLightLeft) sceneDecor.frontLightLeft.visible = isScene1;
+        if (sceneDecor.frontLightRight) sceneDecor.frontLightRight.visible = isScene1;
+        if (sceneDecor.fillLight) sceneDecor.fillLight.visible = isScene1;
+        if (sceneDecor.baseKeyLight) sceneDecor.baseKeyLight.visible = isScene0;
+        if (sceneDecor.baseRimLight) sceneDecor.baseRimLight.visible = isScene0;
+        if (sceneDecor.defaultLightLeft) sceneDecor.defaultLightLeft.visible = isBaseDefault;
+        if (sceneDecor.defaultLightRight) sceneDecor.defaultLightRight.visible = isBaseDefault;
+        if (sceneDecor.defaultAmbient) sceneDecor.defaultAmbient.visible = isBaseDefault;
         for (var i = 0; i < sceneDecor.tableLegs.length; i++) {
             sceneDecor.tableLegs[i].visible = isScene1;
         }
@@ -250,6 +304,28 @@ var SceneSetup3D = (function () {
         var opts = (typeof window !== 'undefined' && window.displayOptions) ? window.displayOptions : {};
         if (axesHelper) axesHelper.visible = opts.showAxes !== false;
         if (gridHelper) gridHelper.visible = opts.showGrid !== false;
+    }
+
+    /**
+     * Tonemapping / couleurs : uniquement en Scène 0 avec mode rendu activé.
+     * Sinon retour au pipeline par défaut (vue normale).
+     */
+    function syncRendererPipeline() {
+        if (!renderer || typeof THREE === 'undefined') return;
+        var modeToggle = (typeof document !== 'undefined') ? document.getElementById('render-mode-toggle') : null;
+        var renderOn = modeToggle && modeToggle.checked;
+        var scene0Render = renderOn && ACTIVE_BG_SCENE === 'scene0';
+        if (scene0Render) {
+            if (renderer.physicallyCorrectLights !== undefined) renderer.physicallyCorrectLights = true;
+            if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
+            if (renderer.toneMapping !== undefined) renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            if (renderer.toneMappingExposure !== undefined) renderer.toneMappingExposure = 1.0;
+        } else {
+            if (renderer.physicallyCorrectLights !== undefined) renderer.physicallyCorrectLights = false;
+            if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.LinearEncoding;
+            if (renderer.toneMapping !== undefined) renderer.toneMapping = THREE.LinearToneMapping;
+            if (renderer.toneMappingExposure !== undefined) renderer.toneMappingExposure = 1.0;
+        }
     }
 
     function initScene(canvasElement) {
@@ -273,6 +349,8 @@ var SceneSetup3D = (function () {
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(w, h);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         canvasElement.appendChild(renderer.domElement);
 
         axesHelper = new THREE.AxesHelper(AXES_SIZE);
@@ -283,15 +361,18 @@ var SceneSetup3D = (function () {
         scene.add(gridHelper);
         applyDisplayOptions();
         applySceneDecor();
+        syncRendererPipeline();
 
         scene.add(camera);
-        var dL1 = new THREE.DirectionalLight(0xffffff, DIRECTIONAL_INTENSITY);
-        dL1.position.set(-3, 0, 1.5);
-        camera.add(dL1);
-        var dL2 = new THREE.DirectionalLight(0xffffff, DIRECTIONAL_INTENSITY);
-        dL2.position.set(3, 0, 1.5);
-        camera.add(dL2);
-        scene.add(new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY));
+        // Eclairage historique de base (actif hors mode rendu).
+        sceneDecor.defaultLightLeft = new THREE.DirectionalLight(0xffffff, DIRECTIONAL_INTENSITY);
+        sceneDecor.defaultLightLeft.position.set(-3, 0, 1.5);
+        camera.add(sceneDecor.defaultLightLeft);
+        sceneDecor.defaultLightRight = new THREE.DirectionalLight(0xffffff, DIRECTIONAL_INTENSITY);
+        sceneDecor.defaultLightRight.position.set(3, 0, 1.5);
+        camera.add(sceneDecor.defaultLightRight);
+        sceneDecor.defaultAmbient = new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY);
+        scene.add(sceneDecor.defaultAmbient);
 
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.target.set(0, CONTROLS_TARGET_Y, 0);
@@ -333,10 +414,12 @@ var SceneSetup3D = (function () {
         disposeScene: disposeScene,
         applyDisplayOptions: applyDisplayOptions,
         setBackgroundScene: function (sceneName) {
-            if (sceneName === 'scene1' || sceneName === 'scene2') ACTIVE_BG_SCENE = sceneName;
+            if (sceneName === 'scene0' || sceneName === 'scene1' || sceneName === 'scene2') ACTIVE_BG_SCENE = sceneName;
             else ACTIVE_BG_SCENE = 'none';
             applyBackgroundScene();
             applySceneDecor();
-        }
+            syncRendererPipeline();
+        },
+        syncRendererPipeline: syncRendererPipeline
     };
 })();

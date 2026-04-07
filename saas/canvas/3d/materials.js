@@ -18,16 +18,18 @@ var BottleMaterials = (function () {
         return new THREE.MeshPhysicalMaterial({
             color: c,
             metalness: 0,
-            roughness: 0.015,
+            roughness: 0.02,
             transmission: 0.99,
-            thickness: 4.0,
+            thickness: 1.0,
             ior: 1.52,
             transparent: true,
-            opacity: 0.35,
-            attenuationDistance: 2.2,
+            opacity: 0.34,
+            attenuationDistance: 9.0,
             attenuationColor: new THREE.Color(0xbfd8ef),
-            clearcoat: 0.15,
-            clearcoatRoughness: 0.05,
+            clearcoat: 0.42,
+            clearcoatRoughness: 0.08,
+            reflectivity: 0.88,
+            depthWrite: false,
             side: THREE.DoubleSide
         });
     }
@@ -38,13 +40,14 @@ var BottleMaterials = (function () {
             color: c,
             metalness: 0,
             roughness: 0.03,
-            transmission: 0.95,
-            thickness: 2.5,
+            transmission: 0.96,
+            thickness: 0.7,
             ior: 1.5,
             transparent: true,
-            opacity: 0.28,
-            attenuationDistance: 1.8,
+            opacity: 0.12,
+            attenuationDistance: 10.0,
             attenuationColor: new THREE.Color(0xc7ddf2),
+            depthWrite: false,
             side: THREE.BackSide
         });
     }
