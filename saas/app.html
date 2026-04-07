@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nolimi - Atelier Bouteille</title>
     
-    <link rel="stylesheet" href="css/structure.css">
-    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="layout/structure.css">
+    <link rel="stylesheet" href="style/theme.css">
     
     <script src="https://unpkg.com/three@0.126.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
@@ -217,25 +217,67 @@
         </div>
     </section>
 
-    <script src="js/state/state.js"></script>
-    <script src="js/state/validator.js"></script>
-    <script src="js/state/sliderLimits.js"></script>
-    <script src="js/maths/geomKernel.js"></script>
-    <script src="js/maths/sections.js"></script>
-    <script src="js/maths/rattachements.js"></script>
-    <script src="js/maths/profileBuilder.js"></script>
-    <script src="js/3d/sceneSetup.js"></script>
-    <script src="js/3d/materials.js"></script>
-    <script src="js/3d/bottleMesh.js"></script>
-    <script src="js/3d/bottleView.js"></script>
-    <script src="js/3d/viewer.js"></script>
-    <script src="js/2d/viewer2d.js"></script>
-    <script src="js/ui/inspector.js"></script>
-    <script src="js/ui/ui.js"></script>
-    <script src="js/ui/events.js"></script>
-    <script src="js/io/storage.js"></script>
-    <script src="js/io/export.js"></script>
-    <script src="js/ui/gravure.js"></script>
-    <script src="js/main.js"></script>
+    <script src="store/state.js"></script>
+    <script src="store/validator.js"></script>
+    <script src="features/rattachement/sliderLimits.js"></script>
+    <script src="features/profile/rules.js"></script>
+    <script src="features/profile/math.js"></script>
+    <script src="features/sections/math.js"></script>
+    <script src="features/sections/rules.js"></script>
+    <script src="features/sections/state.js"></script>
+    <script src="features/sections/bloc.js"></script>
+    <script src="features/sections/events.js"></script>
+    <script src="features/render/rules.js"></script>
+    <script src="features/render/math.js"></script>
+    <script src="features/render/function.js"></script>
+    <script src="features/rattachement/rules.js"></script>
+    <script src="features/rattachement/state.js"></script>
+    <script src="features/rattachement/bloc.js"></script>
+    <script src="features/rattachement/events.js"></script>
+    <script src="features/rattachement/math.js"></script>
+    <script src="features/rattachement/function.js"></script>
+    <script src="features/profile/function.js"></script>
+    <script src="features/3d/data.js"></script>
+    <script src="canvas/3d/rules.js"></script>
+    <script src="canvas/3d/sceneSetup.js"></script>
+    <script src="canvas/3d/materials.js"></script>
+    <script src="canvas/3d/bottleMesh.js"></script>
+    <script src="canvas/3d/bottleView.js"></script>
+    <script src="canvas/3d/viewer.js"></script>
+    <script src="features/2d/rules.js"></script>
+    <script src="features/2d/math.js"></script>
+    <script src="features/2d/state.js"></script>
+    <script src="features/2d/events.js"></script>
+    <script src="features/2d/paper.js"></script>
+    <script src="features/2d/views.js"></script>
+    <script src="features/2d/cartouche.js"></script>
+    <script src="features/2d/cotation.js"></script>
+    <script src="features/2d/data.js"></script>
+    <script src="features/2d/function.js"></script>
+    <script src="canvas/2d/renderPrimitives.js"></script>
+    <script src="canvas/2d/interactions.js"></script>
+    <script src="canvas/2d/viewer2d.js"></script>
+    <script src="features/sections/function.js"></script>
+    <script src="shared/navigation/rules.js"></script>
+    <script src="shared/navigation/state.js"></script>
+    <script src="shared/navigation/events.js"></script>
+    <script src="shared/navigation/function.js"></script>
+    <script src="shared/topbar/function.js"></script>
+    <script src="shared/display/function.js"></script>
+    <script src="shared/history/function.js"></script>
+    <script src="layout/function.js"></script>
+    <script src="store/storage.js"></script>
+    <script src="features/export/rules.js"></script>
+    <script src="features/export/math.js"></script>
+    <script src="features/export/state.js"></script>
+    <script src="features/export/events.js"></script>
+    <script src="features/export/function.js"></script>
+    <script src="features/gravure/rules.js"></script>
+    <script src="features/gravure/math.js"></script>
+    <script src="features/gravure/state.js"></script>
+    <script src="features/gravure/bloc.js"></script>
+    <script src="features/gravure/events.js"></script>
+    <script src="features/gravure/function.js"></script>
+    <script src="app/main.js"></script>
 </body>
 </html>

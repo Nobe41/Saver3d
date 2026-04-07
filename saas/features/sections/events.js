@@ -1,0 +1,248 @@
+// Gestion des événements de la feature sections.
+var SectionsEvents = (function () {
+    function getState() {
+        return (typeof SectionsState !== 'undefined' && SectionsState.getState)
+            ? SectionsState.getState()
+            : null;
+    }
+
+    function getActiveMode(ids) {
+        var contentPiqure = document.getElementById(ids.piqure);
+        var contentBague = document.getElementById(ids.bague);
+        if (contentPiqure && !contentPiqure.classList.contains('hidden')) return 'piqure';
+        if (contentBague && !contentBague.classList.contains('hidden')) return 'bague';
+        return 'main';
+    }
+
+    function wireAddSectionButton(config) {
+        var ids = config && config.containerIds ? config.containerIds : {};
+        var onRefresh = config && config.onRefresh ? config.onRefresh : function () { };
+
+        var btn = document.getElementById('btn-add-section');
+        var sel = document.getElementById('add-section-between');
+        if (!btn || !sel || btn.dataset.bound) return;
+
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', function () {
+            var state = getState();
+            if (!state) return;
+
+            function getNum(id, fallback) {
+                var el = document.getElementById(id);
+                if (!el) return fallback;
+                var v = parseFloat(el.value);
+                return isFinite(v) ? v : fallback;
+            }
+
+            var currentCount = 0;
+            var hInputs = document.querySelectorAll('input[id^="s"][id$="-h"]');
+            for (var hi = 0; hi < hInputs.length; hi++) {
+                var m = (hInputs[hi].id || '').match(/^s(\d+)-h$/);
+                if (!m) continue;
+                var k = parseInt(m[1], 10);
+                if (isFinite(k) && k > currentCount) currentCount = k;
+            }
+            if (!currentCount) currentCount = state.sectionsMain.length;
+
+            var newSections = [];
+            for (var k2 = 1; k2 <= currentCount; k2++) {
+                var base = state.sectionsMain[k2 - 1] || { label: 'Section', hMin: 0, hMax: 350, LMin: 10, LMax: 120, step: 0.5, hStep: 0.5 };
+                newSections.push({
+                    label: base.label || 'Section',
+                    h: getNum('s' + k2 + '-h', base.h || 0),
+                    hMin: base.hMin,
+                    hMax: base.hMax,
+                    L: getNum('s' + k2 + '-L', base.L || 0),
+                    P: getNum('s' + k2 + '-P', base.P || 0),
+                    LMin: base.LMin,
+                    LMax: base.LMax,
+                    step: base.step,
+                    hStep: base.hStep
+                });
+            }
+            state.sectionsMain = newSections;
+
+            var newLiaisons = [];
+            for (var r = 1; r < currentCount; r++) {
+                var rid = 'r' + r + (r + 1);
+                var baseR = state.liaisonsMain[r - 1] || { rho: 10, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 };
+                newLiaisons.push({
+                    rho: getNum(rid + '-rho', baseR.rho),
+                    rhoMin: baseR.rhoMin,
+                    rhoMax: baseR.rhoMax,
+                    rhoStep: baseR.rhoStep
+                });
+            }
+            state.liaisonsMain = newLiaisons;
+
+            var snapshot = {};
+            var els = document.querySelectorAll('#Panel-gauche input, #Panel-gauche select');
+            for (var si = 0; si < els.length; si++) {
+                var el = els[si];
+                if (!el.id) continue;
+                if (el.type === 'checkbox') snapshot[el.id] = !!el.checked;
+                else snapshot[el.id] = el.value;
+            }
+
+            var mode = getActiveMode(ids);
+            var between = parseInt(sel.value, 10);
+            if (!isFinite(between) || between < 1) between = 1;
+
+            if (mode === 'bague') {
+                if (between > state.bagueSections.length - 1) between = state.bagueSections.length - 1;
+                var Ab = state.bagueSections[between - 1];
+                var Bb = state.bagueSections[between];
+                var newKey = 'sb' + (state.bagueSections.length + 1);
+                var newB = {
+                    key: newKey,
+                    label: 'Bague',
+                    h: Math.round(((Ab.h + Bb.h) * 0.5) * 10) / 10,
+                    hMin: Math.min(Ab.hMin, Bb.hMin),
+                    hMax: Math.max(Ab.hMax, Bb.hMax),
+                    hStep: Math.min(Ab.hStep, Bb.hStep),
+                    L: Math.round(((Ab.L + Bb.L) * 0.5) * 10) / 10,
+                    P: Math.round(((Ab.P + Bb.P) * 0.5) * 10) / 10,
+                    LMin: Math.min(Ab.LMin, Bb.LMin),
+                    LMax: Math.max(Ab.LMax, Bb.LMax),
+                    step: Math.min(Ab.step, Bb.step)
+                };
+                state.bagueSections.splice(between, 0, newB);
+                var baseRb = state.bagueLiaisons[between - 1] || { id: 'rb' + between, rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 };
+                var rb1 = { id: 'rb' + (state.bagueLiaisons.length + 1), rho: baseRb.rho, rhoMin: baseRb.rhoMin, rhoMax: baseRb.rhoMax, rhoStep: baseRb.rhoStep };
+                var rb2 = { id: 'rb' + (state.bagueLiaisons.length + 2), rho: baseRb.rho, rhoMin: baseRb.rhoMin, rhoMax: baseRb.rhoMax, rhoStep: baseRb.rhoStep };
+                state.bagueLiaisons.splice(between - 1, 1, rb1, rb2);
+            } else if (mode === 'piqure') {
+                if (between > state.piqureSections.length - 1) between = state.piqureSections.length - 1;
+                var Ap = state.piqureSections[between - 1];
+                var Bp = state.piqureSections[between];
+                var nextIdx = 2;
+                for (var pi = 0; pi < state.piqureSections.length; pi++) {
+                    var mk = (state.piqureSections[pi].key || '').match(/^sp(\d+)$/);
+                    if (mk) nextIdx = Math.max(nextIdx, parseInt(mk[1], 10) + 1);
+                }
+                var newKeyP = 'sp' + nextIdx;
+                var newP = {
+                    key: newKeyP,
+                    label: 'Piqûre',
+                    hasHeight: true,
+                    h: Math.round((((Ap.h || 0) + (Bp.h || 0)) * 0.5) * 10) / 10,
+                    hMin: Math.min(Ap.hMin || 0, Bp.hMin || 0),
+                    hMax: Math.max(Ap.hMax || 80, Bp.hMax || 80),
+                    hStep: Math.min(Ap.hStep || 0.5, Bp.hStep || 0.5),
+                    L: Math.round(((Ap.L + Bp.L) * 0.5) * 10) / 10,
+                    P: Math.round(((Ap.P + Bp.P) * 0.5) * 10) / 10,
+                    LMin: Math.min(Ap.LMin, Bp.LMin),
+                    LMax: Math.max(Ap.LMax, Bp.LMax),
+                    step: Math.min(Ap.step, Bp.step)
+                };
+                state.piqureSections.splice(between, 0, newP);
+                function newPiqureLiaisonId(n) { return n <= 2 ? ('rp' + n) : ('rpp' + n); }
+                var baseRp = state.piqureLiaisons[between - 1] || { id: newPiqureLiaisonId(between), rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 };
+                var seg1 = { id: newPiqureLiaisonId(state.piqureLiaisons.length + 1), rho: baseRp.rho, rhoMin: baseRp.rhoMin, rhoMax: baseRp.rhoMax, rhoStep: baseRp.rhoStep };
+                var seg2 = { id: newPiqureLiaisonId(state.piqureLiaisons.length + 2), rho: baseRp.rho, rhoMin: baseRp.rhoMin, rhoMax: baseRp.rhoMax, rhoStep: baseRp.rhoStep };
+                state.piqureLiaisons.splice(between - 1, 1, seg1, seg2);
+            } else {
+                if (between > state.sectionsMain.length - 1) between = state.sectionsMain.length - 1;
+                var A = state.sectionsMain[between - 1];
+                var B = state.sectionsMain[between];
+                var newS = {
+                    label: 'Section',
+                    h: Math.round(((A.h + B.h) * 0.5) * 10) / 10,
+                    hMin: Math.min(A.hMin, B.hMin),
+                    hMax: Math.max(A.hMax, B.hMax),
+                    L: Math.round(((A.L + B.L) * 0.5) * 10) / 10,
+                    P: Math.round(((A.P + B.P) * 0.5) * 10) / 10,
+                    LMin: Math.min(A.LMin, B.LMin),
+                    LMax: Math.max(A.LMax, B.LMax),
+                    step: Math.min(A.step, B.step),
+                    hStep: Math.min(A.hStep, B.hStep)
+                };
+                state.sectionsMain.splice(between, 0, newS);
+                var baseR = state.liaisonsMain[between - 1] || { rho: 10, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 };
+                var r1 = { rho: baseR.rho, rhoMin: baseR.rhoMin, rhoMax: baseR.rhoMax, rhoStep: baseR.rhoStep };
+                var r2 = { rho: baseR.rho, rhoMin: baseR.rhoMin, rhoMax: baseR.rhoMax, rhoStep: baseR.rhoStep };
+                state.liaisonsMain.splice(between - 1, 1, r1, r2);
+            }
+
+            onRefresh();
+            if (typeof setupListeners === 'function') setupListeners();
+
+            function remapId(oldId) {
+                if (mode === 'bague') {
+                    var msb = oldId.match(/^sb(\d+)-(h|L|P)(-slider)?$/);
+                    if (msb) {
+                        var ksb = parseInt(msb[1], 10);
+                        var tailSb = '-' + msb[2] + (msb[3] || '');
+                        if (ksb > between) ksb = ksb + 1;
+                        return 'sb' + ksb + tailSb;
+                    }
+                    var mrb = oldId.match(/^rb(\d+)-(type|rho)(-slider)?$/);
+                    if (mrb) {
+                        var irb = parseInt(mrb[1], 10);
+                        var tailRb = '-' + mrb[2] + (mrb[3] || '');
+                        if (irb > between) irb = irb + 1;
+                        return 'rb' + irb + tailRb;
+                    }
+                    return oldId;
+                }
+                if (mode === 'piqure') {
+                    if (oldId === 'rp3-h' || oldId === 'rp3-h-slider') return oldId;
+                    var msp = oldId.match(/^sp(\d+)-(h|L|P|forme|carre-niveau)(-slider)?$/);
+                    if (msp) {
+                        var ksp = parseInt(msp[1], 10);
+                        var tailSp = '-' + msp[2] + (msp[3] || '');
+                        if (ksp > between + 1) ksp = ksp + 1;
+                        return 'sp' + ksp + tailSp;
+                    }
+                    var mrp = oldId.match(/^(rp\d+|rpp\d+)-(type|rho)(-slider)?$/);
+                    if (mrp) return oldId;
+                    return oldId;
+                }
+                var ms = oldId.match(/^s(\d+)-(h|L|P|forme|carre-niveau)(-slider)?$/);
+                if (ms) {
+                    var k = parseInt(ms[1], 10);
+                    var tail = '-' + ms[2] + (ms[3] || '');
+                    if (k > between) k = k + 1;
+                    return 's' + k + tail;
+                }
+                var mr = oldId.match(/^r(\d+)(\d+)-(type|rho)(-slider)?$/);
+                if (mr) {
+                    var a = parseInt(mr[1], 10);
+                    var b = parseInt(mr[2], 10);
+                    var tailR = '-' + mr[3] + (mr[4] || '');
+                    if (a === between && b === between + 1) return ['r' + between + (between + 1) + tailR, 'r' + (between + 1) + (between + 2) + tailR];
+                    if (a > between) a = a + 1;
+                    if (b > between + 1) b = b + 1;
+                    return 'r' + a + b + tailR;
+                }
+                return oldId;
+            }
+
+            for (var key in snapshot) {
+                if (!snapshot.hasOwnProperty(key)) continue;
+                var mapped = remapId(key);
+                if (Array.isArray(mapped)) {
+                    for (var mi = 0; mi < mapped.length; mi++) {
+                        var el2 = document.getElementById(mapped[mi]);
+                        if (!el2) continue;
+                        if (el2.type === 'checkbox') el2.checked = !!snapshot[key];
+                        else el2.value = snapshot[key];
+                    }
+                } else {
+                    var el3 = document.getElementById(mapped);
+                    if (!el3) continue;
+                    if (el3.type === 'checkbox') el3.checked = !!snapshot[key];
+                    else el3.value = snapshot[key];
+                }
+            }
+
+            if (typeof Validator !== 'undefined' && Validator.applyAllUserConstraints) Validator.applyAllUserConstraints();
+            if (typeof updateBouteille === 'function') updateBouteille();
+            if (typeof draw2D === 'function') draw2D();
+        });
+    }
+
+    return {
+        wireAddSectionButton: wireAddSectionButton
+    };
+})();

@@ -1,0 +1,27 @@
+var Canvas3DRules = (function () {
+    return {
+        VIEWPORT_ID: 'viewport-3d',
+        TESSELLATION: {
+            N_SEGMENTS: 128,
+            N_FEUILLE_V: 32,
+            MERIDIAN_RESOLUTION: 64
+        },
+        SECTION_RING: {
+            COLOR_NORMAL: 0x000000,
+            COLOR_HIGHLIGHT: 0x0066cc
+        },
+        SCENE: {
+            VIEW_SIZE: 250,
+            NEAR: 1,
+            FAR: 2000,
+            CAMERA_POSITION: { x: 400, y: 300, z: 400 },
+            CONTROLS_TARGET_Y: 150,
+            DIRECTIONAL_INTENSITY: 0.45,
+            AMBIENT_INTENSITY: 0.5,
+            AXES_SIZE: 100,
+            GRID_SIZE: 400,
+            GRID_DIVISIONS: 20,
+            GRID_OPACITY: 0.6
+        }
+    };
+})();

@@ -1,0 +1,131 @@
+var UIEvents = (function () {
+    var IDS = (typeof NavigationRules !== 'undefined' && NavigationRules.IDS) ? NavigationRules.IDS : {};
+
+    function get(id) { return document.getElementById(id); }
+    function setAddSectionBarVisibility(show) {
+        var bar = get('inspector-add-section-bar');
+        if (!bar) return;
+        if (show) bar.classList.remove('hidden'); else bar.classList.add('hidden');
+    }
+
+    function initPageNavigation() {
+        var pageMenu = get(IDS.pageMenu);
+        var pageBouteille = get(IDS.pageBouteille);
+        var btnNewProject = get(IDS.btnNewProject);
+        var btnBackMenu = get(IDS.btnBackMenu);
+        var fichierDropdown = get(IDS.fichierDropdown);
+
+        if (btnNewProject && pageMenu && pageBouteille && !btnNewProject.dataset.navBound) {
+            btnNewProject.dataset.navBound = '1';
+            btnNewProject.addEventListener('click', function () {
+                currentFileHandle = null;
+                pageMenu.classList.add('hidden');
+                pageBouteille.classList.remove('hidden');
+                setTimeout(function () {
+                    if (typeof initLogiciel === 'function' && !isLogicielInit) {
+                        initLogiciel();
+                        isLogicielInit = true;
+                    }
+                    if (typeof updateBouteille === 'function') updateBouteille();
+                }, 50);
+            });
+        }
+
+        if (btnBackMenu && !btnBackMenu.dataset.navBound) {
+            btnBackMenu.dataset.navBound = '1';
+            btnBackMenu.addEventListener('click', function () {
+                if (fichierDropdown) fichierDropdown.classList.add('hidden');
+                window.location.href = '../website/index.html';
+            });
+        }
+    }
+
+    function initViewSwitch() {
+        var btn3D = get(IDS.btn3D), btn2D = get(IDS.btn2D);
+        var view3D = get(IDS.view3D), view2D = get(IDS.view2D);
+        if (!btn3D || !btn2D || !view3D || !view2D) return;
+
+        function switchView(activeBtn, activeView) {
+            btn3D.classList.remove('active');
+            btn2D.classList.remove('active');
+            view3D.classList.add('hidden');
+            view2D.classList.add('hidden');
+            activeBtn.classList.add('active');
+            activeView.classList.remove('hidden');
+            NavigationState.patch({ activeView: activeBtn === btn2D ? '2d' : '3d' });
+            if (activeBtn === btn2D) {
+                if (typeof resizeCanvas2D === 'function') resizeCanvas2D();
+                if (typeof draw2D === 'function') draw2D();
+            }
+        }
+
+        if (!btn3D.dataset.navBound) {
+            btn3D.dataset.navBound = '1';
+            btn3D.addEventListener('click', function () { switchView(btn3D, view3D); });
+        }
+        if (!btn2D.dataset.navBound) {
+            btn2D.dataset.navBound = '1';
+            btn2D.addEventListener('click', function () { switchView(btn2D, view2D); });
+        }
+    }
+
+    function initPanelTabs() {
+        var tabSections = get(IDS.tabSections), tabGravure = get(IDS.tabGravure), tabInformation = get(IDS.tabInformation), tabRendu = get(IDS.tabRendu);
+        var brandHeader = get(IDS.brandHeader), sectionsArea = get(IDS.sectionsArea), contentGravure = get(IDS.contentGravure), contentInformation = get(IDS.contentInformation), contentRendu = get(IDS.contentRendu);
+        var contentSections = get(IDS.contentSections), contentPiqure = get(IDS.contentPiqure), contentBague = get(IDS.contentBague);
+        var barTabSections = get(IDS.barTabSections), barTabPiqure = get(IDS.barTabPiqure), barTabBague = get(IDS.barTabBague);
+        if (!sectionsArea || !contentGravure || !contentInformation || !contentRendu || !contentSections || !contentPiqure || !contentBague) return;
+
+        function refreshAfterTabChange() {
+            if (typeof updateBouteille === 'function') updateBouteille();
+            if (typeof UIInspector !== 'undefined' && UIInspector.refreshAddSectionFooter) UIInspector.refreshAddSectionFooter();
+        }
+        function showLeftSections() {
+            sectionsArea.classList.remove('hidden'); contentGravure.classList.add('hidden'); contentInformation.classList.add('hidden'); contentRendu.classList.add('hidden');
+            if (brandHeader) brandHeader.classList.remove('hidden');
+            if (tabSections) tabSections.classList.add('active'); if (tabGravure) tabGravure.classList.remove('active'); if (tabInformation) tabInformation.classList.remove('active'); if (tabRendu) tabRendu.classList.remove('active');
+            NavigationState.patch({ activeLeftTab: 'sections' }); setAddSectionBarVisibility(true);
+        }
+        function showLeftGravure() {
+            sectionsArea.classList.add('hidden'); contentGravure.classList.remove('hidden'); contentInformation.classList.add('hidden'); contentRendu.classList.add('hidden');
+            if (brandHeader) brandHeader.classList.add('hidden');
+            if (tabSections) tabSections.classList.remove('active'); if (tabGravure) tabGravure.classList.add('active'); if (tabInformation) tabInformation.classList.remove('active'); if (tabRendu) tabRendu.classList.remove('active');
+            NavigationState.patch({ activeLeftTab: 'gravure' }); setAddSectionBarVisibility(false);
+        }
+        function showLeftInformation() {
+            sectionsArea.classList.add('hidden'); contentGravure.classList.add('hidden'); contentInformation.classList.remove('hidden'); contentRendu.classList.add('hidden');
+            if (brandHeader) brandHeader.classList.add('hidden');
+            if (tabSections) tabSections.classList.remove('active'); if (tabGravure) tabGravure.classList.remove('active'); if (tabInformation) tabInformation.classList.add('active'); if (tabRendu) tabRendu.classList.remove('active');
+            NavigationState.patch({ activeLeftTab: 'information' }); setAddSectionBarVisibility(false);
+        }
+        function showLeftRendu() {
+            sectionsArea.classList.add('hidden'); contentGravure.classList.add('hidden'); contentInformation.classList.add('hidden'); contentRendu.classList.remove('hidden');
+            if (brandHeader) brandHeader.classList.add('hidden');
+            if (tabSections) tabSections.classList.remove('active'); if (tabGravure) tabGravure.classList.remove('active'); if (tabInformation) tabInformation.classList.remove('active'); if (tabRendu) tabRendu.classList.add('active');
+            NavigationState.patch({ activeLeftTab: 'rendu' }); setAddSectionBarVisibility(false);
+        }
+        function showBarSections() { contentSections.classList.remove('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.add('hidden'); if (barTabSections) barTabSections.classList.add('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.remove('active'); NavigationState.patch({ activeBarTab: 'sections' }); refreshAfterTabChange(); }
+        function showBarPiqure() { contentSections.classList.add('hidden'); contentPiqure.classList.remove('hidden'); contentBague.classList.add('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.add('active'); if (barTabBague) barTabBague.classList.remove('active'); NavigationState.patch({ activeBarTab: 'piqure' }); refreshAfterTabChange(); }
+        function showBarBague() { contentSections.classList.add('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.remove('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.add('active'); NavigationState.patch({ activeBarTab: 'bague' }); refreshAfterTabChange(); }
+
+        NavigationEvents.bind(tabSections, showLeftSections);
+        NavigationEvents.bind(tabGravure, showLeftGravure);
+        NavigationEvents.bind(tabInformation, showLeftInformation);
+        NavigationEvents.bind(tabRendu, showLeftRendu);
+        NavigationEvents.bind(barTabSections, showBarSections);
+        NavigationEvents.bind(barTabPiqure, showBarPiqure);
+        NavigationEvents.bind(barTabBague, showBarBague);
+        showLeftSections();
+        showBarSections();
+    }
+
+    function init() {
+        initPageNavigation();
+        initPanelTabs();
+        initViewSwitch();
+    }
+
+    return {
+        init: init
+    };
+})();
