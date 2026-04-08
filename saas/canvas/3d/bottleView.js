@@ -213,8 +213,14 @@ var BottleView3D = (function () {
             var baseDepthWrite = obj.material.userData.baseDepthWrite;
             if (isPiqureView) {
                 var isPiqure = obj.userData.isPiqure === true;
-                obj.material.opacity = isPiqure ? baseOpacity : Math.min(baseOpacity, 0.15);
-                obj.material.depthWrite = isPiqure;
+                var isInterior = obj.userData.isInterior === true;
+                if (isInterior) {
+                    obj.material.opacity = Math.min(baseOpacity, 0.2);
+                    obj.material.depthWrite = false;
+                } else {
+                    obj.material.opacity = isPiqure ? baseOpacity : Math.min(baseOpacity, 0.15);
+                    obj.material.depthWrite = isPiqure;
+                }
             } else {
                 obj.material.opacity = baseOpacity;
                 obj.material.depthWrite = baseDepthWrite;
@@ -546,21 +552,42 @@ var BottleView3D = (function () {
             if (bottleInnerGlassMesh.material && bottleInnerGlassMesh.material.dispose) bottleInnerGlassMesh.material.dispose();
             bottleInnerGlassMesh = null;
         }
-        var renderMode = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getRenderMaterialMode)
-            ? BottleMaterials.getRenderMaterialMode()
-            : 'base';
-        if (renderMode === 'glass' && bottleGroup && bottleGroup.geometry && typeof THREE !== 'undefined') {
-            var innerGeom = bottleGroup.geometry.clone();
-            var innerMat = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getInnerGlassMaterial)
-                ? BottleMaterials.getInnerGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR)
-                : BottleMaterials.getGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR);
-            bottleInnerGlassMesh = new THREE.Mesh(innerGeom, innerMat);
-            bottleInnerGlassMesh.scale.set(0.955, 0.995, 0.955);
+        if (bottleGroup && bottleGroup.geometry && typeof THREE !== 'undefined') {
+            var thicknessMm = (typeof InterieurMath !== 'undefined' && InterieurMath.getThicknessMm)
+                ? InterieurMath.getThicknessMm()
+                : 2.5;
+            var innerSectionsData = (typeof InterieurMath !== 'undefined' && InterieurMath.buildInteriorSectionsDataFromThickness)
+                ? InterieurMath.buildInteriorSectionsDataFromThickness(sectionsData, thicknessMm, thicknessMm)
+                : sectionsData;
+            var renderModeNow = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getRenderMaterialMode)
+                ? BottleMaterials.getRenderMaterialMode()
+                : 'base';
+            var innerMat;
+            if (renderModeNow === 'glass') {
+                innerMat = (typeof BottleMaterials !== 'undefined' && BottleMaterials.getInnerGlassMaterial)
+                    ? BottleMaterials.getInnerGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR)
+                    : BottleMaterials.getGlassMaterial(BottleMaterials.DEFAULT_GLASS_COLOR);
+            } else {
+                innerMat = new THREE.MeshPhongMaterial({
+                    color: 0x6f8ead,
+                    side: THREE.BackSide,
+                    shininess: 20
+                });
+            }
+            bottleInnerGlassMesh = (typeof BottleMesh3D !== 'undefined' && BottleMesh3D.createBottleMesh)
+                ? BottleMesh3D.createBottleMesh(innerSectionsData, innerMat)
+                : null;
+            if (!bottleInnerGlassMesh) {
+                var fallbackGeom = bottleGroup.geometry.clone();
+                bottleInnerGlassMesh = new THREE.Mesh(fallbackGeom, innerMat);
+            }
             bottleInnerGlassMesh.position.copy(bottleGroup.position);
             bottleInnerGlassMesh.rotation.copy(bottleGroup.rotation);
             bottleInnerGlassMesh.userData.isPiqure = false;
+            bottleInnerGlassMesh.userData.isInterior = true;
             bottleInnerGlassMesh.castShadow = false;
             bottleInnerGlassMesh.receiveShadow = true;
+            bottleInnerGlassMesh.renderOrder = 3;
             sectionRingGroup.add(bottleInnerGlassMesh);
         }
 
@@ -638,12 +665,45 @@ var BottleView3D = (function () {
         enhanceInnerPiqureVisibility(feuille);
         enableMeshShadows(feuille);
         sectionRingGroup.add(feuille);
+        var thicknessNow = (typeof InterieurMath !== 'undefined' && InterieurMath.getThicknessMm)
+            ? InterieurMath.getThicknessMm()
+            : 2.5;
+        var piqureInnerMat = new THREE.MeshPhongMaterial({ color: 0x6f8ead, side: THREE.BackSide, shininess: 20 });
+        var s1Inner = InterieurMath.insetSection(s1, thicknessNow);
+        s1Inner.H = s1.H + thicknessNow;
+        var piqSectionsInner = [];
+        for (var psi = 0; psi < piqSections.length; psi++) {
+            // Exception demandee: la piqure se decale vers l'exterieur.
+            var outerAtH = InterieurMath.getOuterSectionAtHeight(sections, piqSections[psi].H || 0);
+            var maxTa = outerAtH ? Math.max(0, (outerAtH.a || 0) - (piqSections[psi].a || 0) - 0.2) : thicknessNow;
+            var maxTb = outerAtH ? Math.max(0, (outerAtH.b || 0) - (piqSections[psi].b || 0) - 0.2) : thicknessNow;
+            var tPiq = Math.min(thicknessNow, maxTa, maxTb);
+            var innerP = InterieurMath.outsetSection(piqSections[psi], tPiq);
+            innerP.H = (piqSections[psi].H || 0) + thicknessNow;
+            piqSectionsInner.push(innerP);
+        }
+        var feuilleInner = buildPiqurePiedFeuille(s1Inner, piqSectionsInner[0], piqSectionsInner[0].H);
+        if (feuilleInner) {
+            feuilleInner.userData.isPiqure = true;
+            feuilleInner.userData.isInterior = true;
+            sectionRingGroup.add(feuilleInner);
+        }
         var feuillePiqureStrip = buildRuledSurfaceStrip(piqSections, BottleMaterials.DEFAULT_GLASS_COLOR);
         if (feuillePiqureStrip) {
             feuillePiqureStrip.userData.isPiqure = true;
             enhanceInnerPiqureVisibility(feuillePiqureStrip);
             enableMeshShadows(feuillePiqureStrip);
             sectionRingGroup.add(feuillePiqureStrip);
+            var piqStripInner = buildRuledSurfaceStrip(piqSectionsInner, 0x6f8ead);
+            if (piqStripInner) {
+                piqStripInner.userData.isPiqure = true;
+                piqStripInner.userData.isInterior = true;
+                if (piqStripInner.material) {
+                    piqStripInner.material.side = THREE.BackSide;
+                    piqStripInner.material.shininess = 20;
+                }
+                sectionRingGroup.add(piqStripInner);
+            }
         }
         var lastP = piqSections[piqSections.length - 1];
         var rp3H = getPanelValue('rp3-h', 30);
@@ -653,6 +713,17 @@ var BottleView3D = (function () {
             enhanceInnerPiqureVisibility(feuilleVersAxe);
             enableMeshShadows(feuilleVersAxe);
             sectionRingGroup.add(feuilleVersAxe);
+            var lastPInner = piqSectionsInner[piqSectionsInner.length - 1];
+            var rp3HInner = Math.max(lastPInner.H, rp3H + thicknessNow);
+            var piqApexInner = buildPiqureFeuilleVersAxe(lastPInner, rp3HInner);
+            if (piqApexInner) {
+                piqApexInner.userData.isPiqure = true;
+                piqApexInner.userData.isInterior = true;
+                if (piqApexInner.material) {
+                    piqApexInner.material = piqureInnerMat;
+                }
+                sectionRingGroup.add(piqApexInner);
+            }
         }
 
         // ---------- BAGUE (dynamique : sb1..sbN) ----------
@@ -683,12 +754,66 @@ var BottleView3D = (function () {
             feuilleColBague.userData.isPiqure = false;
             enableMeshShadows(feuilleColBague);
             sectionRingGroup.add(feuilleColBague);
+            var bagueInnerMat = new THREE.MeshPhongMaterial({ color: 0x6f8ead, side: THREE.BackSide, shininess: 20 });
+            var feuilleColBagueInner = InterieurMath.createInsetMeshFromMesh(feuilleColBague, thicknessNow, bagueInnerMat);
+            if (feuilleColBagueInner) {
+                feuilleColBagueInner.userData.isPiqure = false;
+                feuilleColBagueInner.userData.isInterior = true;
+                sectionRingGroup.add(feuilleColBagueInner);
+            }
         }
         var feuilleBagueStrip = buildRuledSurfaceStrip(bagueSections.length ? bagueSections : [getBague1SectionFromPanel(), getBague2SectionFromPanel(), getBague3SectionFromPanel(), getBague4SectionFromPanel(), getBague5SectionFromPanel()], BottleMaterials.DEFAULT_GLASS_COLOR);
-        if (feuilleBagueStrip) { feuilleBagueStrip.userData.isPiqure = false; enableMeshShadows(feuilleBagueStrip); sectionRingGroup.add(feuilleBagueStrip); }
+        if (feuilleBagueStrip) {
+            feuilleBagueStrip.userData.isPiqure = false;
+            enableMeshShadows(feuilleBagueStrip);
+            sectionRingGroup.add(feuilleBagueStrip);
+            var bagueInnerSections = [];
+            for (var bis = 0; bis < bagueSections.length; bis++) bagueInnerSections.push(InterieurMath.insetSection(bagueSections[bis], thicknessNow));
+            // Exception demandee: la section "2 - Haut bague" ne pilote pas l'epaisseur,
+            // on la cale sur la section "3 - Haut bague".
+            if (bagueInnerSections.length >= 3) {
+                bagueInnerSections[1].a = bagueInnerSections[2].a;
+                bagueInnerSections[1].b = bagueInnerSections[2].b;
+                bagueInnerSections[1].shape = bagueInnerSections[2].shape;
+                bagueInnerSections[1].carreNiveau = bagueInnerSections[2].carreNiveau;
+            }
+            var bagueStripInner = buildRuledSurfaceStrip(
+                bagueInnerSections,
+                0x6f8ead
+            );
+            if (bagueStripInner) {
+                bagueStripInner.userData.isPiqure = false;
+                bagueStripInner.userData.isInterior = true;
+                if (bagueStripInner.material) {
+                    bagueStripInner.material.side = THREE.BackSide;
+                    bagueStripInner.material.shininess = 20;
+                }
+                sectionRingGroup.add(bagueStripInner);
+            }
+        }
+
+        // Fermer le haut de bague : feuille qui relie la section "3 - Haut bague"
+        // a la peau interieure pour rendre l'epaisseur lisible au col.
+        if (bagueSections.length) {
+            var bagueTop = bagueSections[bagueSections.length - 1];
+            var bagueTopInner = InterieurMath.insetSection(bagueTop, thicknessNow);
+            // Fermeture coplanaire au meme niveau pour garder un rond propre en haut.
+            bagueTopInner.H = bagueTop.H;
+            var lipSheet = buildPiqureBasHautFeuille(bagueTop, bagueTopInner);
+            if (lipSheet) {
+                lipSheet.userData.isPiqure = false;
+                lipSheet.userData.isInterior = true;
+                enableMeshShadows(lipSheet);
+                sectionRingGroup.add(lipSheet);
+            }
+        }
 
         applyViewOpacity(sectionRingGroup);
         scene.add(sectionRingGroup);
+
+        if (typeof CalculeVolumeFeature !== 'undefined' && CalculeVolumeFeature && CalculeVolumeFeature.updateFromSectionsData) {
+            CalculeVolumeFeature.updateFromSectionsData(sectionsData);
+        }
 
         if (typeof Gravure3D !== 'undefined' && Gravure3D && Gravure3D.updateScene) {
             Gravure3D.updateScene(scene, sectionsData);

@@ -46,6 +46,7 @@
                     <span class="panel-bar-icon" id="panel-bar-tab-sections" title="Sections actuelles">🔧</span>
                     <span class="panel-bar-icon" id="panel-bar-tab-piqure" title="Sections piqûre">⚙️</span>
                     <span class="panel-bar-icon" id="panel-bar-tab-bague" title="Sections bague">⭕</span>
+                    <span class="panel-bar-icon" id="panel-bar-tab-interieur" title="Intérieur bouteille">🫙</span>
                 </div>
                 <!-- Container scrollable pour tout le reste de l'inspector -->
                 <div id="inspector-scroll" class="inspector-scroll">
@@ -59,6 +60,9 @@
                         <div class="panel-content panel-bague-content hidden" id="panel-content-bague">
                             <!-- Rempli par UIInspector.renderSections() -->
                         </div><!-- #panel-content-bague -->
+                        <div class="panel-content panel-interieur-content hidden" id="panel-content-interieur">
+                            <!-- Rempli par InterieurFeature.render() -->
+                        </div><!-- #panel-content-interieur -->
                     </div><!-- #panel-sections-area -->
                     <div class="panel-content panel-gravure-content hidden" id="panel-content-gravure">
                     <button type="button" class="btn-add-gravure" id="btn-add-engraving">Ajouter une gravure</button>
@@ -289,6 +293,10 @@
     <script src="features/rattachement/function.js"></script>
     <script src="features/profile/function.js"></script>
     <script src="features/3d/data.js"></script>
+    <script src="features/calcule/math.js"></script>
+    <script src="features/calcule/function.js"></script>
+    <script src="features/Interieur/function.js"></script>
+    <script src="features/Interieur/math.js"></script>
     <script src="canvas/3d/rules.js"></script>
     <script src="canvas/3d/sceneSetup.js"></script>
     <script src="canvas/3d/materials.js"></script>

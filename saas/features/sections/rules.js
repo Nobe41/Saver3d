@@ -41,16 +41,12 @@ var SectionsRules = (function () {
     var bagueSections = [
         { key: 'sb1', label: 'Bas bague', h: 282, hMin: 0, hMax: 400, hStep: 0.5, L: 35, P: 35, LMin: 10, LMax: 120, step: 0.5 },
         { key: 'sb2', label: 'Haut bague', h: 297, hMin: 0, hMax: 400, hStep: 0.5, L: 35, P: 35, LMin: 10, LMax: 120, step: 0.5 },
-        { key: 'sb3', label: 'Haut bague', h: 299, hMin: 0, hMax: 400, hStep: 0.5, L: 33, P: 33, LMin: 10, LMax: 120, step: 0.5 },
-        { key: 'sb4', label: 'Plat bague', h: 299, hMin: 0, hMax: 400, hStep: 0.5, L: 31, P: 31, LMin: 10, LMax: 120, step: 0.5 },
-        { key: 'sb5', label: 'Bas plat bague', h: 297, hMin: 0, hMax: 400, hStep: 0.5, L: 29, P: 29, LMin: 10, LMax: 120, step: 0.5 }
+        { key: 'sb3', label: 'Haut bague', h: 299, hMin: 0, hMax: 400, hStep: 0.5, L: 33, P: 33, LMin: 10, LMax: 120, step: 0.5 }
     ];
 
     var bagueLiaisons = [
         { id: 'rb1', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 },
-        { id: 'rb2', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 },
-        { id: 'rb3', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 },
-        { id: 'rb4', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 }
+        { id: 'rb2', rho: 5, rhoMin: 0, rhoMax: 400, rhoStep: 0.5 }
     ];
 
     return {

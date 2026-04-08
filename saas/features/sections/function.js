@@ -20,8 +20,10 @@ var UIInspector = (function () {
     function getActiveMode() {
         var contentPiqure = document.getElementById(CONTAINER_PIQURE);
         var contentBague = document.getElementById(CONTAINER_BAGUE);
+        var contentInterieur = document.getElementById('panel-content-interieur');
         if (contentPiqure && !contentPiqure.classList.contains('hidden')) return 'piqure';
         if (contentBague && !contentBague.classList.contains('hidden')) return 'bague';
+        if (contentInterieur && !contentInterieur.classList.contains('hidden')) return 'interieur';
         return 'main';
     }
 
@@ -31,6 +33,7 @@ var UIInspector = (function () {
         var n = mode === 'piqure'
             ? state.piqureSections.length
             : (mode === 'bague' ? state.bagueSections.length : state.sectionsMain.length);
+        if (mode === 'interieur') return '';
         if (n < 2) return '';
         if (typeof SectionsBloc === 'undefined' || !SectionsBloc.buildAddSectionFooter) return '';
         return SectionsBloc.buildAddSectionFooter(mode, n);

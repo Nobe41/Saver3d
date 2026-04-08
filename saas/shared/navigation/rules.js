@@ -21,9 +21,11 @@ var NavigationRules = (function () {
             contentSections: 'panel-content-sections',
             contentPiqure: 'panel-content-piqure',
             contentBague: 'panel-content-bague',
+            contentInterieur: 'panel-content-interieur',
             barTabSections: 'panel-bar-tab-sections',
             barTabPiqure: 'panel-bar-tab-piqure',
             barTabBague: 'panel-bar-tab-bague',
+            barTabInterieur: 'panel-bar-tab-interieur',
             brandHeader: 'brand-header'
         }
     };

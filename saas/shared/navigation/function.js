@@ -72,9 +72,9 @@ var UIEvents = (function () {
     function initPanelTabs() {
         var tabSections = get(IDS.tabSections), tabGravure = get(IDS.tabGravure), tabInformation = get(IDS.tabInformation), tabRendu = get(IDS.tabRendu);
         var brandHeader = get(IDS.brandHeader), sectionsArea = get(IDS.sectionsArea), contentGravure = get(IDS.contentGravure), contentInformation = get(IDS.contentInformation), contentRendu = get(IDS.contentRendu);
-        var contentSections = get(IDS.contentSections), contentPiqure = get(IDS.contentPiqure), contentBague = get(IDS.contentBague);
-        var barTabSections = get(IDS.barTabSections), barTabPiqure = get(IDS.barTabPiqure), barTabBague = get(IDS.barTabBague);
-        if (!sectionsArea || !contentGravure || !contentInformation || !contentRendu || !contentSections || !contentPiqure || !contentBague) return;
+        var contentSections = get(IDS.contentSections), contentPiqure = get(IDS.contentPiqure), contentBague = get(IDS.contentBague), contentInterieur = get(IDS.contentInterieur);
+        var barTabSections = get(IDS.barTabSections), barTabPiqure = get(IDS.barTabPiqure), barTabBague = get(IDS.barTabBague), barTabInterieur = get(IDS.barTabInterieur);
+        if (!sectionsArea || !contentGravure || !contentInformation || !contentRendu || !contentSections || !contentPiqure || !contentBague || !contentInterieur) return;
 
         function refreshAfterTabChange() {
             if (typeof updateBouteille === 'function') updateBouteille();
@@ -104,9 +104,10 @@ var UIEvents = (function () {
             if (tabSections) tabSections.classList.remove('active'); if (tabGravure) tabGravure.classList.remove('active'); if (tabInformation) tabInformation.classList.remove('active'); if (tabRendu) tabRendu.classList.add('active');
             NavigationState.patch({ activeLeftTab: 'rendu' }); setAddSectionBarVisibility(false);
         }
-        function showBarSections() { contentSections.classList.remove('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.add('hidden'); if (barTabSections) barTabSections.classList.add('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.remove('active'); NavigationState.patch({ activeBarTab: 'sections' }); refreshAfterTabChange(); }
-        function showBarPiqure() { contentSections.classList.add('hidden'); contentPiqure.classList.remove('hidden'); contentBague.classList.add('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.add('active'); if (barTabBague) barTabBague.classList.remove('active'); NavigationState.patch({ activeBarTab: 'piqure' }); refreshAfterTabChange(); }
-        function showBarBague() { contentSections.classList.add('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.remove('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.add('active'); NavigationState.patch({ activeBarTab: 'bague' }); refreshAfterTabChange(); }
+        function showBarSections() { contentSections.classList.remove('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.add('hidden'); contentInterieur.classList.add('hidden'); if (barTabSections) barTabSections.classList.add('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.remove('active'); if (barTabInterieur) barTabInterieur.classList.remove('active'); NavigationState.patch({ activeBarTab: 'sections' }); setAddSectionBarVisibility(true); refreshAfterTabChange(); }
+        function showBarPiqure() { contentSections.classList.add('hidden'); contentPiqure.classList.remove('hidden'); contentBague.classList.add('hidden'); contentInterieur.classList.add('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.add('active'); if (barTabBague) barTabBague.classList.remove('active'); if (barTabInterieur) barTabInterieur.classList.remove('active'); NavigationState.patch({ activeBarTab: 'piqure' }); setAddSectionBarVisibility(true); refreshAfterTabChange(); }
+        function showBarBague() { contentSections.classList.add('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.remove('hidden'); contentInterieur.classList.add('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.add('active'); if (barTabInterieur) barTabInterieur.classList.remove('active'); NavigationState.patch({ activeBarTab: 'bague' }); setAddSectionBarVisibility(true); refreshAfterTabChange(); }
+        function showBarInterieur() { contentSections.classList.add('hidden'); contentPiqure.classList.add('hidden'); contentBague.classList.add('hidden'); contentInterieur.classList.remove('hidden'); if (barTabSections) barTabSections.classList.remove('active'); if (barTabPiqure) barTabPiqure.classList.remove('active'); if (barTabBague) barTabBague.classList.remove('active'); if (barTabInterieur) barTabInterieur.classList.add('active'); NavigationState.patch({ activeBarTab: 'interieur' }); setAddSectionBarVisibility(false); if (typeof InterieurFeature !== 'undefined' && InterieurFeature.render) InterieurFeature.render(); refreshAfterTabChange(); }
 
         NavigationEvents.bind(tabSections, showLeftSections);
         NavigationEvents.bind(tabGravure, showLeftGravure);
@@ -115,6 +116,7 @@ var UIEvents = (function () {
         NavigationEvents.bind(barTabSections, showBarSections);
         NavigationEvents.bind(barTabPiqure, showBarPiqure);
         NavigationEvents.bind(barTabBague, showBarBague);
+        NavigationEvents.bind(barTabInterieur, showBarInterieur);
         showLeftSections();
         showBarSections();
     }
