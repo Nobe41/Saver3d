@@ -1,13 +1,52 @@
 // Affichage du volume total dans la vue 3D (coin bas-gauche).
 var CalculeVolumeFeature = (function () {
     var OVERLAY_ID = 'volume-total-overlay';
+    var DEFAULT_CAPACITE_UTILE_CL = 75;
+    var DEFAULT_BOUCHON_RENTRANT_ON = false;
+    var DEFAULT_BOUCHON_RENTRANT_MM = 0;
+    var DEFAULT_DENSITE_VERRE = 2.5;
+
+    function getState() {
+        if (typeof window === 'undefined') {
+            return {
+                capaciteUtileCl: DEFAULT_CAPACITE_UTILE_CL,
+                bouchonRentrantOn: DEFAULT_BOUCHON_RENTRANT_ON,
+                bouchonRentrantMm: DEFAULT_BOUCHON_RENTRANT_MM,
+                densiteVerre: DEFAULT_DENSITE_VERRE
+            };
+        }
+        if (!window.calculeState) {
+            window.calculeState = {
+                capaciteUtileCl: DEFAULT_CAPACITE_UTILE_CL,
+                bouchonRentrantOn: DEFAULT_BOUCHON_RENTRANT_ON,
+                bouchonRentrantMm: DEFAULT_BOUCHON_RENTRANT_MM,
+                densiteVerre: DEFAULT_DENSITE_VERRE
+            };
+        }
+        return window.calculeState;
+    }
+
+    function clampCapaciteUtileCl(v) {
+        if (!isFinite(v)) return DEFAULT_CAPACITE_UTILE_CL;
+        return Math.round(Math.max(10, Math.min(600, v)));
+    }
 
     function formatVolume(volumeMm3) {
-        var ml = volumeMm3 / 1000;
-        return ml.toLocaleString('fr-FR', {
+        var cl = volumeMm3 / 10000;
+        return cl.toLocaleString('fr-FR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
+    }
+
+    function clampBouchonRentrantMm(v) {
+        if (!isFinite(v)) return DEFAULT_BOUCHON_RENTRANT_MM;
+        return Math.round(Math.max(0, Math.min(70, v)));
+    }
+
+    function clampDensiteVerre(v) {
+        if (!isFinite(v)) return DEFAULT_DENSITE_VERRE;
+        return Math.max(2.30, Math.min(2.60, v));
     }
 
     function ensureOverlay() {
@@ -32,10 +71,120 @@ var CalculeVolumeFeature = (function () {
             return;
         }
         var volumeMm3 = CalculeVolumeMath.computeTotalInteriorVolumeMm3(sectionsData || {});
-        el.textContent = 'Volume total interieur (bague fermee): ' + formatVolume(volumeMm3) + ' mL';
+        var outerMm3 = (typeof CalculeVolumeMath !== 'undefined' && CalculeVolumeMath.computeTotalOuterVolumeMm3)
+            ? CalculeVolumeMath.computeTotalOuterVolumeMm3(sectionsData || {})
+            : volumeMm3;
+        var rasBordCl = volumeMm3 / 10000;
+        var capaciteUtileCl = Math.min(rasBordCl, clampCapaciteUtileCl(getState().capaciteUtileCl));
+        var degarnieMmBrut = (typeof CalculeVolumeMath !== 'undefined' && CalculeVolumeMath.computeDegarnieMmFromUsefulCapacityCl)
+            ? CalculeVolumeMath.computeDegarnieMmFromUsefulCapacityCl(sectionsData || {}, capaciteUtileCl)
+            : 0;
+        var st = getState();
+        var bouchonMm = (st.bouchonRentrantOn ? clampBouchonRentrantMm(st.bouchonRentrantMm) : 0);
+        var degarnieMm = degarnieMmBrut;
+        var chamberClRaw = Math.max(0, rasBordCl - capaciteUtileCl);
+        // Le bouchon rentrant reduit la chambre d'expansion, pas le degarnie.
+        // Application proportionnelle par rapport au degarnie calcule.
+        var chamberFactor = degarnieMmBrut > 1e-9
+            ? Math.max(0, (degarnieMmBrut - bouchonMm) / degarnieMmBrut)
+            : 0;
+        var chamberCl = chamberClRaw * chamberFactor;
+        var chamberPct = rasBordCl > 1e-9 ? (chamberCl / rasBordCl) * 100 : 0;
+        var canuleMm = (typeof CalculeVolumeMath !== 'undefined' && CalculeVolumeMath.computeCanuleDiameterMm)
+            ? CalculeVolumeMath.computeCanuleDiameterMm()
+            : 0;
+        var densite = clampDensiteVerre(st.densiteVerre);
+        var volumeVerreMm3 = Math.max(0, outerMm3 - volumeMm3);
+        var poidsVerreG = (volumeVerreMm3 / 1000) * densite;
+        el.textContent = 'Capacite ras bord: ' + formatVolume(volumeMm3) + ' cl'
+            + '\nDegarnie: ' + degarnieMm.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mm'
+            + '\nChambre d expansion: ' + chamberPct.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %'
+            + '\nØ canule: ' + canuleMm.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mm'
+            + '\nPoids verre: ' + poidsVerreG.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' g';
+    }
+
+    function renderPanel() {
+        if (typeof document === 'undefined') return;
+        var container = document.getElementById('panel-content-calcule');
+        if (!container) return;
+        var st = getState();
+        container.innerHTML = ''
+            + '<div class="setting-card">'
+            + '  <div style="padding: 8px 12px; font-size: 0.85rem; font-weight: bold;">Volume</div>'
+            + '  <div class="panel-controls" style="max-height: none; overflow: visible; padding-bottom: 8px;">'
+            + '    <div class="control-group">'
+            + '      <div class="label-row"><label>Capacite utile</label><div class="input-wrapper"><input type="number" id="calcule-capacite-utile-cl" value="' + clampCapaciteUtileCl(st.capaciteUtileCl) + '" min="10" max="600" step="1"><span class="unit">cl</span></div></div>'
+            + '      <input type="range" id="calcule-capacite-utile-cl-slider" min="10" max="600" step="1" value="' + clampCapaciteUtileCl(st.capaciteUtileCl) + '">'
+            + '    </div>'
+            + '    <div class="control-group">'
+            + '      <div class="checkbox-row"><input type="checkbox" id="calcule-bouchon-rentrant-on" ' + (st.bouchonRentrantOn ? 'checked' : '') + '><label for="calcule-bouchon-rentrant-on">bouchon rentrant</label></div>'
+            + '    </div>'
+            + '    <div class="control-group" id="calcule-bouchon-rentrant-group" style="' + (st.bouchonRentrantOn ? '' : 'display:none;') + '">'
+            + '      <div class="label-row"><label>Bouchon rentrant</label><div class="input-wrapper"><input type="number" id="calcule-bouchon-rentrant-mm" value="' + clampBouchonRentrantMm(st.bouchonRentrantMm) + '" min="0" max="70" step="1"><span class="unit">mm</span></div></div>'
+            + '      <input type="range" id="calcule-bouchon-rentrant-mm-slider" min="0" max="70" step="1" value="' + clampBouchonRentrantMm(st.bouchonRentrantMm) + '">'
+            + '    </div>'
+            + '    <div class="control-group">'
+            + '      <div class="label-row"><label>Densite du verre</label><div class="input-wrapper"><input type="number" id="calcule-densite-verre" value="' + clampDensiteVerre(st.densiteVerre).toFixed(2) + '" min="2.30" max="2.60" step="0.01"><span class="unit">g/cm3</span></div></div>'
+            + '      <input type="range" id="calcule-densite-verre-slider" min="2.30" max="2.60" step="0.01" value="' + clampDensiteVerre(st.densiteVerre).toFixed(2) + '">'
+            + '    </div>'
+            + '  </div>'
+            + '</div>';
+
+        var num = document.getElementById('calcule-capacite-utile-cl');
+        var rng = document.getElementById('calcule-capacite-utile-cl-slider');
+        function applyCapaciteUtile(v) {
+            var s = getState();
+            s.capaciteUtileCl = clampCapaciteUtileCl(v);
+            if (num) num.value = s.capaciteUtileCl;
+            if (rng) rng.value = s.capaciteUtileCl;
+            if (typeof updateBouteille === 'function') updateBouteille();
+        }
+        if (num && rng) {
+            num.addEventListener('input', function () { applyCapaciteUtile(parseFloat(num.value)); });
+            rng.addEventListener('input', function () { applyCapaciteUtile(parseFloat(rng.value)); });
+        }
+
+        var cb = document.getElementById('calcule-bouchon-rentrant-on');
+        var group = document.getElementById('calcule-bouchon-rentrant-group');
+        var brNum = document.getElementById('calcule-bouchon-rentrant-mm');
+        var brRng = document.getElementById('calcule-bouchon-rentrant-mm-slider');
+        if (cb && group) {
+            cb.addEventListener('change', function () {
+                var s = getState();
+                s.bouchonRentrantOn = !!cb.checked;
+                group.style.display = s.bouchonRentrantOn ? '' : 'none';
+                if (typeof updateBouteille === 'function') updateBouteille();
+            });
+        }
+        function applyBouchon(v) {
+            var s = getState();
+            s.bouchonRentrantMm = clampBouchonRentrantMm(v);
+            if (brNum) brNum.value = s.bouchonRentrantMm;
+            if (brRng) brRng.value = s.bouchonRentrantMm;
+            if (typeof updateBouteille === 'function') updateBouteille();
+        }
+        if (brNum && brRng) {
+            brNum.addEventListener('input', function () { applyBouchon(parseFloat(brNum.value)); });
+            brRng.addEventListener('input', function () { applyBouchon(parseFloat(brRng.value)); });
+        }
+
+        var dNum = document.getElementById('calcule-densite-verre');
+        var dRng = document.getElementById('calcule-densite-verre-slider');
+        function applyDensite(v) {
+            var s = getState();
+            s.densiteVerre = clampDensiteVerre(v);
+            if (dNum) dNum.value = s.densiteVerre.toFixed(2);
+            if (dRng) dRng.value = s.densiteVerre.toFixed(2);
+            if (typeof updateBouteille === 'function') updateBouteille();
+        }
+        if (dNum && dRng) {
+            dNum.addEventListener('input', function () { applyDensite(parseFloat(dNum.value)); });
+            dRng.addEventListener('input', function () { applyDensite(parseFloat(dRng.value)); });
+        }
     }
 
     return {
-        updateFromSectionsData: updateFromSectionsData
+        updateFromSectionsData: updateFromSectionsData,
+        renderPanel: renderPanel
     };
 })();

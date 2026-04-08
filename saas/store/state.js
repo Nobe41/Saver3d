@@ -11,5 +11,6 @@ window.engravingImages = {};
 window.displayOptions = {
     showAxes: true,
     showGrid: true,
-    showSectionRings: true
+    showSectionRings: true,
+    showMoldJoint: true
 };

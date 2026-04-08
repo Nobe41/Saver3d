@@ -81,12 +81,14 @@ var CalculeVolumeMath = (function () {
         return Math.max(0, intVal);
     }
 
-    function integrateMainBodyVolume(sectionsData) {
+    function integrateMainBodyVolume(sectionsData, yStartOpt, yEndOpt) {
         if (typeof BottleMaths === 'undefined' || typeof GeomKernel === 'undefined') return 0;
         if (!sectionsData || !sectionsData.sections || sectionsData.sections.length < 2) return 0;
 
-        var yMin = sectionsData.sections[0].H || 0;
-        var yMax = sectionsData.sections[sectionsData.sections.length - 1].H || yMin;
+        var yMinBase = sectionsData.sections[0].H || 0;
+        var yMaxBase = sectionsData.sections[sectionsData.sections.length - 1].H || yMinBase;
+        var yMin = (typeof yStartOpt === 'number') ? Math.max(yMinBase, yStartOpt) : yMinBase;
+        var yMax = (typeof yEndOpt === 'number') ? Math.min(yMaxBase, yEndOpt) : yMaxBase;
         if (yMax <= yMin + EPS) return 0;
 
         var sumOverTheta = 0;
@@ -112,6 +114,21 @@ var CalculeVolumeMath = (function () {
 
         var dTheta = (2 * Math.PI) / THETA_SAMPLES;
         return 0.5 * dTheta * sumOverTheta;
+    }
+
+    function integrateSectionAreaLinearClipped(s0, s1, yStart, yEnd) {
+        var lo = Math.max(Math.min(s0.H, s1.H), yStart);
+        var hi = Math.min(Math.max(s0.H, s1.H), yEnd);
+        if (hi <= lo + EPS) return 0;
+        var dy = (s1.H - s0.H);
+        if (Math.abs(dy) <= EPS) return 0;
+        var t0 = (lo - s0.H) / dy;
+        var t1 = (hi - s0.H) / dy;
+        var c0 = lerpSection(s0, s1, t0);
+        var c1 = lerpSection(s0, s1, t1);
+        c0.H = lo;
+        c1.H = hi;
+        return integrateSectionAreaLinear(c0, c1);
     }
 
     function getDynamicPiqureSections() {
@@ -228,14 +245,175 @@ var CalculeVolumeMath = (function () {
         return Math.max(0, v);
     }
 
+    function buildInteriorContext(sectionsData) {
+        var thicknessMm = (typeof InterieurMath !== 'undefined' && InterieurMath.getThicknessMm)
+            ? InterieurMath.getThicknessMm()
+            : 2.5;
+
+        var innerSectionsData = (typeof InterieurMath !== 'undefined' && InterieurMath.buildInteriorSectionsDataFromThickness)
+            ? InterieurMath.buildInteriorSectionsDataFromThickness(sectionsData, thicknessMm, thicknessMm)
+            : sectionsData;
+
+        // Bague interieure: exception metier, sb2 cale sur sb3.
+        var sTopInner = innerSectionsData && innerSectionsData.sections && innerSectionsData.sections.length
+            ? innerSectionsData.sections[innerSectionsData.sections.length - 1]
+            : null;
+        var bague = getDynamicBagueSections();
+        for (var b = 0; b < bague.length; b++) {
+            bague[b] = (typeof InterieurMath !== 'undefined' && InterieurMath.insetSection)
+                ? InterieurMath.insetSection(bague[b], thicknessMm)
+                : bague[b];
+        }
+        if (bague.length >= 3) {
+            bague[1].a = bague[2].a;
+            bague[1].b = bague[2].b;
+            bague[1].shape = bague[2].shape;
+            bague[1].carreNiveau = bague[2].carreNiveau;
+        }
+        if (sTopInner && bague.length && bague[0].H < sTopInner.H) bague[0].H = sTopInner.H;
+        for (var bm = 0; bm < bague.length - 1; bm++) {
+            if (bague[bm + 1].H < bague[bm].H) bague[bm + 1].H = bague[bm].H;
+        }
+
+        // Piqure interieure: meme regle que l'affichage interieur (decalage vers exterieur).
+        var piq = [];
+        if (sectionsData && sectionsData.sections && sectionsData.sections.length) {
+            var s1H = (sectionsData.sections[0].H || 0) + thicknessMm;
+            var p0 = {
+                H: s1H,
+                a: Math.max(0, getPanelValue('sp-L', 58) / 2),
+                b: Math.max(0, getPanelValue('sp-P', 58) / 2),
+                shape: getPanelSelectValue('sp-forme', 'rond'),
+                carreNiveau: Math.max(0, Math.min(100, getPanelValue('sp-carre-niveau', 0)))
+            };
+            p0 = (typeof InterieurMath !== 'undefined' && InterieurMath.outsetSection)
+                ? InterieurMath.outsetSection(p0, thicknessMm)
+                : p0;
+            piq.push(p0);
+        }
+        var more = getDynamicPiqureSections();
+        for (var i = 0; i < more.length; i++) {
+            var sec = more[i];
+            var outerAtH = (typeof InterieurMath !== 'undefined' && InterieurMath.getOuterSectionAtHeight)
+                ? InterieurMath.getOuterSectionAtHeight(innerSectionsData.sections, sec.H || 0)
+                : null;
+            var maxTa = outerAtH ? Math.max(0, (outerAtH.a || 0) - (sec.a || 0) - 0.2) : thicknessMm;
+            var maxTb = outerAtH ? Math.max(0, (outerAtH.b || 0) - (sec.b || 0) - 0.2) : thicknessMm;
+            var tPiq = Math.min(thicknessMm, maxTa, maxTb);
+            var outSec = (typeof InterieurMath !== 'undefined' && InterieurMath.outsetSection)
+                ? InterieurMath.outsetSection(sec, tPiq)
+                : sec;
+            outSec.H = (sec.H || 0) + thicknessMm;
+            piq.push(outSec);
+        }
+        for (var k = 1; k < piq.length; k++) if (piq[k].H < piq[k - 1].H) piq[k].H = piq[k - 1].H;
+        var rp3HInner = null;
+        if (piq.length) {
+            var last = piq[piq.length - 1];
+            rp3HInner = Math.max(last.H, getPanelValue('rp3-h', 30) + thicknessMm);
+        }
+
+        return {
+            innerSectionsData: innerSectionsData,
+            sTopInner: sTopInner,
+            bagueInner: bague,
+            piqInner: piq,
+            rp3HInner: rp3HInner
+        };
+    }
+
+    function computeVolumeUpToHeightMm3(ctx, yTop) {
+        if (!ctx || !ctx.innerSectionsData || !ctx.innerSectionsData.sections || !ctx.innerSectionsData.sections.length) return 0;
+        var yBottom = ctx.innerSectionsData.sections[0].H || 0;
+        var y = Math.max(yBottom, yTop);
+        var mainTop = ctx.sTopInner ? ctx.sTopInner.H : yBottom;
+        var v = 0;
+
+        v += integrateMainBodyVolume(ctx.innerSectionsData, yBottom, Math.min(y, mainTop));
+
+        if (ctx.sTopInner && ctx.bagueInner && ctx.bagueInner.length && y > mainTop) {
+            v += integrateSectionAreaLinearClipped(ctx.sTopInner, ctx.bagueInner[0], mainTop, y);
+            for (var bi = 0; bi < ctx.bagueInner.length - 1; bi++) {
+                v += integrateSectionAreaLinearClipped(ctx.bagueInner[bi], ctx.bagueInner[bi + 1], mainTop, y);
+            }
+        }
+
+        var vPiq = 0;
+        if (ctx.piqInner && ctx.piqInner.length) {
+            for (var pi = 0; pi < ctx.piqInner.length - 1; pi++) {
+                vPiq += integrateSectionAreaLinearClipped(ctx.piqInner[pi], ctx.piqInner[pi + 1], yBottom, y);
+            }
+            if (ctx.rp3HInner != null) {
+                var last = ctx.piqInner[ctx.piqInner.length - 1];
+                var apex = { H: ctx.rp3HInner, a: 0, b: 0, shape: last.shape, carreNiveau: last.carreNiveau };
+                vPiq += integrateSectionAreaLinearClipped(last, apex, yBottom, y);
+            }
+        }
+        return Math.max(0, v - vPiq);
+    }
+
+    function getTopBagueHeight(ctx) {
+        if (!ctx) return 0;
+        if (ctx.bagueInner && ctx.bagueInner.length) return ctx.bagueInner[ctx.bagueInner.length - 1].H || 0;
+        if (ctx.sTopInner) return ctx.sTopInner.H || 0;
+        if (ctx.innerSectionsData && ctx.innerSectionsData.sections && ctx.innerSectionsData.sections.length) {
+            return ctx.innerSectionsData.sections[ctx.innerSectionsData.sections.length - 1].H || 0;
+        }
+        return 0;
+    }
+
     function computeTotalInteriorVolumeMm3(sectionsData) {
+        var ctx = buildInteriorContext(sectionsData);
+        return computeVolumeUpToHeightMm3(ctx, getTopBagueHeight(ctx));
+    }
+
+    function computeTotalOuterVolumeMm3(sectionsData) {
+        if (!sectionsData) return 0;
         var bodyMain = integrateMainBodyVolume(sectionsData);
         var bagueAdd = computeBagueAddedVolume(sectionsData);
         var piqureSubtract = computePiqureSubtractedVolume(sectionsData);
         return Math.max(0, bodyMain + bagueAdd - piqureSubtract);
     }
 
+    function computeCanuleDiameterMm() {
+        var bague = getDynamicBagueSections();
+        if (!bague || !bague.length) return 0;
+        var top = bague[bague.length - 1];
+        var thicknessMm = (typeof InterieurMath !== 'undefined' && InterieurMath.getThicknessMm)
+            ? InterieurMath.getThicknessMm()
+            : 2.5;
+        var topInner = (typeof InterieurMath !== 'undefined' && InterieurMath.insetSection)
+            ? InterieurMath.insetSection(top, thicknessMm)
+            : top;
+        return Math.max(0, 2 * Math.min(topInner.a || 0, topInner.b || 0));
+    }
+
+    function computeDegarnieMmFromUsefulCapacityCl(sectionsData, usefulCl) {
+        var ctx = buildInteriorContext(sectionsData);
+        var yBottom = (ctx.innerSectionsData && ctx.innerSectionsData.sections && ctx.innerSectionsData.sections.length)
+            ? (ctx.innerSectionsData.sections[0].H || 0)
+            : 0;
+        var yTop = getTopBagueHeight(ctx);
+        var vTop = computeVolumeUpToHeightMm3(ctx, yTop);
+        var targetMm3 = Math.max(0, Math.min(vTop, (usefulCl || 0) * 10000));
+        if (targetMm3 <= EPS) return Math.max(0, yTop - yBottom);
+        if (targetMm3 >= vTop - EPS) return 0;
+
+        var lo = yBottom;
+        var hi = yTop;
+        for (var it = 0; it < 36; it++) {
+            var mid = (lo + hi) * 0.5;
+            var vmid = computeVolumeUpToHeightMm3(ctx, mid);
+            if (vmid < targetMm3) lo = mid; else hi = mid;
+        }
+        var yFill = (lo + hi) * 0.5;
+        return Math.max(0, yTop - yFill);
+    }
+
     return {
-        computeTotalInteriorVolumeMm3: computeTotalInteriorVolumeMm3
+        computeTotalInteriorVolumeMm3: computeTotalInteriorVolumeMm3,
+        computeTotalOuterVolumeMm3: computeTotalOuterVolumeMm3,
+        computeDegarnieMmFromUsefulCapacityCl: computeDegarnieMmFromUsefulCapacityCl,
+        computeCanuleDiameterMm: computeCanuleDiameterMm
     };
 })();

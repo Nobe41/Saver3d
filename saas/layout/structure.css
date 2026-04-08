@@ -569,5 +569,7 @@ input[type="text"], .input-select, .input-select-disabled {
     border-radius: 8px;
     font-size: 0.78rem;
     line-height: 1.2;
+    white-space: pre-line;
+    text-align: left;
     pointer-events: none;
 }

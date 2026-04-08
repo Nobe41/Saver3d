@@ -180,10 +180,49 @@ var BottleView3D = (function () {
     }
 
     function buildSectionRingLine(H, points, isHighlight) {
-        var pts = points.map(function (p) { return new THREE.Vector3(p[0], H, p[1]); });
+        var RING_SURFACE_OFFSET = 0.015; // micro-offset pour eviter le z-fighting
+        var pts = points.map(function (p) {
+            var x = p[0], z = p[1];
+            var r = Math.sqrt(x * x + z * z);
+            if (r > 1e-9) {
+                var k = (r + RING_SURFACE_OFFSET) / r;
+                x *= k;
+                z *= k;
+            }
+            return new THREE.Vector3(x, H, z);
+        });
         var geom = new THREE.BufferGeometry().setFromPoints(pts);
         var color = isHighlight ? RING_COLOR_HIGHLIGHT : RING_COLOR_NORMAL;
-        return new THREE.LineLoop(geom, new THREE.LineBasicMaterial({ color: color }));
+        var mat = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.95,
+            depthTest: true
+        });
+        var ring = new THREE.LineLoop(geom, mat);
+        ring.renderOrder = 20;
+        return ring;
+    }
+
+    function buildMoldJointLine(theta, sectionsData) {
+        if (typeof THREE === 'undefined' || typeof BottleMaths === 'undefined' || typeof GeomKernel === 'undefined') return null;
+        var entities = BottleMaths.buildExteriorProfile(theta, sectionsData);
+        if (!entities || !entities.length) return null;
+        var pts2d = GeomKernel.tessellateProfile(entities, Math.max(64, MERIDIAN_RESOLUTION));
+        if (!pts2d || !pts2d.length) return null;
+        var c = Math.cos(theta), s = Math.sin(theta);
+        var pts3d = [];
+        for (var i = 0; i < pts2d.length; i++) {
+            var p = pts2d[i];
+            pts3d.push(new THREE.Vector3(p.x * c, p.y, p.x * s));
+        }
+        var geom = new THREE.BufferGeometry().setFromPoints(pts3d);
+        var mat = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.95 });
+        var line = new THREE.Line(geom, mat);
+        line.renderOrder = 20;
+        line.userData.isPiqure = false;
+        line.userData.isInterior = false;
+        return line;
     }
 
     function addSectionRing(group, section, isHighlight, isPiqure) {
@@ -634,6 +673,16 @@ var BottleView3D = (function () {
 
         for (var i = 0; i < sections.length; i++) {
             addSectionRing(sectionRingGroup, sections[i], activeSection === i + 1, false);
+        }
+
+        // Joint de moule visuel sur l'axe rouge (deux demi-joints opposes).
+        var showMoldJoint = !(typeof window !== 'undefined' && window.displayOptions && window.displayOptions.showMoldJoint === false);
+        if (showMoldJoint) {
+            // Axe bleu (Z) -> meridiens a 90deg et 270deg.
+            var moldLineA = buildMoldJointLine(Math.PI / 2, sectionsData);
+            var moldLineB = buildMoldJointLine((3 * Math.PI) / 2, sectionsData);
+            if (moldLineA) sectionRingGroup.add(moldLineA);
+            if (moldLineB) sectionRingGroup.add(moldLineB);
         }
 
         // ---------- PIQÛRE (dynamique : sp + sp2..spN) ----------

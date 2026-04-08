@@ -38,6 +38,7 @@
                 <div class="panel-logo panel-col-tab" id="panel-tab-gravure" title="Gravure" role="button" tabindex="0">G</div>
                 <div class="panel-logo panel-col-tab" id="panel-tab-information" title="Plan" role="button" tabindex="0">P</div>
                 <div class="panel-logo panel-col-tab" id="panel-tab-rendu" title="Rendu" role="button" tabindex="0">R</div>
+                <div class="panel-logo panel-col-tab" id="panel-tab-calcule" title="Calcule" role="button" tabindex="0">C</div>
             </div>
             <!-- Inspector : zone où s'affiche le contenu (pages pilotées par le Brand Header) -->
             <div id="inspector" class="panel-right">
@@ -67,6 +68,9 @@
                     <div class="panel-content panel-gravure-content hidden" id="panel-content-gravure">
                     <button type="button" class="btn-add-gravure" id="btn-add-engraving">Ajouter une gravure</button>
                     <div id="engravings-container"></div>
+                    </div>
+                    <div class="panel-content panel-calcule-content hidden" id="panel-content-calcule">
+                        <!-- Rempli par CalculeVolumeFeature.renderPanel() -->
                     </div>
                     <div class="panel-content panel-information-content hidden" id="panel-content-information">
                     <div class="setting-card">
@@ -249,6 +253,10 @@
                             <label style="padding:8px 12px; font-size:0.8rem;">
                                 <span>Ronds des sections</span>
                                 <input type="checkbox" id="display-rings-toggle" checked>
+                            </label>
+                            <label style="padding:8px 12px; font-size:0.8rem;">
+                                <span>Joint de moule</span>
+                                <input type="checkbox" id="display-mold-joint-toggle" checked>
                             </label>
                         </div>
                     </div>
