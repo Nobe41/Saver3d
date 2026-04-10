@@ -17,12 +17,18 @@ var SceneSetup3D = (function () {
     var GRID_OPACITY = sceneRules.GRID_OPACITY || 0.6;
     var ACTIVE_BG_SCENE = 'none';
     var backgroundTextures = { scene1: null, scene2: null };
+    var scene0EnvTexture = null;
+    var scene0EnvBackgroundTexture = null;
+    var scene0EnvImageLoading = false;
+    var scene0EnvImageLoaded = false;
+    var SCENE0_ENV_IMAGE_PATH = 'assets/env/empty_play_room_1k.exr';
     var axesHelper = null;
     var gridHelper = null;
     var sceneDecor = {
         table: null, tableLegs: [], contactShadow: null, sunLight: null,
         frontLightLeft: null, frontLightRight: null, fillLight: null, baseKeyLight: null, baseRimLight: null,
-        defaultLightLeft: null, defaultLightRight: null, defaultAmbient: null
+        defaultLightLeft: null, defaultLightRight: null, defaultAmbient: null,
+        scene0Dome: null
     };
 
     function makeBackgroundTexture(kind) {
@@ -167,12 +173,241 @@ var SceneSetup3D = (function () {
         return backgroundTextures[kind];
     }
 
+    function isRenderModeEnabled() {
+        if (typeof document === 'undefined') return false;
+        var modeToggle = document.getElementById('render-mode-toggle');
+        return !!(modeToggle && modeToggle.checked);
+    }
+
+    function buildScene0PanoramaTexture() {
+        if (typeof THREE === 'undefined') return null;
+        var w = 2048;
+        var h = 1024;
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        // Environnement studio visible (pas juste un blanc uniforme).
+        var grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#eef3f8');
+        grad.addColorStop(0.38, '#e2e9f1');
+        grad.addColorStop(0.56, '#d0d8e4');
+        grad.addColorStop(0.70, '#c6ad89');
+        grad.addColorStop(1, '#9e7d58');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Horizon lisible.
+        var horizonY = Math.round(h * 0.58);
+        ctx.fillStyle = 'rgba(255, 236, 210, 0.40)';
+        ctx.fillRect(0, horizonY - 16, w, 32);
+
+        // Sol "planches" simplifié pour casser l'effet fond blanc.
+        var floorTop = horizonY + 8;
+        var floorH = h - floorTop;
+        var floorGrad = ctx.createLinearGradient(0, floorTop, 0, h);
+        floorGrad.addColorStop(0, 'rgba(193, 154, 111, 0.55)');
+        floorGrad.addColorStop(1, 'rgba(115, 84, 52, 0.72)');
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, floorTop, w, floorH);
+        ctx.strokeStyle = 'rgba(88, 60, 34, 0.24)';
+        ctx.lineWidth = 2;
+        for (var lx = 0; lx < w; lx += 120) {
+            ctx.beginPath();
+            ctx.moveTo(lx, floorTop);
+            ctx.lineTo(lx, h);
+            ctx.stroke();
+        }
+
+        // Panneaux lumineux verticaux type studio.
+        function addLightPanel(cx, panelW, alpha) {
+            var x0 = Math.max(0, Math.round(cx - panelW / 2));
+            var x1 = Math.min(w, Math.round(cx + panelW / 2));
+            var lg = ctx.createLinearGradient(x0, 0, x1, 0);
+            lg.addColorStop(0, 'rgba(255,255,255,0)');
+            lg.addColorStop(0.5, 'rgba(255,255,255,' + alpha + ')');
+            lg.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = lg;
+            ctx.fillRect(x0, Math.round(h * 0.08), x1 - x0, Math.round(h * 0.7));
+        }
+        addLightPanel(w * 0.18, w * 0.10, 0.70);
+        addLightPanel(w * 0.50, w * 0.13, 0.60);
+        addLightPanel(w * 0.82, w * 0.10, 0.70);
+
+        // Montants sombres pour que les reflets aient des contours nets.
+        ctx.fillStyle = 'rgba(38, 46, 58, 0.24)';
+        ctx.fillRect(Math.round(w * 0.10), Math.round(h * 0.08), Math.round(w * 0.02), Math.round(h * 0.68));
+        ctx.fillRect(Math.round(w * 0.48), Math.round(h * 0.08), Math.round(w * 0.02), Math.round(h * 0.68));
+        ctx.fillRect(Math.round(w * 0.88), Math.round(h * 0.08), Math.round(w * 0.02), Math.round(h * 0.68));
+
+        // Vignette légère pour éviter un fond trop plat.
+        var vGrad = ctx.createRadialGradient(w / 2, h * 0.48, h * 0.18, w / 2, h * 0.5, h * 0.86);
+        vGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        vGrad.addColorStop(1, 'rgba(45,33,20,0.34)');
+        ctx.fillStyle = vGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        if (tex.encoding !== undefined && THREE.sRGBEncoding !== undefined) tex.encoding = THREE.sRGBEncoding;
+        tex.needsUpdate = true;
+        return tex;
+    }
+
+    function buildEquirectTextureFromImage(image) {
+        if (typeof THREE === 'undefined' || !image) return null;
+        var w = 2048;
+        var h = 1024; // ratio 2:1 attendu pour equirect
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        // Fond doux pour éviter des bandes noires dures.
+        var bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+        bgGrad.addColorStop(0, '#f0f0f0');
+        bgGrad.addColorStop(1, '#d8d8d8');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // "Contain" : on affiche toute l'image sans crop (évite l'effet zoom).
+        var iw = image.width || w;
+        var ih = image.height || h;
+        var imgAspect = iw / Math.max(1, ih);
+        var targetW = w;
+        var targetH = Math.round(targetW / Math.max(0.01, imgAspect));
+        if (targetH > h) {
+            targetH = h;
+            targetW = Math.round(targetH * imgAspect);
+        }
+        var dx = Math.round((w - targetW) / 2);
+        var dy = Math.round((h - targetH) / 2);
+
+        // Couche de remplissage agrandie, faible alpha (adoucit les marges).
+        ctx.globalAlpha = 0.22;
+        ctx.drawImage(image, 0, 0, iw, ih, 0, 0, w, h);
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(image, 0, 0, iw, ih, dx, dy, targetW, targetH);
+
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        if (tex.encoding !== undefined && THREE.sRGBEncoding !== undefined) tex.encoding = THREE.sRGBEncoding;
+        tex.needsUpdate = true;
+        return tex;
+    }
+
+    function ensureScene0Environment() {
+        if (typeof THREE === 'undefined') return null;
+        if (!scene0EnvBackgroundTexture) {
+            scene0EnvBackgroundTexture = buildScene0PanoramaTexture();
+        }
+        if (!scene0EnvTexture && scene0EnvBackgroundTexture) {
+            if (renderer && typeof THREE.PMREMGenerator !== 'undefined') {
+                var pmrem = new THREE.PMREMGenerator(renderer);
+                if (pmrem.compileEquirectangularShader) pmrem.compileEquirectangularShader();
+                var envRT = pmrem.fromEquirectangular(scene0EnvBackgroundTexture);
+                scene0EnvTexture = envRT ? envRT.texture : scene0EnvBackgroundTexture;
+                pmrem.dispose();
+            } else {
+                scene0EnvTexture = scene0EnvBackgroundTexture;
+            }
+        }
+
+        // Remplace le panorama procédural par l'EXR utilisateur dès qu'il est chargé.
+        if (!scene0EnvImageLoaded && !scene0EnvImageLoading) {
+            scene0EnvImageLoading = true;
+            var loader = (typeof THREE.EXRLoader !== 'undefined')
+                ? new THREE.EXRLoader()
+                : new THREE.TextureLoader();
+            loader.load(
+                SCENE0_ENV_IMAGE_PATH,
+                function (imgTex) {
+                    scene0EnvImageLoading = false;
+                    scene0EnvImageLoaded = true;
+                    if (!imgTex) return;
+                    // EXR: déjà HDR/equirect -> on l'applique tel quel.
+                    if (typeof THREE.EXRLoader !== 'undefined') {
+                        imgTex.mapping = THREE.EquirectangularReflectionMapping;
+                        imgTex.magFilter = THREE.LinearFilter;
+                        imgTex.minFilter = THREE.LinearFilter;
+                        imgTex.generateMipmaps = false;
+                        scene0EnvBackgroundTexture = imgTex;
+                    } else {
+                        var converted = buildEquirectTextureFromImage(imgTex.image) || imgTex;
+                        scene0EnvBackgroundTexture = converted;
+                    }
+                    if (renderer && typeof THREE.PMREMGenerator !== 'undefined') {
+                        var pmrem2 = new THREE.PMREMGenerator(renderer);
+                        if (pmrem2.compileEquirectangularShader) pmrem2.compileEquirectangularShader();
+                        var envRT2 = pmrem2.fromEquirectangular(scene0EnvBackgroundTexture);
+                        scene0EnvTexture = envRT2 ? envRT2.texture : scene0EnvBackgroundTexture;
+                        pmrem2.dispose();
+                    } else {
+                        scene0EnvTexture = scene0EnvBackgroundTexture;
+                    }
+                    if (sceneDecor.scene0Dome && sceneDecor.scene0Dome.material) {
+                        sceneDecor.scene0Dome.material.map = scene0EnvBackgroundTexture;
+                        sceneDecor.scene0Dome.material.needsUpdate = true;
+                    }
+                    if (scene && ACTIVE_BG_SCENE === 'scene0' && isRenderModeEnabled()) {
+                        ensureScene0Dome();
+                        applyBackgroundScene();
+                        applySceneDecor();
+                    }
+                },
+                undefined,
+                function () {
+                    scene0EnvImageLoading = false;
+                }
+            );
+        }
+        return scene0EnvTexture;
+    }
+
+    function ensureScene0Dome() {
+        if (!scene || typeof THREE === 'undefined') return null;
+        if (sceneDecor.scene0Dome) return sceneDecor.scene0Dome;
+        if (!scene0EnvBackgroundTexture) ensureScene0Environment();
+        if (!scene0EnvBackgroundTexture) return null;
+        var domeGeo = new THREE.SphereGeometry(1400, 64, 40);
+        var domeMat = new THREE.MeshBasicMaterial({
+            map: scene0EnvBackgroundTexture,
+            side: THREE.BackSide,
+            depthWrite: false
+        });
+        var dome = new THREE.Mesh(domeGeo, domeMat);
+        dome.position.set(0, 120, 0);
+        dome.renderOrder = -10;
+        scene.add(dome);
+        sceneDecor.scene0Dome = dome;
+        return dome;
+    }
+
     function applyBackgroundScene() {
         if (!scene || typeof THREE === 'undefined') return;
+        var useScene0Env = ACTIVE_BG_SCENE === 'scene0' && isRenderModeEnabled();
+        if (useScene0Env) {
+            var envTex = ensureScene0Environment();
+            scene.environment = envTex;
+            // Si l'EXR est chargé, on l'affiche directement en fond (cadrage correct).
+            if (scene0EnvImageLoaded && scene0EnvBackgroundTexture) {
+                scene.background = scene0EnvBackgroundTexture;
+            } else {
+                // Fallback sobre pendant le chargement/échec EXR.
+                scene.background = scene0EnvBackgroundTexture || new THREE.Color(0xffffff);
+            }
+            if (sceneDecor.scene0Dome) sceneDecor.scene0Dome.visible = false;
+            return;
+        }
         if (ACTIVE_BG_SCENE === 'scene1' || ACTIVE_BG_SCENE === 'scene2') {
             scene.background = ensureBackgroundTexture(ACTIVE_BG_SCENE);
+            scene.environment = null;
         } else {
             scene.background = new THREE.Color(0xffffff);
+            scene.environment = null;
         }
     }
 
@@ -282,6 +517,7 @@ var SceneSetup3D = (function () {
         ensureSceneDecor();
         var isScene1 = ACTIVE_BG_SCENE === 'scene1';
         var isScene0 = ACTIVE_BG_SCENE === 'scene0';
+        var isScene0Render = isScene0 && isRenderModeEnabled();
         var isBaseDefault = ACTIVE_BG_SCENE === 'none';
         if (sceneDecor.table) sceneDecor.table.visible = isScene1;
         if (sceneDecor.contactShadow) sceneDecor.contactShadow.visible = isScene1;
@@ -294,6 +530,7 @@ var SceneSetup3D = (function () {
         if (sceneDecor.defaultLightLeft) sceneDecor.defaultLightLeft.visible = isBaseDefault;
         if (sceneDecor.defaultLightRight) sceneDecor.defaultLightRight.visible = isBaseDefault;
         if (sceneDecor.defaultAmbient) sceneDecor.defaultAmbient.visible = isBaseDefault;
+        if (sceneDecor.scene0Dome) sceneDecor.scene0Dome.visible = false;
         for (var i = 0; i < sceneDecor.tableLegs.length; i++) {
             sceneDecor.tableLegs[i].visible = isScene1;
         }
@@ -302,8 +539,9 @@ var SceneSetup3D = (function () {
     function applyDisplayOptions() {
         if (!scene) return;
         var opts = (typeof window !== 'undefined' && window.displayOptions) ? window.displayOptions : {};
-        if (axesHelper) axesHelper.visible = opts.showAxes !== false;
-        if (gridHelper) gridHelper.visible = opts.showGrid !== false;
+        var isScene0Render = ACTIVE_BG_SCENE === 'scene0' && isRenderModeEnabled();
+        if (axesHelper) axesHelper.visible = !isScene0Render && opts.showAxes !== false;
+        if (gridHelper) gridHelper.visible = !isScene0Render && opts.showGrid !== false;
     }
 
     /**
@@ -418,6 +656,7 @@ var SceneSetup3D = (function () {
             else ACTIVE_BG_SCENE = 'none';
             applyBackgroundScene();
             applySceneDecor();
+            applyDisplayOptions();
             syncRendererPipeline();
         },
         syncRendererPipeline: syncRendererPipeline
