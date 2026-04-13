@@ -1,23 +1,17 @@
 (function () {
-    var sections = ['accueil', 'fonctionnalites', 'galerie', 'licence'];
-    var links = {};
-    sections.forEach(function (id) {
-        var a = document.querySelector('.panel-nav a[href="#' + id + '"]');
-        if (a) links[id] = a;
-    });
+    var path = (window.location.pathname || "").toLowerCase();
+    var file = path.split("/").pop() || "";
 
-    function setActive() {
-        var top = window.scrollY + 120;
-        var current = sections[0];
-        sections.forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el && el.offsetTop <= top) current = id;
-        });
-        sections.forEach(function (id) {
-            if (links[id]) links[id].classList.toggle('active', id === current);
-        });
+    var page = "accueil";
+    if (file.indexOf("fonctionnalites") !== -1) page = "fonctionnalites";
+    else if (file.indexOf("galerie") !== -1) page = "galerie";
+    else if (file.indexOf("licence") !== -1) page = "licence";
+    else if (file.indexOf("avis") !== -1) page = "avis";
+    else if (!file || file === "index.html" || path.endsWith("/website/") || path.endsWith("/website")) {
+        page = "accueil";
     }
 
-    setActive();
-    window.addEventListener('scroll', setActive);
+    document.querySelectorAll(".panel-nav a[data-nav]").forEach(function (a) {
+        a.classList.toggle("active", a.getAttribute("data-nav") === page);
+    });
 })();

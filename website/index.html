@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nolimi</title>
+    <title>Nolimi — Accueil</title>
     <link rel="stylesheet" href="./css/main.css">
 </head>
-<body>
+<body class="page page--home">
     <header class="panel">
-        <span class="panel-logo">Nolimi</span>
-        <nav class="panel-nav">
-            <a href="#accueil">Accueil</a>
-            <a href="#fonctionnalites">Fonctionnalité</a>
-            <a href="#galerie">Galérie</a>
-            <a href="#licence">Licence</a>
-        </nav>
-        <a href="../auth/login.html" class="panel-cta">Accéder à l'app</a>
+        <a href="index.html" class="panel-logo">Nolimi</a>
+        <div class="panel-actions">
+            <nav class="panel-nav">
+                <a href="index.html" data-nav="accueil">Accueil</a>
+                <a href="pages/fonctionnalites.html" data-nav="fonctionnalites">Fonctionnalité</a>
+                <a href="pages/galerie.html" data-nav="galerie">Galerie</a>
+                <a href="pages/avis.html" data-nav="avis">Avis</a>
+                <a href="pages/licence.html" data-nav="licence">Licence</a>
+            </nav>
+            <a href="../auth/login.html" class="panel-cta">Accéder au SaaS</a>
+        </div>
     </header>
-    <section id="accueil">
-        <h1 class="hero-title">
-            Creer votre <span class="hero-highlight">bouteille</span> en quelque minutes
-        </h1>
-    </section>
-    <section id="fonctionnalites"><h2 class="section-title">Fonctionnalité</h2></section>
-    <section id="galerie"><h2 class="section-title">Galérie</h2></section>
-    <section id="licence"><h2 class="section-title">Licence</h2></section>
-    <footer id="cgu"></footer>
+    <main class="page-main page-main--hero" id="accueil"></main>
     <script src="./js/components/navbar.js"></script>
-    <script src="./js/main.js"></script>
 </body>
 </html>

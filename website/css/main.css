@@ -1,58 +1,51 @@
 @import url("./components/navbar.css");
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; overscroll-behavior: none; }
-body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; overscroll-behavior: none; }
-
-section {
+html { scroll-behavior: smooth; overscroll-behavior: none; height: 100%; }
+body {
+    font-family: system-ui, -apple-system, sans-serif;
     min-height: 100vh;
+    overscroll-behavior: none;
+    background: #fafafa;
+}
+
+html:has(body.page--home),
+html:has(body.page--home) body {
+    height: 100%;
+    overflow: hidden;
+}
+
+html:has(body.page--scrollable) {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.page--scrollable {
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.page--home {
+    display: flex;
+    flex-direction: column;
+}
+
+.page-main {
+    width: 100%;
+}
+
+body.page--home .page-main--hero {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 5rem 1.5rem 4rem;
-    font-size: 2rem;
-    color: #666;
-    font-weight: 300;
+    min-height: 0;
+    padding: 5rem 1.5rem 2rem;
 }
-#accueil {
-    background: #fafafa;
-    position: relative;
-}
-.hero-title {
-    text-align: center;
-    color: #444;
-    font-size: 5.4rem;
-    font-weight: 400;
-    line-height: 1.4;
-    max-width: 980px;
-}
-.hero-highlight {
-    background: linear-gradient(135deg, #0066cc 0%, #3d9bff 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-size: 1.25em;
-    font-weight: 700;
-}
-#fonctionnalites {
-    background: #f5f5f5;
+
+body.page:not(.page--home) .page-main {
     min-height: 100vh;
-}
-#galerie {
-    background: #fff;
-    min-height: 100vh;
-}
-#licence {
-    background: #e8e8e8;
-    min-height: 100vh;
-}
-#cgu {
-    min-height: 25vh;
-    background: #e0e0e0;
-}
-.section-title {
-    font-size: 3.5rem;
-    font-weight: 300;
-    color: #444;
-    text-align: center;
 }
