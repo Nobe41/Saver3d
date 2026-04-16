@@ -11,8 +11,10 @@ body {
 
 html:has(body.page--home),
 html:has(body.page--home) body {
-    height: 100%;
-    overflow: hidden;
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 html:has(body.page--scrollable) {
@@ -31,19 +33,19 @@ body.page--scrollable {
 body.page--home {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .page-main {
     width: 100%;
 }
 
-body.page--home .page-main--hero {
+body.page--home .page-main--home {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     min-height: 0;
-    padding: 5rem 1.5rem 2rem;
 }
 
 body.page:not(.page--home) .page-main {
